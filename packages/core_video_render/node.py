@@ -210,15 +210,16 @@ class VideoRenderNode(NodeBase):
         out_mp4 = os.path.join(workdir, out_name + ".mp4")
         cmd += [out_mp4]
 
-        proc = subprocess.run(cmd, capture_output=True, text=True, timeout=1800, errors="replace")
+        proc = await ctx["run_tracked"](cmd, timeout=1800, text=True)
         if proc.returncode != 0:
             # 写错误日志便于排查
+            err = getattr(proc, "stderr", "") or ""
             try:
                 with open(os.path.join(workdir, "render_err.log"), "w", encoding="utf-8") as f:
-                    f.write(proc.stderr or "")
+                    f.write(err)
             except OSError:
                 pass
-            raise RuntimeError("渲染失败: " + (proc.stderr[-1200:] if proc.stderr else "未知错误"))
+            raise RuntimeError("渲染失败: " + (err[-1200:] if err else "未知错误"))
 
         asset = store.save_asset(Asset(id="", kind=PortType.VIDEO.value, path=out_mp4,
                                        meta={"width": w, "height": h, "aspect": aspect,

@@ -154,11 +154,24 @@
       "description": ""
     }
   ],
-  "permission": {},
+  "permission": {
+    "subprocess": {
+      "enabled": true,
+      "argv_allowlist": [
+        "ffmpeg",
+        "ffprobe"
+      ]
+    },
+    "secret": {
+      "refs": [
+        "*"
+      ]
+    }
+  },
   "signature": {
     "alg": "ed25519",
     "key_id": "a8998646b062c170",
-    "value": "PZrHNTA2ntL11qR5VHZgtNwyzjzO01ccpxqsSCmJtHrHpjOITlcJxuw2vhJeyhD4s8kAq+Yr0a6btBmnM9qDDg==",
+    "value": "tYQtA7K91cGIZggnf2IfwA3YqmQQiI0mw1XFS9ZZcs1xK0KmxzbQzLCFycHBCBxaMO040sFfPuvZ3vdBQp5dAw==",
     "over": "manifest"
   }
 }

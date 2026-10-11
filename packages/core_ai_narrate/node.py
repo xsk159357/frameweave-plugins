@@ -12,7 +12,8 @@ from app.nodespec import NodeBase, NodeSpec, PortSpec, PortType
 from app.registry import register
 
 
-def _extract_keyframes(video_path: str, workdir: str, count: int = 8) -> List[str]:
+async def _extract_keyframes(video_path: str, workdir: str, ctx: Dict[str, Any] = None,
+                             count: int = 8) -> List[str]:
     import imageio_ffmpeg
     ff = imageio_ffmpeg.get_ffmpeg_exe()
     out_dir = os.path.join(workdir, "narrate_frames")
@@ -24,9 +25,18 @@ def _extract_keyframes(video_path: str, workdir: str, count: int = 8) -> List[st
             pass
     filt = r"select=not(mod(n\," + str(max(1, count)) + ")),scale=320:-1"
     try:
-        subprocess.run([ff, "-v", "quiet", "-i", video_path, "-vf", filt,
-                        "-frames:v", str(count), os.path.join(out_dir, "kf_%02d.jpg")],
-                       capture_output=True, timeout=120)
+        if ctx is not None and ctx.get("run_tracked"):
+            proc = await ctx["run_tracked"](
+                [ff, "-v", "quiet", "-i", video_path, "-vf", filt,
+                 "-frames:v", str(count), os.path.join(out_dir, "kf_%02d.jpg")],
+                timeout=120, text=True)
+            if proc.returncode != 0:
+                return []
+        else:
+            import subprocess
+            subprocess.run([ff, "-v", "quiet", "-i", video_path, "-vf", filt,
+                            "-frames:v", str(count), os.path.join(out_dir, "kf_%02d.jpg")],
+                           capture_output=True, timeout=120)
     except Exception:
         return []
     return sorted(os.path.join(out_dir, f) for f in os.listdir(out_dir))
@@ -89,8 +99,14 @@ class AINarrateNode(NodeBase):
     async def run(self, ctx, inputs, params) -> Dict[str, Any]:
         api_key = str(params.get("api_key", "") or "").strip()
         if api_key.startswith("@secret:"):
-            from app.secrets import read_secret
-            api_key = read_secret(api_key.split(":", 1)[1]) or ""
+            ref = api_key.split(":", 1)[1]
+            # P3 迁移：优先 ctx.resolve_secret（worker 内经白名单 RPC）；缺省回退主进程保险箱
+            resolver = ctx.get("resolve_secret") if hasattr(ctx, "get") else None
+            if resolver:
+                api_key = resolver(ref) or ""
+            else:
+                from app.secrets import read_secret
+                api_key = read_secret(ref) or ""
         if not api_key:
             raise RuntimeError("请填写 API Key，或在密钥保险箱存好后用 @secret:名称 引用")
         base_url = str(params.get("base_url", "https://ameaaos.com/v1")).strip() or "https://ameaaos.com/v1"
@@ -116,7 +132,7 @@ class AINarrateNode(NodeBase):
         if mode == "上帝视角":
             if video_asset is None or not video_asset.path or not os.path.exists(video_asset.path):
                 raise RuntimeError("上帝视角模式需要连接视频输入")
-            frames = _extract_keyframes(video_asset.path, ctx["workdir"])
+            frames = await _extract_keyframes(video_asset.path, ctx["workdir"], ctx)
             segments_desc = ""
             if segments_asset is not None:
                 segs = store.read_json(segments_asset.id) or []

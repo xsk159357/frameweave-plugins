@@ -272,11 +272,26 @@
       "description": "0.25~4.0"
     }
   ],
-  "permission": {},
+  "permission": {
+    "subprocess": {
+      "enabled": true,
+      "argv_allowlist": [
+        "python",
+        "python.exe",
+        "ffmpeg",
+        "ffprobe"
+      ]
+    },
+    "secret": {
+      "refs": [
+        "*"
+      ]
+    }
+  },
   "signature": {
     "alg": "ed25519",
     "key_id": "a8998646b062c170",
-    "value": "Bvt2fwk+Yfo1hSvnDUWkuS4uxWou0Ptzp1EOhj8iRM4FBo2FWGG6lkZta51Ji0EM+c255teGFO7izsyqZj4FDg==",
+    "value": "ekJDmtQIi9efMa2/DYWN7R/AAUI2sGrEYCao4fauVZl6K9Dd12vDaBxlZ6/3izkQeBOg4HpZY3ObXkclQPbaBQ==",
     "over": "manifest"
   }
 }
