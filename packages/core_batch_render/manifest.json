@@ -1,0 +1,10 @@
+{
+  "type_id": "core/batch_render",
+  "title": "批量出片",
+  "category": "控制",
+  "description": "矩阵批量出片",
+  "version": "1.0.0",
+  "runtime": "python",
+  "entrypoint": "node.py",
+  "class_name": "BatchRenderNode"
+}

@@ -1,0 +1,10 @@
+{
+  "type_id": "core/asr",
+  "title": "语音转字幕",
+  "category": "分析",
+  "description": "语音识别转字幕",
+  "version": "1.0.0",
+  "runtime": "python",
+  "entrypoint": "node.py",
+  "class_name": "ASRNode"
+}

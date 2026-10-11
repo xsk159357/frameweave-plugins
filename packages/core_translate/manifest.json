@@ -1,0 +1,10 @@
+{
+  "type_id": "core/translate",
+  "title": "多语种翻译",
+  "category": "编辑",
+  "description": "中文文案/字幕多语种翻译",
+  "version": "1.0.0",
+  "runtime": "python",
+  "entrypoint": "node.py",
+  "class_name": "TranslateNode"
+}

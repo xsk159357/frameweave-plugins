@@ -1,0 +1,10 @@
+{
+  "type_id": "core/ai_narrate",
+  "title": "AI 文案生成",
+  "category": "语义",
+  "description": "生成解说文案",
+  "version": "1.0.0",
+  "runtime": "python",
+  "entrypoint": "node.py",
+  "class_name": "AINarrateNode"
+}

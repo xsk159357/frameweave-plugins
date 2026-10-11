@@ -1,0 +1,62 @@
+{
+  "schema_version": 2,
+  "engine_api": "1.0",
+  "type_id": "user/my_plugin",
+  "title": "我的插件",
+  "category": "用户节点",
+  "description": "SDK 骨架示例节点",
+  "version": "1.0.0",
+  "kind": "python",
+  "runtime": "python",
+  "entrypoint": "node.py",
+  "class_name": "MyPluginNode",
+  "inputs": [
+    {
+      "name": "text",
+      "type": "STRING",
+      "label": "输入文本",
+      "required": true,
+      "description": "要处理的文本"
+    }
+  ],
+  "outputs": [
+    {
+      "name": "result",
+      "type": "STRING",
+      "label": "拼接结果"
+    },
+    {
+      "name": "stats",
+      "type": "JSON",
+      "label": "统计"
+    }
+  ],
+  "params": [
+    {
+      "name": "prefix",
+      "type": "STRING",
+      "label": "前缀",
+      "default": "FW",
+      "widget": "text"
+    },
+    {
+      "name": "mode",
+      "type": "STRING",
+      "label": "模式",
+      "default": "upper",
+      "widget": "select",
+      "options": [
+        "upper",
+        "lower",
+        "raw"
+      ]
+    }
+  ],
+  "permission": {
+    "fs": {
+      "write": [
+        "scratch/**"
+      ]
+    }
+  }
+}

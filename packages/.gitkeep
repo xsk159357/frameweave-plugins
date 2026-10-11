@@ -1,0 +1,3 @@
+# frameweave-plugins 插件包源目录
+# 每包 = manifest.json + node.py（骨架）；来源 FrameWeave HEAD 18e68ac900154b467430a369f4ec9ef7a8c5d493
+# 10 core_* + hello 共 21 文件，与迁移前 git HEAD 字节级一致（hash-object 校验）# declared-v3

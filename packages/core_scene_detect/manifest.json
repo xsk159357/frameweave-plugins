@@ -1,0 +1,10 @@
+{
+  "type_id": "core/scene_detect",
+  "title": "场景检测",
+  "category": "分析",
+  "description": "检测镜头/场景切换",
+  "version": "1.0.0",
+  "runtime": "python",
+  "entrypoint": "node.py",
+  "class_name": "SceneDetectNode"
+}

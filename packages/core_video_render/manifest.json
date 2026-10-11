@@ -1,0 +1,10 @@
+{
+  "type_id": "core/video_render",
+  "title": "MP4 渲染",
+  "category": "输出",
+  "description": "自动混剪出片",
+  "version": "1.0.0",
+  "runtime": "python",
+  "entrypoint": "node.py",
+  "class_name": "VideoRenderNode"
+}

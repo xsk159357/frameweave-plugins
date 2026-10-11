@@ -1,0 +1,10 @@
+{
+  "type_id": "core/tts",
+  "title": "TTS 配音",
+  "category": "音频",
+  "description": "文字转语音",
+  "version": "1.0.0",
+  "runtime": "python",
+  "entrypoint": "node.py",
+  "class_name": "TTSNode"
+}

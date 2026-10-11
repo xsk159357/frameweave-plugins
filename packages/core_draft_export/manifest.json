@@ -1,0 +1,10 @@
+{
+  "type_id": "core/draft_export",
+  "title": "剪映草稿导出",
+  "category": "输出",
+  "description": "生成剪映草稿与工程文件",
+  "version": "1.0.0",
+  "runtime": "python",
+  "entrypoint": "node.py",
+  "class_name": "DraftExportNode"
+}

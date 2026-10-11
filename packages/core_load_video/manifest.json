@@ -1,0 +1,10 @@
+{
+  "type_id": "core/load_video",
+  "title": "导入视频",
+  "category": "输入",
+  "description": "导入本地视频文件并解析元数据",
+  "version": "1.0.0",
+  "runtime": "python",
+  "entrypoint": "node.py",
+  "class_name": "LoadVideoNode"
+}
