@@ -1,10 +1,108 @@
 {
+  "schema_version": 2,
+  "engine_api": "1.0",
   "type_id": "core/asr",
   "title": "语音转字幕",
   "category": "分析",
-  "description": "语音识别转字幕",
+  "description": "语音识别转字幕（faster-whisper）",
   "version": "1.0.0",
+  "kind": "python",
   "runtime": "python",
   "entrypoint": "node.py",
-  "class_name": "ASRNode"
+  "class_name": "ASRNode",
+  "inputs": [
+    {
+      "name": "video",
+      "type": "VIDEO",
+      "label": "视频",
+      "required": true,
+      "default": null,
+      "widget": "text",
+      "options": [],
+      "description": ""
+    },
+    {
+      "name": "audio",
+      "type": "AUDIO",
+      "label": "音频(可选)",
+      "required": false,
+      "default": null,
+      "widget": "text",
+      "options": [],
+      "description": ""
+    }
+  ],
+  "outputs": [
+    {
+      "name": "subtitle",
+      "type": "SUBTITLE",
+      "label": "字幕",
+      "required": true,
+      "default": null,
+      "widget": "text",
+      "options": [],
+      "description": ""
+    },
+    {
+      "name": "srt",
+      "type": "STRING",
+      "label": "SRT 文本",
+      "required": true,
+      "default": null,
+      "widget": "text",
+      "options": [],
+      "description": ""
+    }
+  ],
+  "params": [
+    {
+      "name": "model",
+      "type": "STRING",
+      "label": "模型",
+      "required": true,
+      "default": "large-v3",
+      "widget": "select",
+      "options": [
+        "large-v3"
+      ],
+      "description": ""
+    },
+    {
+      "name": "language",
+      "type": "STRING",
+      "label": "语言",
+      "required": true,
+      "default": "zh",
+      "widget": "select",
+      "options": [
+        "zh",
+        "en",
+        "ja",
+        "ko",
+        "auto"
+      ],
+      "description": ""
+    },
+    {
+      "name": "device",
+      "type": "STRING",
+      "label": "设备",
+      "required": true,
+      "default": "auto",
+      "widget": "select",
+      "options": [
+        "auto",
+        "cpu",
+        "cuda"
+      ],
+      "description": ""
+    }
+  ],
+  "permission": {},
+  "signature": {
+    "alg": "ed25519",
+    "key_id": "a8998646b062c170",
+    "value": "c/TQxGWhYM0+/UBWj4/8bKAtbnF5142syLgrvJ43k+eyFEGN4j6jb/1wHlH0pFNZMIP/QhMPc4x/qWJQwRysBA==",
+    "over": "manifest"
+  }
 }

@@ -1,10 +1,282 @@
 {
+  "schema_version": 2,
+  "engine_api": "1.0",
   "type_id": "core/tts",
   "title": "TTS 配音",
   "category": "音频",
-  "description": "文字转语音",
+  "description": "文字转语音：Edge免费 / 本地克隆 / 云端音色 / 人工配音",
   "version": "1.0.0",
+  "kind": "python",
   "runtime": "python",
   "entrypoint": "node.py",
-  "class_name": "TTSNode"
+  "class_name": "TTSNode",
+  "inputs": [
+    {
+      "name": "script",
+      "type": "SCRIPT",
+      "label": "文案",
+      "required": true,
+      "default": null,
+      "widget": "text",
+      "options": [],
+      "description": ""
+    },
+    {
+      "name": "audio_in",
+      "type": "AUDIO",
+      "label": "人工音频",
+      "required": false,
+      "default": null,
+      "widget": "text",
+      "options": [],
+      "description": ""
+    },
+    {
+      "name": "audio_ref",
+      "type": "AUDIO",
+      "label": "克隆参考音",
+      "required": false,
+      "default": null,
+      "widget": "text",
+      "options": [],
+      "description": ""
+    }
+  ],
+  "outputs": [
+    {
+      "name": "audio",
+      "type": "AUDIO",
+      "label": "配音音频",
+      "required": true,
+      "default": null,
+      "widget": "text",
+      "options": [],
+      "description": ""
+    },
+    {
+      "name": "marks",
+      "type": "JSON",
+      "label": "时间戳标记",
+      "required": true,
+      "default": null,
+      "widget": "text",
+      "options": [],
+      "description": ""
+    }
+  ],
+  "params": [
+    {
+      "name": "direct_text",
+      "type": "STRING",
+      "label": "直接输入文案",
+      "required": true,
+      "default": "",
+      "widget": "text",
+      "options": [],
+      "description": "留空时使用上游文案输入"
+    },
+    {
+      "name": "engine",
+      "type": "STRING",
+      "label": "引擎",
+      "required": true,
+      "default": "edge",
+      "widget": "select",
+      "options": [
+        "edge",
+        "manual",
+        "indextts",
+        "cloud"
+      ],
+      "description": ""
+    },
+    {
+      "name": "voice",
+      "type": "STRING",
+      "label": "音色",
+      "required": true,
+      "default": "zh-CN-XiaoxiaoNeural",
+      "widget": "select",
+      "options": [
+        "zh-CN-XiaoxiaoNeural",
+        "zh-CN-XiaoyiNeural",
+        "zh-CN-YunjianNeural",
+        "zh-CN-YunxiNeural",
+        "zh-CN-YunxiaNeural",
+        "zh-CN-YunyangNeural",
+        "zh-CN-liaoning-XiaobeiNeural",
+        "zh-CN-shaanxi-XiaoniNeural",
+        "zh-CN-XiaomoNeural",
+        "zh-CN-XiaoruiNeural",
+        "zh-CN-XiaoshuangNeural",
+        "zh-CN-XiaoxuanNeural",
+        "zh-CN-XiaoxueNeural",
+        "zh-CN-XiaoyanNeural",
+        "zh-CN-XiaoyouNeural",
+        "zh-CN-XiaozhenNeural",
+        "zh-CN-YunfengNeural",
+        "zh-CN-YunhaoNeural",
+        "zh-CN-YunjianNeural",
+        "zh-CN-YunzeNeural",
+        "zh-TW-HsiaoChenNeural",
+        "zh-TW-HsiaoYuNeural",
+        "zh-TW-YunJheNeural",
+        "zh-HK-HiuGaaiNeural",
+        "zh-HK-HiuMaanNeural",
+        "zh-HK-WanLungNeural",
+        "en-US-JennyNeural",
+        "en-US-AriaNeural",
+        "en-US-GuyNeural",
+        "en-US-ChristopherNeural",
+        "en-US-EricNeural",
+        "en-US-MichelleNeural",
+        "en-GB-SoniaNeural",
+        "en-GB-RyanNeural",
+        "en-AU-NatashaNeural",
+        "ja-JP-NanamiNeural",
+        "ja-JP-KeitaNeural",
+        "ja-JP-AoiNeural",
+        "ko-KR-SunHiNeural",
+        "ko-KR-InJoonNeural"
+      ],
+      "description": ""
+    },
+    {
+      "name": "rate",
+      "type": "STRING",
+      "label": "语速",
+      "required": true,
+      "default": "+0%",
+      "widget": "text",
+      "options": [],
+      "description": "edge-tts 语速如 +10%"
+    },
+    {
+      "name": "pitch",
+      "type": "STRING",
+      "label": "音调",
+      "required": true,
+      "default": "+0Hz",
+      "widget": "text",
+      "options": [],
+      "description": ""
+    },
+    {
+      "name": "output_format",
+      "type": "STRING",
+      "label": "输出格式",
+      "required": true,
+      "default": "mp3",
+      "widget": "select",
+      "options": [
+        "mp3",
+        "wav",
+        "ogg"
+      ],
+      "description": ""
+    },
+    {
+      "name": "lang",
+      "type": "STRING",
+      "label": "克隆语言",
+      "required": true,
+      "default": "ZH",
+      "widget": "select",
+      "options": [
+        "ZH",
+        "EN",
+        "JA",
+        "ES",
+        "AR"
+      ],
+      "description": ""
+    },
+    {
+      "name": "duration_factor",
+      "type": "STRING",
+      "label": "语速倍率",
+      "required": true,
+      "default": "1.0",
+      "widget": "text",
+      "options": [],
+      "description": "0.5~2.0, 1.0 为原速"
+    },
+    {
+      "name": "server_url",
+      "type": "STRING",
+      "label": "克隆服务地址",
+      "required": true,
+      "default": "http://127.0.0.1:8791",
+      "widget": "text",
+      "options": [],
+      "description": "IndexTTS2 常驻服务"
+    },
+    {
+      "name": "auto_start_server",
+      "type": "BOOL",
+      "label": "自动拉起服务",
+      "required": true,
+      "default": true,
+      "widget": "toggle",
+      "options": [],
+      "description": "首次用时自动启动克隆服务"
+    },
+    {
+      "name": "api_key",
+      "type": "STRING",
+      "label": "API Key",
+      "required": true,
+      "default": null,
+      "widget": "text",
+      "options": [],
+      "description": "云端 TTS 用户自带 Key（ameaao 中转）"
+    },
+    {
+      "name": "base_url",
+      "type": "STRING",
+      "label": "中转地址",
+      "required": true,
+      "default": "https://ameaaos.com/v1",
+      "widget": "text",
+      "options": [],
+      "description": ""
+    },
+    {
+      "name": "cloud_model",
+      "type": "STRING",
+      "label": "云端模型",
+      "required": true,
+      "default": "tts-1",
+      "widget": "text",
+      "options": [],
+      "description": ""
+    },
+    {
+      "name": "cloud_voice",
+      "type": "STRING",
+      "label": "云端音色",
+      "required": true,
+      "default": "alloy",
+      "widget": "text",
+      "options": [],
+      "description": "OpenAI 音色: alloy/echo/fable/onyx/nova/shimmer"
+    },
+    {
+      "name": "cloud_speed",
+      "type": "STRING",
+      "label": "云端语速",
+      "required": true,
+      "default": "1.0",
+      "widget": "text",
+      "options": [],
+      "description": "0.25~4.0"
+    }
+  ],
+  "permission": {},
+  "signature": {
+    "alg": "ed25519",
+    "key_id": "a8998646b062c170",
+    "value": "Bvt2fwk+Yfo1hSvnDUWkuS4uxWou0Ptzp1EOhj8iRM4FBo2FWGG6lkZta51Ji0EM+c255teGFO7izsyqZj4FDg==",
+    "over": "manifest"
+  }
 }

@@ -1,10 +1,86 @@
 {
+  "schema_version": 2,
+  "engine_api": "1.0",
   "type_id": "core/scene_detect",
   "title": "场景检测",
   "category": "分析",
-  "description": "检测镜头/场景切换",
+  "description": "检测镜头/场景切换，输出片段列表（时间戳/时长/缩略图）",
   "version": "1.0.0",
+  "kind": "python",
   "runtime": "python",
   "entrypoint": "node.py",
-  "class_name": "SceneDetectNode"
+  "class_name": "SceneDetectNode",
+  "inputs": [
+    {
+      "name": "video",
+      "type": "VIDEO",
+      "label": "视频",
+      "required": true,
+      "default": null,
+      "widget": "text",
+      "options": [],
+      "description": ""
+    }
+  ],
+  "outputs": [
+    {
+      "name": "segments",
+      "type": "SEGMENTS",
+      "label": "片段列表",
+      "required": true,
+      "default": null,
+      "widget": "text",
+      "options": [],
+      "description": ""
+    },
+    {
+      "name": "count",
+      "type": "INT",
+      "label": "片段数",
+      "required": true,
+      "default": null,
+      "widget": "text",
+      "options": [],
+      "description": ""
+    }
+  ],
+  "params": [
+    {
+      "name": "sample_fps",
+      "type": "FLOAT",
+      "label": "抽样帧率",
+      "required": true,
+      "default": 1.0,
+      "widget": "number",
+      "options": [],
+      "description": ""
+    },
+    {
+      "name": "threshold",
+      "type": "FLOAT",
+      "label": "切换阈值",
+      "required": true,
+      "default": 0.12,
+      "widget": "number",
+      "options": [],
+      "description": ""
+    },
+    {
+      "name": "min_duration",
+      "type": "FLOAT",
+      "label": "最小片段时长(秒)",
+      "required": true,
+      "default": 0.6,
+      "widget": "number",
+      "options": [],
+      "description": ""
+    }
+  ],
+  "permission": {},
+  "signature": {
+    "alg": "ed25519",
+    "key_id": "a8998646b062c170",
+    "value": "AbGI71r1pj+U40DP73nrrzcLMNhQScOBwYqympf5LCszjXAt54ymp+SXJyOm5NjmuDG1JBmSC7j0cWxEKbKGBQ==",
+    "over": "manifest"
+  }
 }

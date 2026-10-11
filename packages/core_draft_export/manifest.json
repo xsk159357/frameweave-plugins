@@ -1,10 +1,198 @@
 {
+  "schema_version": 2,
+  "engine_api": "1.0",
   "type_id": "core/draft_export",
   "title": "剪映草稿导出",
   "category": "输出",
-  "description": "生成剪映草稿与工程文件",
+  "description": "生成剪映草稿 / Premiere XML / EDL 工程文件",
   "version": "1.0.0",
+  "kind": "python",
   "runtime": "python",
   "entrypoint": "node.py",
-  "class_name": "DraftExportNode"
+  "class_name": "DraftExportNode",
+  "inputs": [
+    {
+      "name": "video",
+      "type": "VIDEO",
+      "label": "视频",
+      "required": true,
+      "default": null,
+      "widget": "text",
+      "options": [],
+      "description": ""
+    },
+    {
+      "name": "segments",
+      "type": "SEGMENTS",
+      "label": "片段列表",
+      "required": true,
+      "default": null,
+      "widget": "text",
+      "options": [],
+      "description": ""
+    },
+    {
+      "name": "audio",
+      "type": "AUDIO",
+      "label": "配音音频",
+      "required": false,
+      "default": null,
+      "widget": "text",
+      "options": [],
+      "description": ""
+    },
+    {
+      "name": "styled_subtitle",
+      "type": "SUBTITLE",
+      "label": "样式字幕",
+      "required": false,
+      "default": null,
+      "widget": "text",
+      "options": [],
+      "description": ""
+    }
+  ],
+  "outputs": [
+    {
+      "name": "draft",
+      "type": "JSON",
+      "label": "剪映草稿信息",
+      "required": true,
+      "default": null,
+      "widget": "text",
+      "options": [],
+      "description": ""
+    },
+    {
+      "name": "xml",
+      "type": "STRING",
+      "label": "Pr XML",
+      "required": true,
+      "default": null,
+      "widget": "text",
+      "options": [],
+      "description": ""
+    },
+    {
+      "name": "edl",
+      "type": "STRING",
+      "label": "EDL",
+      "required": true,
+      "default": null,
+      "widget": "text",
+      "options": [],
+      "description": ""
+    },
+    {
+      "name": "fcpxml",
+      "type": "STRING",
+      "label": "FCPXML",
+      "required": true,
+      "default": null,
+      "widget": "text",
+      "options": [],
+      "description": ""
+    }
+  ],
+  "params": [
+    {
+      "name": "format",
+      "type": "STRING",
+      "label": "导出格式",
+      "required": true,
+      "default": "jianying",
+      "widget": "select",
+      "options": [
+        "jianying",
+        "prxml",
+        "edl",
+        "fcpxml",
+        "all"
+      ],
+      "description": ""
+    },
+    {
+      "name": "aspect",
+      "type": "STRING",
+      "label": "画幅",
+      "required": true,
+      "default": "16:9",
+      "widget": "select",
+      "options": [
+        "16:9",
+        "9:16",
+        "1:1"
+      ],
+      "description": ""
+    },
+    {
+      "name": "resolution",
+      "type": "STRING",
+      "label": "分辨率",
+      "required": true,
+      "default": "1080p",
+      "widget": "select",
+      "options": [
+        "1080p",
+        "720p",
+        "4k"
+      ],
+      "description": ""
+    },
+    {
+      "name": "draft_name",
+      "type": "STRING",
+      "label": "草稿名",
+      "required": true,
+      "default": "FrameWeave_导出",
+      "widget": "text",
+      "options": [],
+      "description": ""
+    },
+    {
+      "name": "transition",
+      "type": "STRING",
+      "label": "转场",
+      "required": true,
+      "default": "cut",
+      "widget": "select",
+      "options": [
+        "cut",
+        "fade",
+        "fadeblack",
+        "dissolve",
+        "slide",
+        "wipe",
+        "zoom"
+      ],
+      "description": ""
+    },
+    {
+      "name": "transition_duration",
+      "type": "FLOAT",
+      "label": "转场时长(秒)",
+      "required": true,
+      "default": 0.5,
+      "widget": "number",
+      "options": [],
+      "description": ""
+    },
+    {
+      "name": "output_dir",
+      "type": "STRING",
+      "label": "输出目录",
+      "required": true,
+      "default": "",
+      "widget": "text",
+      "options": [],
+      "description": "留空输出到资产目录"
+    }
+  ],
+  "permission": {},
+  "signature": {
+    "alg": "ed25519",
+    "key_id": "a8998646b062c170",
+    "value": "GE2qKcoMj+CUjenmtRnkru2jHRT4d/g0E82kfX67CSEdAZaCPR0RlUsCPOh326lGswc4EQYZ9z3a7knmnTcdAQ==",
+    "over": "manifest"
+  }
 }

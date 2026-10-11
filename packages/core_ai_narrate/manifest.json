@@ -1,10 +1,164 @@
 {
+  "schema_version": 2,
+  "engine_api": "1.0",
   "type_id": "core/ai_narrate",
   "title": "AI 文案生成",
   "category": "语义",
-  "description": "生成解说文案",
+  "description": "生成解说文案：上帝视角自动分析 / 用户文案扩写 / 配画面 / 风格仿写",
   "version": "1.0.0",
+  "kind": "python",
   "runtime": "python",
   "entrypoint": "node.py",
-  "class_name": "AINarrateNode"
+  "class_name": "AINarrateNode",
+  "inputs": [
+    {
+      "name": "video",
+      "type": "VIDEO",
+      "label": "视频",
+      "required": false,
+      "default": null,
+      "widget": "text",
+      "options": [],
+      "description": ""
+    },
+    {
+      "name": "segments",
+      "type": "SEGMENTS",
+      "label": "片段列表",
+      "required": false,
+      "default": null,
+      "widget": "text",
+      "options": [],
+      "description": ""
+    },
+    {
+      "name": "script",
+      "type": "SCRIPT",
+      "label": "文案草稿",
+      "required": false,
+      "default": null,
+      "widget": "text",
+      "options": [],
+      "description": ""
+    }
+  ],
+  "outputs": [
+    {
+      "name": "narration_script",
+      "type": "SCRIPT",
+      "label": "解说文案",
+      "required": true,
+      "default": null,
+      "widget": "text",
+      "options": [],
+      "description": ""
+    },
+    {
+      "name": "narration",
+      "type": "JSON",
+      "label": "结构化文案",
+      "required": true,
+      "default": null,
+      "widget": "text",
+      "options": [],
+      "description": ""
+    }
+  ],
+  "params": [
+    {
+      "name": "mode",
+      "type": "STRING",
+      "label": "模式",
+      "required": true,
+      "default": "上帝视角",
+      "widget": "select",
+      "options": [
+        "上帝视角",
+        "扩写",
+        "配画面",
+        "仿写"
+      ],
+      "description": ""
+    },
+    {
+      "name": "style",
+      "type": "STRING",
+      "label": "风格",
+      "required": true,
+      "default": "悬疑解说",
+      "widget": "select",
+      "options": [
+        "悬疑解说",
+        "搞笑解说",
+        "知识科普",
+        "情感讲述",
+        "客观平实"
+      ],
+      "description": ""
+    },
+    {
+      "name": "language",
+      "type": "STRING",
+      "label": "语言",
+      "required": true,
+      "default": "中文",
+      "widget": "select",
+      "options": [
+        "中文",
+        "英语",
+        "日语",
+        "韩语",
+        "缅甸语",
+        "越南语"
+      ],
+      "description": ""
+    },
+    {
+      "name": "api_key",
+      "type": "STRING",
+      "label": "API Key",
+      "required": true,
+      "default": null,
+      "widget": "text",
+      "options": [],
+      "description": "用户自带 Key（本机加密存储）"
+    },
+    {
+      "name": "base_url",
+      "type": "STRING",
+      "label": "中转地址",
+      "required": true,
+      "default": "https://ameaaos.com/v1",
+      "widget": "text",
+      "options": [],
+      "description": ""
+    },
+    {
+      "name": "model",
+      "type": "STRING",
+      "label": "模型",
+      "required": true,
+      "default": "gpt-4o",
+      "widget": "text",
+      "options": [],
+      "description": ""
+    },
+    {
+      "name": "word_count",
+      "type": "INT",
+      "label": "目标字数",
+      "required": true,
+      "default": 800,
+      "widget": "number",
+      "options": [],
+      "description": ""
+    }
+  ],
+  "permission": {},
+  "signature": {
+    "alg": "ed25519",
+    "key_id": "a8998646b062c170",
+    "value": "PZrHNTA2ntL11qR5VHZgtNwyzjzO01ccpxqsSCmJtHrHpjOITlcJxuw2vhJeyhD4s8kAq+Yr0a6btBmnM9qDDg==",
+    "over": "manifest"
+  }
 }

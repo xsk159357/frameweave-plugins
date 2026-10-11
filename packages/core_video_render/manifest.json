@@ -1,10 +1,152 @@
 {
+  "schema_version": 2,
+  "engine_api": "1.0",
   "type_id": "core/video_render",
   "title": "MP4 渲染",
   "category": "输出",
-  "description": "自动混剪出片",
+  "description": "自动混剪出片：片段拼接 + 配音混入 + 字幕烧录（花字样式）",
   "version": "1.0.0",
+  "kind": "python",
   "runtime": "python",
   "entrypoint": "node.py",
-  "class_name": "VideoRenderNode"
+  "class_name": "VideoRenderNode",
+  "inputs": [
+    {
+      "name": "video",
+      "type": "VIDEO",
+      "label": "源视频",
+      "required": true,
+      "default": null,
+      "widget": "text",
+      "options": [],
+      "description": ""
+    },
+    {
+      "name": "segments",
+      "type": "SEGMENTS",
+      "label": "片段列表",
+      "required": true,
+      "default": null,
+      "widget": "text",
+      "options": [],
+      "description": ""
+    },
+    {
+      "name": "audio",
+      "type": "AUDIO",
+      "label": "配音音频",
+      "required": false,
+      "default": null,
+      "widget": "text",
+      "options": [],
+      "description": ""
+    },
+    {
+      "name": "styled_subtitle",
+      "type": "SUBTITLE",
+      "label": "样式字幕",
+      "required": false,
+      "default": null,
+      "widget": "text",
+      "options": [],
+      "description": ""
+    }
+  ],
+  "outputs": [
+    {
+      "name": "rendered",
+      "type": "VIDEO",
+      "label": "成品 MP4",
+      "required": true,
+      "default": null,
+      "widget": "text",
+      "options": [],
+      "description": ""
+    }
+  ],
+  "params": [
+    {
+      "name": "aspect",
+      "type": "STRING",
+      "label": "画幅",
+      "required": true,
+      "default": "16:9",
+      "widget": "select",
+      "options": [
+        "16:9",
+        "9:16",
+        "1:1"
+      ],
+      "description": ""
+    },
+    {
+      "name": "resolution",
+      "type": "STRING",
+      "label": "分辨率",
+      "required": true,
+      "default": "1080p",
+      "widget": "select",
+      "options": [
+        "1080p",
+        "720p",
+        "4k"
+      ],
+      "description": ""
+    },
+    {
+      "name": "fps",
+      "type": "INT",
+      "label": "帧率",
+      "required": true,
+      "default": 30,
+      "widget": "number",
+      "options": [],
+      "description": ""
+    },
+    {
+      "name": "burn_subtitle",
+      "type": "BOOL",
+      "label": "烧录字幕",
+      "required": true,
+      "default": true,
+      "widget": "text",
+      "options": [],
+      "description": ""
+    },
+    {
+      "name": "transition",
+      "type": "STRING",
+      "label": "转场",
+      "required": true,
+      "default": "cut",
+      "widget": "select",
+      "options": [
+        "cut",
+        "fade",
+        "fadeblack",
+        "dissolve",
+        "slide",
+        "wipe",
+        "zoom"
+      ],
+      "description": ""
+    },
+    {
+      "name": "output_name",
+      "type": "STRING",
+      "label": "输出文件名",
+      "required": true,
+      "default": "chengpian",
+      "widget": "text",
+      "options": [],
+      "description": ""
+    }
+  ],
+  "permission": {},
+  "signature": {
+    "alg": "ed25519",
+    "key_id": "a8998646b062c170",
+    "value": "u3GgldugvZnaSf4LhetRYl3VrzS3Awe9Q8feO7C34OaYd8lHtd8d4sxb1E9G92UBNDc6kW3M41coa6bAJIp6Cg==",
+    "over": "manifest"
+  }
 }

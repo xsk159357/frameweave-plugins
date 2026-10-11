@@ -1,10 +1,135 @@
 {
+  "schema_version": 2,
+  "engine_api": "1.0",
   "type_id": "core/translate",
   "title": "多语种翻译",
-  "category": "编辑",
-  "description": "中文文案/字幕多语种翻译",
+  "category": "剪辑",
+  "description": "中文文案/字幕翻译为多语种（含小语种），输出可接配音/字幕",
   "version": "1.0.0",
+  "kind": "python",
   "runtime": "python",
   "entrypoint": "node.py",
-  "class_name": "TranslateNode"
+  "class_name": "TranslateNode",
+  "inputs": [
+    {
+      "name": "script",
+      "type": "SCRIPT",
+      "label": "文案草稿",
+      "required": false,
+      "default": null,
+      "widget": "text",
+      "options": [],
+      "description": ""
+    },
+    {
+      "name": "subtitle",
+      "type": "SUBTITLE",
+      "label": "字幕",
+      "required": false,
+      "default": null,
+      "widget": "text",
+      "options": [],
+      "description": ""
+    }
+  ],
+  "outputs": [
+    {
+      "name": "translated_script",
+      "type": "SCRIPT",
+      "label": "翻译文案",
+      "required": true,
+      "default": null,
+      "widget": "text",
+      "options": [],
+      "description": ""
+    },
+    {
+      "name": "translated_subtitle",
+      "type": "SUBTITLE",
+      "label": "翻译字幕",
+      "required": true,
+      "default": null,
+      "widget": "text",
+      "options": [],
+      "description": ""
+    }
+  ],
+  "params": [
+    {
+      "name": "target",
+      "type": "STRING",
+      "label": "目标语言",
+      "required": true,
+      "default": "英文",
+      "widget": "select",
+      "options": [
+        "英文",
+        "日文",
+        "韩文",
+        "西班牙语",
+        "阿拉伯语",
+        "法语",
+        "德语",
+        "俄语",
+        "葡萄牙语",
+        "意大利语",
+        "越南语",
+        "泰语",
+        "印尼语",
+        "马来语",
+        "缅甸语",
+        "印地语",
+        "土耳其语",
+        "乌克兰语"
+      ],
+      "description": ""
+    },
+    {
+      "name": "keep_style",
+      "type": "BOOL",
+      "label": "保留解说风格",
+      "required": true,
+      "default": true,
+      "widget": "toggle",
+      "options": [],
+      "description": ""
+    },
+    {
+      "name": "api_key",
+      "type": "STRING",
+      "label": "API Key",
+      "required": true,
+      "default": null,
+      "widget": "text",
+      "options": [],
+      "description": "用户自带 Key（本机保险箱加密）"
+    },
+    {
+      "name": "base_url",
+      "type": "STRING",
+      "label": "中转地址",
+      "required": true,
+      "default": "https://ameaaos.com/v1",
+      "widget": "text",
+      "options": [],
+      "description": ""
+    },
+    {
+      "name": "model",
+      "type": "STRING",
+      "label": "模型",
+      "required": true,
+      "default": "gpt-4o",
+      "widget": "text",
+      "options": [],
+      "description": ""
+    }
+  ],
+  "permission": {},
+  "signature": {
+    "alg": "ed25519",
+    "key_id": "a8998646b062c170",
+    "value": "K9AnC7NTVgp4h4ArwfAQknKtRwesGt5ZvdDRcMPYyNW2dTWGX9vb6cYKwwIVoQUhu5aZ8Q7h3nEpLSCR4wzwDA==",
+    "over": "manifest"
+  }
 }

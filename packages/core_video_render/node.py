@@ -100,7 +100,7 @@ class VideoRenderNode(NodeBase):
                 PortSpec(name="styled_subtitle", type=PortType.SUBTITLE, label="样式字幕", required=False),
             ],
             outputs=[
-                PortSpec(name="video", type=PortType.VIDEO, label="成品 MP4"),
+                PortSpec(name="rendered", type=PortType.VIDEO, label="成品 MP4"),
             ],
             params=[
                 PortSpec(name="aspect", type=PortType.STRING, label="画幅", default="16:9",
@@ -223,4 +223,4 @@ class VideoRenderNode(NodeBase):
         asset = store.save_asset(Asset(id="", kind=PortType.VIDEO.value, path=out_mp4,
                                        meta={"width": w, "height": h, "aspect": aspect,
                                              "resolution": res, "segments": n}))
-        return {"video": asset}
+        return {"rendered": asset}

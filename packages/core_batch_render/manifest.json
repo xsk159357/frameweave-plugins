@@ -1,10 +1,183 @@
 {
+  "schema_version": 2,
+  "engine_api": "1.0",
   "type_id": "core/batch_render",
   "title": "批量出片",
   "category": "控制",
-  "description": "矩阵批量出片",
+  "description": "矩阵批量出片：一个视频 x 多组文案，自动配音+字幕+渲染",
   "version": "1.0.0",
+  "kind": "python",
   "runtime": "python",
   "entrypoint": "node.py",
-  "class_name": "BatchRenderNode"
+  "class_name": "BatchRenderNode",
+  "inputs": [
+    {
+      "name": "video",
+      "type": "VIDEO",
+      "label": "源视频",
+      "required": true,
+      "default": null,
+      "widget": "text",
+      "options": [],
+      "description": ""
+    },
+    {
+      "name": "segments",
+      "type": "SEGMENTS",
+      "label": "片段列表",
+      "required": true,
+      "default": null,
+      "widget": "text",
+      "options": [],
+      "description": ""
+    },
+    {
+      "name": "items",
+      "type": "JSON",
+      "label": "矩阵数据",
+      "required": false,
+      "default": null,
+      "widget": "text",
+      "options": [],
+      "description": "[{name, script}]"
+    }
+  ],
+  "outputs": [
+    {
+      "name": "results",
+      "type": "JSON",
+      "label": "批量结果",
+      "required": true,
+      "default": null,
+      "widget": "text",
+      "options": [],
+      "description": ""
+    },
+    {
+      "name": "first_video",
+      "type": "VIDEO",
+      "label": "第一批成品",
+      "required": true,
+      "default": null,
+      "widget": "text",
+      "options": [],
+      "description": ""
+    }
+  ],
+  "params": [
+    {
+      "name": "manual_items",
+      "type": "STRING",
+      "label": "矩阵条目",
+      "required": true,
+      "default": "",
+      "widget": "text",
+      "options": [],
+      "description": "每行一个：名称|文案；可用 {{变量}} 模板，如：第{{n}}集|欢迎观看{{title}}"
+    },
+    {
+      "name": "variables",
+      "type": "STRING",
+      "label": "模板变量",
+      "required": true,
+      "default": "",
+      "widget": "text",
+      "options": [],
+      "description": "每行一个：key=value；文案/名称/文件名中的 {{key}} 会被替换"
+    },
+    {
+      "name": "voice",
+      "type": "STRING",
+      "label": "音色",
+      "required": true,
+      "default": "zh-CN-YunxiNeural",
+      "widget": "select",
+      "options": [
+        "zh-CN-XiaoxiaoNeural",
+        "zh-CN-YunxiNeural",
+        "zh-CN-YunjianNeural",
+        "zh-CN-XiaoyiNeural"
+      ],
+      "description": ""
+    },
+    {
+      "name": "aspect",
+      "type": "STRING",
+      "label": "画幅",
+      "required": true,
+      "default": "16:9",
+      "widget": "select",
+      "options": [
+        "16:9",
+        "9:16",
+        "1:1"
+      ],
+      "description": ""
+    },
+    {
+      "name": "resolution",
+      "type": "STRING",
+      "label": "分辨率",
+      "required": true,
+      "default": "1080p",
+      "widget": "select",
+      "options": [
+        "1080p",
+        "720p",
+        "4k"
+      ],
+      "description": ""
+    },
+    {
+      "name": "fps",
+      "type": "INT",
+      "label": "帧率",
+      "required": true,
+      "default": 30,
+      "widget": "number",
+      "options": [],
+      "description": ""
+    },
+    {
+      "name": "transition",
+      "type": "STRING",
+      "label": "转场",
+      "required": true,
+      "default": "cut",
+      "widget": "select",
+      "options": [
+        "cut",
+        "fade",
+        "fadeblack"
+      ],
+      "description": ""
+    },
+    {
+      "name": "output_prefix",
+      "type": "STRING",
+      "label": "输出前缀",
+      "required": true,
+      "default": "batch_",
+      "widget": "text",
+      "options": [],
+      "description": ""
+    },
+    {
+      "name": "max_concurrent",
+      "type": "INT",
+      "label": "最大并发数",
+      "required": true,
+      "default": 2,
+      "widget": "number",
+      "options": [],
+      "description": "0=不限制"
+    }
+  ],
+  "permission": {},
+  "signature": {
+    "alg": "ed25519",
+    "key_id": "a8998646b062c170",
+    "value": "VEZcID3SZo/RS+2WvnUVtNkiUK62KquQmX9U7+s2DWKHq0/Xj1+7pF1rHtZ+upZw3x4Sqj02HzYPe8CHiQQ1Dw==",
+    "over": "manifest"
+  }
 }

@@ -30,15 +30,15 @@ class TranslateNode(NodeBase):
         return NodeSpec(
             type_id="core/translate",
             title="多语种翻译",
-            category="编辑",
+            category="剪辑",
             description="中文文案/字幕翻译为多语种（含小语种），输出可接配音/字幕",
             inputs=[
                 PortSpec(name="script", type=PortType.SCRIPT, label="文案草稿", required=False),
                 PortSpec(name="subtitle", type=PortType.SUBTITLE, label="字幕", required=False),
             ],
             outputs=[
-                PortSpec(name="script", type=PortType.SCRIPT, label="翻译文案"),
-                PortSpec(name="subtitle", type=PortType.SUBTITLE, label="翻译字幕"),
+                PortSpec(name="translated_script", type=PortType.SCRIPT, label="翻译文案"),
+                PortSpec(name="translated_subtitle", type=PortType.SUBTITLE, label="翻译字幕"),
             ],
             params=[
                 PortSpec(name="target", type=PortType.STRING, label="目标语言", default="英文",
@@ -135,7 +135,7 @@ class TranslateNode(NodeBase):
                     Asset(id="", kind=PortType.SUBTITLE.value, meta={"lang": target_label}),
                     payload=subs)
 
-        return {"script": out_script, "subtitle": out_sub}
+        return {"translated_script": out_script, "translated_subtitle": out_sub}
 
 
 def _read_text(store, asset) -> str:

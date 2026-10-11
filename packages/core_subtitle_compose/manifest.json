@@ -1,10 +1,148 @@
 {
+  "schema_version": 2,
+  "engine_api": "1.0",
   "type_id": "core/subtitle_compose",
   "title": "字幕装配",
   "category": "输出",
-  "description": "字幕高级样式",
+  "description": "字幕高级样式：花字/特效/逐句卡点动画",
   "version": "1.0.0",
+  "kind": "python",
   "runtime": "python",
   "entrypoint": "node.py",
-  "class_name": "SubtitleComposeNode"
+  "class_name": "SubtitleComposeNode",
+  "inputs": [
+    {
+      "name": "subtitle",
+      "type": "SUBTITLE",
+      "label": "字幕",
+      "required": true,
+      "default": null,
+      "widget": "text",
+      "options": [],
+      "description": ""
+    },
+    {
+      "name": "script",
+      "type": "SCRIPT",
+      "label": "文案(可选)",
+      "required": false,
+      "default": null,
+      "widget": "text",
+      "options": [],
+      "description": ""
+    }
+  ],
+  "outputs": [
+    {
+      "name": "styled_subtitle",
+      "type": "SUBTITLE",
+      "label": "样式化字幕",
+      "required": true,
+      "default": null,
+      "widget": "text",
+      "options": [],
+      "description": ""
+    }
+  ],
+  "params": [
+    {
+      "name": "manual_text",
+      "type": "STRING",
+      "label": "手动字幕",
+      "required": true,
+      "default": "",
+      "widget": "text",
+      "options": [],
+      "description": "每行一条，可用 | 指定起始秒，如: 0.2|第一句字幕"
+    },
+    {
+      "name": "preset",
+      "type": "STRING",
+      "label": "样式预设",
+      "required": true,
+      "default": "默认",
+      "widget": "select",
+      "options": [
+        "默认",
+        "悬疑惊悚",
+        "搞笑鬼畜",
+        "知识科普",
+        "情感讲述"
+      ],
+      "description": ""
+    },
+    {
+      "name": "font",
+      "type": "STRING",
+      "label": "字体",
+      "required": true,
+      "default": "微软雅黑",
+      "widget": "text",
+      "options": [],
+      "description": ""
+    },
+    {
+      "name": "size",
+      "type": "INT",
+      "label": "字号",
+      "required": true,
+      "default": 48,
+      "widget": "number",
+      "options": [],
+      "description": ""
+    },
+    {
+      "name": "color",
+      "type": "STRING",
+      "label": "字色",
+      "required": true,
+      "default": "#FFFFFF",
+      "widget": "text",
+      "options": [],
+      "description": ""
+    },
+    {
+      "name": "stroke",
+      "type": "STRING",
+      "label": "描边色",
+      "required": true,
+      "default": "#000000",
+      "widget": "text",
+      "options": [],
+      "description": ""
+    },
+    {
+      "name": "animation",
+      "type": "STRING",
+      "label": "动画",
+      "required": true,
+      "default": "none",
+      "widget": "select",
+      "options": [
+        "none",
+        "typewriter",
+        "bounce",
+        "fade",
+        "fadeup"
+      ],
+      "description": ""
+    },
+    {
+      "name": "karaoke",
+      "type": "BOOL",
+      "label": "逐字卡点",
+      "required": true,
+      "default": true,
+      "widget": "text",
+      "options": [],
+      "description": ""
+    }
+  ],
+  "permission": {},
+  "signature": {
+    "alg": "ed25519",
+    "key_id": "a8998646b062c170",
+    "value": "OksoYU8E2SqAWQvGv0qQkFLH0AJtgbVXLfeDH6a/4KnBvYel1c/KzEwK7tbmU5kI5OyZ493xAoBrkdPVno0aDg==",
+    "over": "manifest"
+  }
 }

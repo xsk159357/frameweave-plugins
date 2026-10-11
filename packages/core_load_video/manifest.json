@@ -1,10 +1,55 @@
 {
+  "schema_version": 2,
+  "engine_api": "1.0",
   "type_id": "core/load_video",
   "title": "导入视频",
   "category": "输入",
   "description": "导入本地视频文件并解析元数据",
   "version": "1.0.0",
+  "kind": "python",
   "runtime": "python",
   "entrypoint": "node.py",
-  "class_name": "LoadVideoNode"
+  "class_name": "LoadVideoNode",
+  "inputs": [],
+  "outputs": [
+    {
+      "name": "video",
+      "type": "VIDEO",
+      "label": "视频",
+      "required": true,
+      "default": null,
+      "widget": "text",
+      "options": [],
+      "description": "导入的视频资产"
+    },
+    {
+      "name": "meta",
+      "type": "JSON",
+      "label": "元数据",
+      "required": false,
+      "default": null,
+      "widget": "text",
+      "options": [],
+      "description": "ffprobe 解析的媒体元数据"
+    }
+  ],
+  "params": [
+    {
+      "name": "path",
+      "type": "STRING",
+      "label": "视频路径",
+      "required": true,
+      "default": null,
+      "widget": "file",
+      "options": [],
+      "description": "本地视频文件路径"
+    }
+  ],
+  "permission": {},
+  "signature": {
+    "alg": "ed25519",
+    "key_id": "a8998646b062c170",
+    "value": "SiOP2wsjI13civN86HnDVrHVkWXs5zBh+REgrlB6qCyzYiD6uxOj1cjTvTZVLaVOkL4J6gE0oQVUpwpjXMDeDQ==",
+    "over": "manifest"
+  }
 }

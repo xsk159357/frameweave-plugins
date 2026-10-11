@@ -66,7 +66,7 @@ class AINarrateNode(NodeBase):
                 PortSpec(name="script", type=PortType.SCRIPT, label="文案草稿", required=False),
             ],
             outputs=[
-                PortSpec(name="script", type=PortType.SCRIPT, label="解说文案"),
+                PortSpec(name="narration_script", type=PortType.SCRIPT, label="解说文案"),
                 PortSpec(name="narration", type=PortType.JSON, label="结构化文案"),
             ],
             params=[
@@ -170,4 +170,4 @@ class AINarrateNode(NodeBase):
         narration_payload.update(narration)
         n_asset = store.save_asset(
             Asset(id="", kind=PortType.JSON.value, meta={"mode": mode}), payload=narration_payload)
-        return {"script": asset, "narration": n_asset}
+        return {"narration_script": asset, "narration": n_asset}

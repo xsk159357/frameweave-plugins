@@ -41,7 +41,7 @@ class BatchRenderNode(NodeBase):
             ],
             outputs=[
                 PortSpec(name="results", type=PortType.JSON, label="批量结果"),
-                PortSpec(name="video", type=PortType.VIDEO, label="第一批成品"),
+                PortSpec(name="first_video", type=PortType.VIDEO, label="第一批成品"),
             ],
             params=[
                 PortSpec(name="manual_items", type=PortType.STRING, label="矩阵条目",
@@ -184,7 +184,7 @@ class BatchRenderNode(NodeBase):
             Asset(id="", kind=PortType.JSON.value,
                   meta={"count": len(clean), "ok": sum(1 for r in clean if r["ok"])}),
             payload={"items": clean})
-        return {"results": res_asset, "video": first_out}
+        return {"results": res_asset, "first_video": first_out}
 
     async def _process_item(self, ctx, store, tts_cls, render_cls, params,
                              video_asset, seg_asset, item, idx, voice, global_vars, first_holder):
@@ -217,11 +217,11 @@ class BatchRenderNode(NodeBase):
         out = await asyncio.to_thread(
             self._render_sync, render_cls, ctx, video_asset, seg_asset,
             tts_asset, sub_asset, params, out_name)
-        sz = os.path.getsize(out["video"].path) if os.path.exists(out["video"].path) else 0
+        sz = os.path.getsize(out["rendered"].path) if os.path.exists(out["rendered"].path) else 0
         return {"index": idx, "name": name, "ok": True,
-                "path": out["video"].path, "size": sz,
-                "video_id": out["video"].id,
-                "_video_asset": out["video"]}
+                "path": out["rendered"].path, "size": sz,
+                "video_id": out["rendered"].id,
+                "_video_asset": out["rendered"]}
 
     def _render_sync(self, render_cls, ctx, video_asset, seg_asset, tts_asset, sub_asset,
                      params, out_name):
