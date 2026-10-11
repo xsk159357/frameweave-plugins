@@ -202,6 +202,10 @@ class TTSNode(NodeBase):
                                "可用环境变量 INDEX_TTS_ROOT 指定")
         logf = open(os.path.join(proj if not getattr(sys, "frozen", False) else os.path.dirname(sys.executable), "data", "indextts_server.log"), "a", encoding="utf-8")
         env = dict(os.environ)
+        # V1 令牌：把主进程本地令牌传给子服务（仅单值，非环境全文）
+        _token = ctx.get("local_token")() if hasattr(ctx, "get") else os.environ.get("FRAMEWEAVE_LOCAL_TOKEN", "")
+        if _token:
+            env["FRAMEWEAVE_LOCAL_TOKEN"] = _token
         env["PYTHONUTF8"] = "1"
         env["PYTHONIOENCODING"] = "utf-8"
         # M10 修复：PYTHONPATH 不再写死本机路径，改为环境变量 FW_PATCH_DIR（未设置则不注入）
@@ -250,7 +254,11 @@ class TTSNode(NodeBase):
         }
         body = json.dumps(payload).encode("utf-8")
         t0 = time.time()
-        req = urllib.request.Request(base + "/synthesize", data=body, headers={"Content-Type": "application/json"})
+        headers = {"Content-Type": "application/json"}
+        _token = ctx.get("local_token")() if hasattr(ctx, "get") else os.environ.get("FRAMEWEAVE_LOCAL_TOKEN", "")
+        if _token:
+            headers["X-FW-Local-Token"] = _token     # V1 令牌鉴权
+        req = urllib.request.Request(base + "/synthesize", data=body, headers=headers)
         try:
             with urllib.request.urlopen(req, timeout=600) as r:
                 wav_data = r.read()
@@ -275,8 +283,14 @@ class TTSNode(NodeBase):
         import base64, time, urllib.request, urllib.error
         api_key = str(params.get("api_key", "") or "").strip()
         if api_key.startswith("@secret:"):
-            from app.secrets import read_secret
-            api_key = read_secret(api_key.split(":", 1)[1]) or ""
+            ref = api_key.split(":", 1)[1]
+            # P3 迁移：优先 ctx.resolve_secret；缺省回退主进程保险箱
+            resolver = ctx.get("resolve_secret") if hasattr(ctx, "get") else None
+            if resolver:
+                api_key = resolver(ref) or ""
+            else:
+                from app.secrets import read_secret
+                api_key = read_secret(ref) or ""
         if not api_key:
             raise RuntimeError("cloud 引擎需要 API Key（参数面板填写 或 @secret:名称 引用）")
         base_url = str(params.get("base_url", "https://ameaaos.com/v1")).strip() or "https://ameaaos.com/v1"

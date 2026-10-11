@@ -47,17 +47,20 @@ def find_ffmpeg() -> str:
 FFMPEG = find_ffmpeg()
 
 
-def _run(cmd: list):
+async def _run(cmd: list, ctx: Dict[str, Any] = None):
+    """执行外部命令（P3 迁移：优先 ctx.run_tracked 托管；缺省回退 subprocess.run）。"""
+    if ctx is not None and ctx.get("run_tracked"):
+        return await ctx["run_tracked"](cmd, timeout=900, text=True)
     import subprocess
     return subprocess.run(cmd, capture_output=True, timeout=900)
 
 
-def _probe_duration(video_path: str) -> float:
+async def _probe_duration(video_path: str, ctx: Dict[str, Any] = None) -> float:
     if not FFMPEG:
         return 0.0
     exe = find_ffprobe()
     try:
-        out = _run([exe, "-v", "quiet", "-show_entries", "format=duration", "-of", "json", video_path])
+        out = await _run([exe, "-v", "quiet", "-show_entries", "format=duration", "-of", "json", video_path], ctx)
         data = json.loads(out.stdout or "{}")
         return float(data.get("format", {}).get("duration", 0) or 0)
     except Exception:
@@ -73,7 +76,8 @@ def find_ffprobe() -> str:
     return "ffprobe"
 
 
-def _extract_frames(video_path: str, fps: float, workdir: str) -> List[str]:
+async def _extract_frames(video_path: str, fps: float, workdir: str,
+                          ctx: Dict[str, Any] = None) -> List[str]:
     """抽取 fps 帧率的 jpg 帧到 workdir，返回帧文件列表（按序）。"""
     out_dir = os.path.join(workdir, "frames")
     os.makedirs(out_dir, exist_ok=True)
@@ -81,9 +85,9 @@ def _extract_frames(video_path: str, fps: float, workdir: str) -> List[str]:
         try: os.remove(os.path.join(out_dir, f))
         except OSError: pass
     try:
-        _run([FFMPEG, "-v", "quiet", "-i", video_path, "-vf",
-              "fps={}".format(fps), os.path.join(out_dir, "frame_%05d.jpg")])
-    except (OSError, subprocess.TimeoutExpired):
+        await _run([FFMPEG, "-v", "quiet", "-i", video_path, "-vf",
+                    "fps={}".format(fps), os.path.join(out_dir, "frame_%05d.jpg")], ctx)
+    except (OSError, subprocess.TimeoutExpired, TimeoutError):
         return []
     frames = sorted(os.listdir(out_dir))
     return [os.path.join(out_dir, f) for f in frames]
@@ -168,10 +172,10 @@ class SceneDetectNode(NodeBase):
         threshold = float(params.get("threshold", 0.12) or 0.12)
         min_duration = float(params.get("min_duration", 0.6) or 0.6)
 
-        duration = video_asset.meta.get("duration") or _probe_duration(video_asset.path)
+        duration = video_asset.meta.get("duration") or await _probe_duration(video_asset.path, ctx)
         workdir = ctx["workdir"]
 
-        frames = _extract_frames(video_asset.path, sample_fps, workdir)
+        frames = await _extract_frames(video_asset.path, sample_fps, workdir, ctx)
         if not frames:
             # 无 ffmpeg 时生成伪片段（整段为一个片段）
             segments = [{
