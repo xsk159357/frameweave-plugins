@@ -1,0 +1,21 @@
+{
+  "schema_version": 2,
+  "engine_api": "1.0",
+  "type_id": "user/jsm_batch_map",
+  "title": "批次映射",
+  "category": "控制",
+  "description": "将列表或批次信封标准化，并按模板映射每个条目。",
+  "version": "1.0.0",
+  "kind": "python",
+  "runtime": "python",
+  "entrypoint": "node.py",
+  "class_name": "BatchMapNode",
+  "inputs": [{"name":"items","type":"JSON","label":"条目列表","required":true,"description":"列表或标准 batch envelope"}],
+  "outputs": [{"name":"batch","type":"JSON","label":"批次信封"},{"name":"report","type":"JSON","label":"批次报告"}],
+  "params": [
+    {"name":"mapping","type":"STRING","label":"映射模板","default":"","widget":"text","description":"JSON 对象；字符串值支持 {{field}}"},
+    {"name":"concurrency","type":"INT","label":"并发数","default":2,"widget":"number"},
+    {"name":"checkpoint","type":"BOOL","label":"保存断点","default":true,"widget":"toggle"}
+  ],
+  "permission": {"fs":{"write":["batch_checkpoints/**"]}}
+}

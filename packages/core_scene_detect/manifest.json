@@ -4,8 +4,8 @@
   "type_id": "core/scene_detect",
   "title": "场景检测",
   "category": "分析",
-  "description": "检测镜头/场景切换，输出片段列表（时间戳/时长/缩略图）",
-  "version": "1.0.0",
+  "description": "镜头/场景切分：ffmpeg 帧差（默认）+ 可选 TransNetV2；输出候选与后处理两级片段",
+  "version": "2.0.0",
   "kind": "python",
   "runtime": "python",
   "entrypoint": "node.py",
@@ -19,32 +19,67 @@
       "default": null,
       "widget": "text",
       "options": [],
-      "description": ""
+      "description": "输入视频资产"
     }
   ],
   "outputs": [
     {
-      "name": "segments",
+      "name": "scenes",
       "type": "SEGMENTS",
-      "label": "片段列表",
+      "label": "场景片段",
       "required": true,
       "default": null,
       "widget": "text",
       "options": [],
-      "description": ""
+      "description": "后处理（合并短/拆分长）后的场景列表"
+    },
+    {
+      "name": "candidates",
+      "type": "SEGMENTS",
+      "label": "候选切点",
+      "required": false,
+      "default": null,
+      "widget": "text",
+      "options": [],
+      "description": "原始切点列表（未做后处理）"
     },
     {
       "name": "count",
       "type": "INT",
-      "label": "片段数",
-      "required": true,
+      "label": "场景数",
+      "required": false,
       "default": null,
       "widget": "text",
       "options": [],
-      "description": ""
+      "description": "后处理后的场景数量"
+    },
+    {
+      "name": "report",
+      "type": "JSON",
+      "label": "检测报告",
+      "required": false,
+      "default": null,
+      "widget": "text",
+      "options": [],
+      "description": "策略使用/降级链/合并拆分统计报告"
     }
   ],
   "params": [
+    {
+      "name": "strategy",
+      "type": "STRING",
+      "label": "检测策略",
+      "required": true,
+      "default": "auto",
+      "widget": "select",
+      "options": [
+        "auto",
+        "framediff",
+        "transnetv2",
+        "fixed_interval"
+      ],
+      "description": "auto=TransNetV2 可用则用，否则帧差，最后固定间隔"
+    },
     {
       "name": "sample_fps",
       "type": "FLOAT",
@@ -53,27 +88,81 @@
       "default": 1.0,
       "widget": "number",
       "options": [],
-      "description": ""
+      "description": "帧差策略的抽帧频率（帧/秒）"
+    },
+    {
+      "name": "diff_threshold",
+      "type": "FLOAT",
+      "label": "帧差阈值",
+      "required": true,
+      "default": 0.1,
+      "widget": "number",
+      "options": [],
+      "description": "相邻帧感知差超过该值判定为切点（0-1）"
     },
     {
       "name": "threshold",
       "type": "FLOAT",
-      "label": "切换阈值",
+      "label": "模型阈值(TransNet)",
       "required": true,
-      "default": 0.12,
+      "default": 0.5,
       "widget": "number",
       "options": [],
-      "description": ""
+      "description": "TransNetV2 预测概率阈值"
     },
     {
       "name": "min_duration",
       "type": "FLOAT",
-      "label": "最小片段时长(秒)",
+      "label": "最小片段(秒)",
       "required": true,
-      "default": 0.6,
+      "default": 1.0,
       "widget": "number",
       "options": [],
-      "description": ""
+      "description": "短于此的场景将被合并"
+    },
+    {
+      "name": "max_duration",
+      "type": "FLOAT",
+      "label": "最大片段(秒)",
+      "required": true,
+      "default": 30.0,
+      "widget": "number",
+      "options": [],
+      "description": "长于此的场景将被均匀拆分"
+    },
+    {
+      "name": "merge_policy",
+      "type": "STRING",
+      "label": "短片段合并",
+      "required": true,
+      "default": "previous",
+      "widget": "select",
+      "options": [
+        "previous",
+        "next",
+        "drop"
+      ],
+      "description": "短场景并入前一/后一场景，或丢弃"
+    },
+    {
+      "name": "fast_mode",
+      "type": "BOOL",
+      "label": "快速模式(15fps)",
+      "required": true,
+      "default": false,
+      "widget": "toggle",
+      "options": [],
+      "description": "TransNet 抽帧降到 15fps 提速"
+    },
+    {
+      "name": "transnet_model_path",
+      "type": "STRING",
+      "label": "TransNet 模型目录",
+      "required": false,
+      "default": "",
+      "widget": "text",
+      "options": [],
+      "description": "含 transnetv2_pytorch.py 与 *.pth 的目录；留空自动探测"
     }
   ],
   "permission": {
@@ -81,14 +170,16 @@
       "enabled": true,
       "argv_allowlist": [
         "ffmpeg",
-        "ffprobe"
+        "ffmpeg.exe",
+        "ffprobe",
+        "ffprobe.exe"
       ]
     }
   },
   "signature": {
     "alg": "ed25519",
     "key_id": "a8998646b062c170",
-    "value": "97lxCt6HPpoO4CExAc9JiEGOpMfvGG9JjSgVMhJtOz75+Nz4H5Z9c2zR2lrnLKr0zjCSuQvGCzF2fyvYXL9ZAQ==",
+    "value": "J9SM8YXKz9re9MRBhYLF9GAoFXkcX7fIAr1ahAnzM+EiOJZXruND+jsBMiGcMGTXy2sNQV5yltLv9bGHKu/1CA==",
     "over": "manifest"
   }
 }

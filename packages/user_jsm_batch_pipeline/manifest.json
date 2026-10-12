@@ -1,0 +1,644 @@
+{
+  "schema_version": 2,
+  "engine_api": "1.0",
+  "type_id": "user/jsm_batch_pipeline",
+  "title": "多视频批量编排",
+  "category": "控制",
+  "description": "对一批视频逐条执行完整出片流水线（分析→文案→匹配→字幕→配音→渲染）；并发、断点续跑、逐条隔离、首项成品输出",
+  "version": "1.0.0",
+  "kind": "python",
+  "runtime": "python",
+  "entrypoint": "node.py",
+  "class_name": "BatchPipelineNode",
+  "inputs": [
+    {
+      "name": "items",
+      "type": "JSON",
+      "label": "批次条目",
+      "required": true,
+      "default": null,
+      "widget": "text",
+      "options": [],
+      "description": "标准批次信封；item.input 含 video_id 或 path"
+    },
+    {
+      "name": "audio_in",
+      "type": "AUDIO",
+      "label": "人工配音(manual 用)",
+      "required": false,
+      "default": null,
+      "widget": "text",
+      "options": [],
+      "description": "tts_engine=manual 时的直通音频"
+    },
+    {
+      "name": "bgm",
+      "type": "AUDIO",
+      "label": "背景音乐",
+      "required": false,
+      "default": null,
+      "widget": "text",
+      "options": [],
+      "description": "可选；混音时与解说/原声混合"
+    }
+  ],
+  "outputs": [
+    {
+      "name": "results",
+      "type": "JSON",
+      "label": "批次结果",
+      "required": true,
+      "default": null,
+      "widget": "text",
+      "options": [],
+      "description": "批次信封（含每项成品/中间资产 id 与状态）"
+    },
+    {
+      "name": "report",
+      "type": "JSON",
+      "label": "编排报告",
+      "required": true,
+      "default": null,
+      "widget": "text",
+      "options": [],
+      "description": "batchlib 汇总 + 全量条目明细"
+    },
+    {
+      "name": "first_video",
+      "type": "VIDEO",
+      "label": "首条成品",
+      "required": false,
+      "default": null,
+      "widget": "text",
+      "options": [],
+      "description": "首条成功条目的成品视频"
+    }
+  ],
+  "params": [
+    {
+      "name": "scene_strategy",
+      "type": "STRING",
+      "label": "场景策略",
+      "required": true,
+      "default": "auto",
+      "widget": "select",
+      "options": [
+        "auto",
+        "framediff",
+        "transnetv2",
+        "fixed_interval"
+      ],
+      "description": "auto=优先 TransNetV2，不可用降级帧差"
+    },
+    {
+      "name": "scene_sample_fps",
+      "type": "FLOAT",
+      "label": "场景抽样帧率",
+      "required": true,
+      "default": 1.0,
+      "widget": "number",
+      "options": [],
+      "description": ""
+    },
+    {
+      "name": "scene_diff_threshold",
+      "type": "FLOAT",
+      "label": "场景帧差阈值",
+      "required": true,
+      "default": 0.1,
+      "widget": "number",
+      "options": [],
+      "description": ""
+    },
+    {
+      "name": "scene_min_duration",
+      "type": "FLOAT",
+      "label": "最小片段(秒)",
+      "required": true,
+      "default": 1.0,
+      "widget": "number",
+      "options": [],
+      "description": ""
+    },
+    {
+      "name": "scene_max_duration",
+      "type": "FLOAT",
+      "label": "最大片段(秒)",
+      "required": true,
+      "default": 30.0,
+      "widget": "number",
+      "options": [],
+      "description": ""
+    },
+    {
+      "name": "chunk_enabled",
+      "type": "BOOL",
+      "label": "智能分块",
+      "required": true,
+      "default": false,
+      "widget": "toggle",
+      "options": [],
+      "description": "开启后对长视频做目标窗分块"
+    },
+    {
+      "name": "chunk_target_duration",
+      "type": "FLOAT",
+      "label": "分块目标窗(秒)",
+      "required": true,
+      "default": 180.0,
+      "widget": "number",
+      "options": [],
+      "description": ""
+    },
+    {
+      "name": "chunk_min_duration",
+      "type": "FLOAT",
+      "label": "分块最小窗(秒)",
+      "required": true,
+      "default": 120.0,
+      "widget": "number",
+      "options": [],
+      "description": ""
+    },
+    {
+      "name": "chunk_max_duration",
+      "type": "FLOAT",
+      "label": "分块最大窗(秒)",
+      "required": true,
+      "default": 240.0,
+      "widget": "number",
+      "options": [],
+      "description": ""
+    },
+    {
+      "name": "asr_mode",
+      "type": "STRING",
+      "label": "ASR 字幕",
+      "required": true,
+      "default": "off",
+      "widget": "select",
+      "options": [
+        "off",
+        "auto",
+        "local",
+        "remote"
+      ],
+      "description": "off=不转字幕（从文案段落生成字幕）；auto=本地优先"
+    },
+    {
+      "name": "asr_model",
+      "type": "STRING",
+      "label": "ASR 本地模型",
+      "required": true,
+      "default": "small",
+      "widget": "select",
+      "options": [
+        "tiny",
+        "base",
+        "small",
+        "medium",
+        "large-v3"
+      ],
+      "description": ""
+    },
+    {
+      "name": "asr_language",
+      "type": "STRING",
+      "label": "ASR 语言",
+      "required": true,
+      "default": "zh",
+      "widget": "select",
+      "options": [
+        "zh",
+        "en",
+        "ja",
+        "ko",
+        "auto"
+      ],
+      "description": ""
+    },
+    {
+      "name": "asr_api_key",
+      "type": "STRING",
+      "label": "ASR API Key",
+      "required": false,
+      "default": "",
+      "widget": "password",
+      "options": [],
+      "description": "远程 ASR 用；支持 @secret:名称"
+    },
+    {
+      "name": "asr_base_url",
+      "type": "STRING",
+      "label": "ASR 中转地址",
+      "required": false,
+      "default": "https://api.openai.com/v1",
+      "widget": "text",
+      "options": [],
+      "description": ""
+    },
+    {
+      "name": "narrate_mode",
+      "type": "STRING",
+      "label": "文案模式",
+      "required": true,
+      "default": "上帝视角",
+      "widget": "select",
+      "options": [
+        "上帝视角",
+        "扩写",
+        "配画面",
+        "仿写"
+      ],
+      "description": ""
+    },
+    {
+      "name": "narrate_style",
+      "type": "STRING",
+      "label": "文案风格",
+      "required": true,
+      "default": "客观平实",
+      "widget": "select",
+      "options": [
+        "悬疑解说",
+        "搞笑解说",
+        "知识科普",
+        "情感讲述",
+        "客观平实",
+        "自定义"
+      ],
+      "description": ""
+    },
+    {
+      "name": "narrate_language",
+      "type": "STRING",
+      "label": "文案语言",
+      "required": true,
+      "default": "中文",
+      "widget": "select",
+      "options": [
+        "中文",
+        "英语",
+        "日语",
+        "韩语",
+        "泰语",
+        "越南语",
+        "自动"
+      ],
+      "description": ""
+    },
+    {
+      "name": "provider",
+      "type": "STRING",
+      "label": "LLM Provider",
+      "required": true,
+      "default": "auto",
+      "widget": "select",
+      "options": [
+        "auto",
+        "openai",
+        "gemini"
+      ],
+      "description": ""
+    },
+    {
+      "name": "api_key",
+      "type": "STRING",
+      "label": "LLM API Key",
+      "required": false,
+      "default": "",
+      "widget": "password",
+      "options": [],
+      "description": "支持 @secret:名称 引用保险箱"
+    },
+    {
+      "name": "base_url",
+      "type": "STRING",
+      "label": "LLM API 地址",
+      "required": false,
+      "default": "",
+      "widget": "text",
+      "options": [],
+      "description": ""
+    },
+    {
+      "name": "model",
+      "type": "STRING",
+      "label": "LLM 模型",
+      "required": true,
+      "default": "gpt-4o",
+      "widget": "text",
+      "options": [],
+      "description": ""
+    },
+    {
+      "name": "temperature",
+      "type": "FLOAT",
+      "label": "温度",
+      "required": true,
+      "default": 0.7,
+      "widget": "number",
+      "options": [],
+      "description": ""
+    },
+    {
+      "name": "target_duration",
+      "type": "FLOAT",
+      "label": "目标时长(秒,0=自动)",
+      "required": true,
+      "default": 0.0,
+      "widget": "number",
+      "options": [],
+      "description": ""
+    },
+    {
+      "name": "target_chars",
+      "type": "INT",
+      "label": "目标字数(0=自动)",
+      "required": true,
+      "default": 0,
+      "widget": "number",
+      "options": [],
+      "description": ""
+    },
+    {
+      "name": "json_mode",
+      "type": "BOOL",
+      "label": "结构化输出",
+      "required": true,
+      "default": true,
+      "widget": "toggle",
+      "options": [],
+      "description": ""
+    },
+    {
+      "name": "local_match",
+      "type": "BOOL",
+      "label": "本地匹配兜底",
+      "required": true,
+      "default": true,
+      "widget": "toggle",
+      "options": [],
+      "description": ""
+    },
+    {
+      "name": "match_embedder",
+      "type": "STRING",
+      "label": "匹配嵌入器",
+      "required": true,
+      "default": "text",
+      "widget": "select",
+      "options": [
+        "auto",
+        "clip",
+        "text"
+      ],
+      "description": "text=本地 n-gram 嵌入，离线可用"
+    },
+    {
+      "name": "match_min_similarity",
+      "type": "FLOAT",
+      "label": "匹配最低相似度",
+      "required": true,
+      "default": 0.2,
+      "widget": "number",
+      "options": [],
+      "description": ""
+    },
+    {
+      "name": "subtitle_preset",
+      "type": "STRING",
+      "label": "字幕样式预设",
+      "required": true,
+      "default": "默认",
+      "widget": "select",
+      "options": [
+        "默认",
+        "悬疑惊悚",
+        "搞笑鬼畜",
+        "知识科普",
+        "情感讲述"
+      ],
+      "description": ""
+    },
+    {
+      "name": "tts_engine",
+      "type": "STRING",
+      "label": "TTS 引擎",
+      "required": true,
+      "default": "edge",
+      "widget": "select",
+      "options": [
+        "edge",
+        "manual",
+        "indextts",
+        "cloud"
+      ],
+      "description": "manual 需连接 audio_in 输入"
+    },
+    {
+      "name": "tts_voice",
+      "type": "STRING",
+      "label": "TTS 音色",
+      "required": true,
+      "default": "zh-CN-XiaoxiaoNeural",
+      "widget": "text",
+      "options": [],
+      "description": ""
+    },
+    {
+      "name": "tts_rate",
+      "type": "STRING",
+      "label": "TTS 语速",
+      "required": true,
+      "default": "+0%",
+      "widget": "text",
+      "options": [],
+      "description": ""
+    },
+    {
+      "name": "segments_source",
+      "type": "STRING",
+      "label": "渲染片段来源",
+      "required": true,
+      "default": "scenes",
+      "widget": "select",
+      "options": [
+        "scenes",
+        "timeline"
+      ],
+      "description": "scenes=整片；timeline=按匹配时间线剪出"
+    },
+    {
+      "name": "render_aspect",
+      "type": "STRING",
+      "label": "画幅",
+      "required": true,
+      "default": "original",
+      "widget": "select",
+      "options": [
+        "16:9",
+        "9:16",
+        "1:1",
+        "original"
+      ],
+      "description": ""
+    },
+    {
+      "name": "render_resolution",
+      "type": "STRING",
+      "label": "分辨率",
+      "required": true,
+      "default": "source",
+      "widget": "select",
+      "options": [
+        "1080p",
+        "720p",
+        "4k",
+        "source"
+      ],
+      "description": ""
+    },
+    {
+      "name": "render_fps",
+      "type": "INT",
+      "label": "帧率",
+      "required": true,
+      "default": 30,
+      "widget": "number",
+      "options": [],
+      "description": ""
+    },
+    {
+      "name": "render_transition",
+      "type": "STRING",
+      "label": "转场",
+      "required": true,
+      "default": "cut",
+      "widget": "select",
+      "options": [
+        "cut",
+        "fade",
+        "fadeblack",
+        "dissolve"
+      ],
+      "description": ""
+    },
+    {
+      "name": "render_transition_duration",
+      "type": "FLOAT",
+      "label": "转场时长(秒)",
+      "required": true,
+      "default": 0.5,
+      "widget": "number",
+      "options": [],
+      "description": ""
+    },
+    {
+      "name": "render_audio_mix",
+      "type": "STRING",
+      "label": "混音模式",
+      "required": true,
+      "default": "narration_only",
+      "widget": "select",
+      "options": [
+        "narration_only",
+        "original_only",
+        "mix"
+      ],
+      "description": ""
+    },
+    {
+      "name": "render_narration_volume",
+      "type": "FLOAT",
+      "label": "解说音量",
+      "required": true,
+      "default": 1.0,
+      "widget": "number",
+      "options": [],
+      "description": ""
+    },
+    {
+      "name": "render_original_volume",
+      "type": "FLOAT",
+      "label": "原声音量",
+      "required": true,
+      "default": 0.35,
+      "widget": "number",
+      "options": [],
+      "description": ""
+    },
+    {
+      "name": "render_burn_subtitle",
+      "type": "BOOL",
+      "label": "烧录字幕",
+      "required": true,
+      "default": true,
+      "widget": "toggle",
+      "options": [],
+      "description": ""
+    },
+    {
+      "name": "output_name",
+      "type": "STRING",
+      "label": "输出文件名前缀",
+      "required": true,
+      "default": "batch_out",
+      "widget": "text",
+      "options": [],
+      "description": "每条目自动追加序号"
+    },
+    {
+      "name": "concurrency",
+      "type": "INT",
+      "label": "并发数",
+      "required": true,
+      "default": 2,
+      "widget": "number",
+      "options": [],
+      "description": "条目并发上限"
+    },
+    {
+      "name": "resume",
+      "type": "BOOL",
+      "label": "断点续跑",
+      "required": true,
+      "default": true,
+      "widget": "toggle",
+      "options": [],
+      "description": "成功条目跨运行复用（checkpoint 落盘）"
+    },
+    {
+      "name": "retries",
+      "type": "INT",
+      "label": "可重试次数",
+      "required": true,
+      "default": 1,
+      "widget": "number",
+      "options": [],
+      "description": "网络/超时/429 类错误的指数退避重试次数"
+    }
+  ],
+  "permission": {
+    "subprocess": {
+      "enabled": true,
+      "argv_allowlist": [
+        "ffmpeg",
+        "ffmpeg.exe",
+        "ffprobe",
+        "ffprobe.exe"
+      ]
+    },
+    "secret": {
+      "refs": [
+        "*"
+      ]
+    }
+  },
+  "signature": {
+    "alg": "ed25519",
+    "key_id": "a8998646b062c170",
+    "value": "ko2QohcBEqWcdBD0rmfndSVxwchCa8gTe4Z0A+J9Wua0OM5iBsTyxExH0PwIOugb/NiAIdmk40RZeiKnmdSODw==",
+    "over": "manifest"
+  }
+}

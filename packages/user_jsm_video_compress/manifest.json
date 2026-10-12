@@ -1,0 +1,128 @@
+{
+  "schema_version": 2,
+  "engine_api": "1.0",
+  "type_id": "user/jsm_video_compress",
+  "title": "视频压缩",
+  "category": "剪辑",
+  "description": "CRF/码率上限压缩，自动探测硬件编码并在 NVENC 失败后回退软件编码。",
+  "version": "1.0.0",
+  "kind": "python",
+  "runtime": "python",
+  "entrypoint": "node.py",
+  "class_name": "VideoCompressNode",
+  "inputs": [
+    {
+      "name": "video",
+      "type": "VIDEO",
+      "label": "源视频",
+      "required": true
+    }
+  ],
+  "outputs": [
+    {
+      "name": "compressed",
+      "type": "VIDEO",
+      "label": "压缩视频"
+    },
+    {
+      "name": "stats",
+      "type": "JSON",
+      "label": "压缩统计"
+    }
+  ],
+  "params": [
+    {
+      "name": "encoder",
+      "type": "STRING",
+      "label": "编码器",
+      "default": "auto",
+      "widget": "select",
+      "options": [
+        "auto",
+        "h264",
+        "h265",
+        "nvenc_h264",
+        "nvenc_h265"
+      ]
+    },
+    {
+      "name": "crf",
+      "type": "INT",
+      "label": "CRF/CQ",
+      "default": 23,
+      "widget": "number"
+    },
+    {
+      "name": "preset",
+      "type": "STRING",
+      "label": "预设",
+      "default": "medium",
+      "widget": "select",
+      "options": [
+        "ultrafast",
+        "fast",
+        "medium",
+        "slow",
+        "veryslow"
+      ]
+    },
+    {
+      "name": "max_width",
+      "type": "INT",
+      "label": "最大宽度",
+      "default": 0,
+      "widget": "number"
+    },
+    {
+      "name": "fps",
+      "type": "INT",
+      "label": "帧率",
+      "default": 0,
+      "widget": "number"
+    },
+    {
+      "name": "audio_bitrate",
+      "type": "STRING",
+      "label": "音频码率",
+      "default": "192k",
+      "widget": "text"
+    },
+    {
+      "name": "accel",
+      "type": "STRING",
+      "label": "加速",
+      "default": "auto",
+      "widget": "select",
+      "options": [
+        "auto",
+        "none"
+      ]
+    },
+    {
+      "name": "output_name",
+      "type": "STRING",
+      "label": "输出文件名",
+      "default": "compressed",
+      "widget": "text"
+    }
+  ],
+  "permission": {
+    "fs": {
+      "write": [
+        "scratch/**"
+      ]
+    },
+    "subprocess": {
+      "enabled": true,
+      "argv_allowlist": [
+        "ffmpeg"
+      ]
+    }
+  },
+  "signature": {
+    "alg": "ed25519",
+    "key_id": "a8998646b062c170",
+    "value": "pmC5SzVwEAoY1n7NIg/+6TtQXTVTcdYeeWIS49h/X+ABm1if9+23pQEDPpx3NII6oqZq3X+eSWJIrj8JOHVmCg==",
+    "over": "manifest"
+  }
+}

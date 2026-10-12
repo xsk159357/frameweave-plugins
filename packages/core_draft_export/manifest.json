@@ -4,8 +4,8 @@
   "type_id": "core/draft_export",
   "title": "剪映草稿导出",
   "category": "输出",
-  "description": "生成剪映草稿 / Premiere XML / EDL 工程文件",
-  "version": "1.0.0",
+  "description": "生成剪映草稿目录（完整 27 键结构）+ Premiere XML/EDL/FCPXML + SRT；字幕样式、画幅、导出目标可选。",
+  "version": "1.1.0",
   "kind": "python",
   "runtime": "python",
   "entrypoint": "node.py",
@@ -19,7 +19,7 @@
       "default": null,
       "widget": "text",
       "options": [],
-      "description": ""
+      "description": "源视频资产"
     },
     {
       "name": "segments",
@@ -29,7 +29,7 @@
       "default": null,
       "widget": "text",
       "options": [],
-      "description": ""
+      "description": "split_cam 风格片段列表"
     },
     {
       "name": "audio",
@@ -39,7 +39,7 @@
       "default": null,
       "widget": "text",
       "options": [],
-      "description": ""
+      "description": "合并解说音频（未给 voice_items 时整段一轨）"
     },
     {
       "name": "styled_subtitle",
@@ -49,7 +49,27 @@
       "default": null,
       "widget": "text",
       "options": [],
-      "description": ""
+      "description": "字幕列表（含 style）"
+    },
+    {
+      "name": "timeline",
+      "type": "TIMELINE",
+      "label": "时间线",
+      "required": false,
+      "default": null,
+      "widget": "text",
+      "options": [],
+      "description": "时间线资产：{segments, voice_items:[{segment_index,path,duration,start,end}]}"
+    },
+    {
+      "name": "bgm",
+      "type": "AUDIO",
+      "label": "背景音乐",
+      "required": false,
+      "default": null,
+      "widget": "text",
+      "options": [],
+      "description": "循环铺满的 BGM 轨"
     }
   ],
   "outputs": [
@@ -61,37 +81,47 @@
       "default": null,
       "widget": "text",
       "options": [],
-      "description": ""
+      "description": "草稿目录与结构摘要"
     },
     {
       "name": "xml",
       "type": "STRING",
       "label": "Pr XML",
-      "required": true,
+      "required": false,
       "default": null,
       "widget": "text",
       "options": [],
-      "description": ""
+      "description": "xmeml v4 XML 文本"
     },
     {
       "name": "edl",
       "type": "STRING",
       "label": "EDL",
-      "required": true,
+      "required": false,
       "default": null,
       "widget": "text",
       "options": [],
-      "description": ""
+      "description": "CMX 3600 EDL 文本"
     },
     {
       "name": "fcpxml",
       "type": "STRING",
       "label": "FCPXML",
-      "required": true,
+      "required": false,
       "default": null,
       "widget": "text",
       "options": [],
-      "description": ""
+      "description": "FCPXML 1.9 文本"
+    },
+    {
+      "name": "report",
+      "type": "JSON",
+      "label": "导出报告",
+      "required": false,
+      "default": null,
+      "widget": "text",
+      "options": [],
+      "description": "导出报告（文件路径/统计）"
     }
   ],
   "params": [
@@ -140,6 +170,21 @@
       "description": ""
     },
     {
+      "name": "canvas_ratio",
+      "type": "STRING",
+      "label": "画布比例",
+      "required": true,
+      "default": "original",
+      "widget": "select",
+      "options": [
+        "original",
+        "16:9",
+        "9:16",
+        "1:1"
+      ],
+      "description": "original=跟随源视频尺寸（r4 默认）"
+    },
+    {
       "name": "draft_name",
       "type": "STRING",
       "label": "草稿名",
@@ -150,32 +195,62 @@
       "description": ""
     },
     {
-      "name": "transition",
+      "name": "export_target",
       "type": "STRING",
-      "label": "转场",
+      "label": "导出目标",
       "required": true,
-      "default": "cut",
+      "default": "jianying",
       "widget": "select",
       "options": [
-        "cut",
-        "fade",
-        "fadeblack",
-        "dissolve",
-        "slide",
-        "wipe",
-        "zoom"
+        "jianying",
+        "capcut"
+      ],
+      "description": "剪映国内版或 CapCut 国际版"
+    },
+    {
+      "name": "subtitle_style",
+      "type": "STRING",
+      "label": "字幕样式",
+      "required": true,
+      "default": "经典-白字黑边",
+      "widget": "select",
+      "options": [
+        "经典-白字黑边",
+        "黑底白字",
+        "黄字红边",
+        "默认"
       ],
       "description": ""
     },
     {
-      "name": "transition_duration",
+      "name": "font_size",
       "type": "FLOAT",
-      "label": "转场时长(秒)",
+      "label": "字号",
       "required": true,
-      "default": 0.5,
+      "default": 0.0,
       "widget": "number",
       "options": [],
+      "description": "0=横版6/竖版9"
+    },
+    {
+      "name": "enable_subtitle",
+      "type": "BOOL",
+      "label": "生成字幕",
+      "required": true,
+      "default": true,
+      "widget": "toggle",
+      "options": [],
       "description": ""
+    },
+    {
+      "name": "fps",
+      "type": "INT",
+      "label": "工程帧率",
+      "required": true,
+      "default": 30,
+      "widget": "number",
+      "options": [],
+      "description": "XML/EDL 帧换算帧率"
     },
     {
       "name": "output_dir",
@@ -188,11 +263,24 @@
       "description": "留空输出到资产目录"
     }
   ],
-  "permission": {},
+  "permission": {
+    "subprocess": {
+      "enabled": true,
+      "argv_allowlist": [
+        "ffprobe"
+      ]
+    },
+    "fs": {
+      "write": [
+        "drafts/**",
+        "assets/**"
+      ]
+    }
+  },
   "signature": {
     "alg": "ed25519",
     "key_id": "a8998646b062c170",
-    "value": "GE2qKcoMj+CUjenmtRnkru2jHRT4d/g0E82kfX67CSEdAZaCPR0RlUsCPOh326lGswc4EQYZ9z3a7knmnTcdAQ==",
+    "value": "DtZacxQosDK84ISD47Gs2HxwpRF7E4HrfzU1jyLYnKygb/yNUEurBShn4Ye5l49uNw3RjGcGIgmcmENru1XQDg==",
     "over": "manifest"
   }
 }

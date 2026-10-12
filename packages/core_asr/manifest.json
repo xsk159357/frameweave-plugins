@@ -4,8 +4,8 @@
   "type_id": "core/asr",
   "title": "语音转字幕",
   "category": "分析",
-  "description": "语音识别转字幕（faster-whisper）",
-  "version": "1.0.0",
+  "description": "ASR 字幕：faster-whisper 本地转写（离线免费）或 OpenAI 兼容远程；支持 VAD/词级时间戳",
+  "version": "2.0.0",
   "kind": "python",
   "runtime": "python",
   "entrypoint": "node.py",
@@ -15,11 +15,11 @@
       "name": "video",
       "type": "VIDEO",
       "label": "视频",
-      "required": true,
+      "required": false,
       "default": null,
       "widget": "text",
       "options": [],
-      "description": ""
+      "description": "输入视频（未接 audio 时取视频音轨转写）"
     },
     {
       "name": "audio",
@@ -29,43 +29,71 @@
       "default": null,
       "widget": "text",
       "options": [],
-      "description": ""
+      "description": "独立音频输入（优先于视频音轨）"
     }
   ],
   "outputs": [
     {
-      "name": "subtitle",
+      "name": "subtitles",
       "type": "SUBTITLE",
       "label": "字幕",
       "required": true,
       "default": null,
       "widget": "text",
       "options": [],
-      "description": ""
+      "description": "字幕行列表 {index,start,end,text,confidence?,words?}"
     },
     {
       "name": "srt",
       "type": "STRING",
       "label": "SRT 文本",
-      "required": true,
+      "required": false,
       "default": null,
       "widget": "text",
       "options": [],
-      "description": ""
+      "description": "标准 SRT 字幕文本"
+    },
+    {
+      "name": "report",
+      "type": "JSON",
+      "label": "转写报告",
+      "required": false,
+      "default": null,
+      "widget": "text",
+      "options": [],
+      "description": "引擎/模型/语言/统计与降级警告"
     }
   ],
   "params": [
     {
-      "name": "model",
+      "name": "engine",
       "type": "STRING",
-      "label": "模型",
+      "label": "引擎",
       "required": true,
-      "default": "large-v3",
+      "default": "auto",
       "widget": "select",
       "options": [
+        "auto",
+        "local",
+        "remote"
+      ],
+      "description": "auto=本地 faster-whisper 优先，失败退远程"
+    },
+    {
+      "name": "model",
+      "type": "STRING",
+      "label": "本地模型",
+      "required": true,
+      "default": "small",
+      "widget": "select",
+      "options": [
+        "tiny",
+        "base",
+        "small",
+        "medium",
         "large-v3"
       ],
-      "description": ""
+      "description": "faster-whisper 模型大小或本地模型目录"
     },
     {
       "name": "language",
@@ -81,7 +109,7 @@
         "ko",
         "auto"
       ],
-      "description": ""
+      "description": "auto=自动检测"
     },
     {
       "name": "device",
@@ -95,14 +123,84 @@
         "cpu",
         "cuda"
       ],
-      "description": ""
+      "description": "auto=服务器默认 CPU；GPU 请显式选 cuda"
+    },
+    {
+      "name": "compute_type",
+      "type": "STRING",
+      "label": "计算精度",
+      "required": true,
+      "default": "int8",
+      "widget": "select",
+      "options": [
+        "int8",
+        "float16",
+        "float32"
+      ],
+      "description": "CTranslate2 计算精度"
+    },
+    {
+      "name": "vad",
+      "type": "BOOL",
+      "label": "VAD 过滤静音",
+      "required": true,
+      "default": true,
+      "widget": "toggle",
+      "options": [],
+      "description": "静音段过滤，提升转写精度"
+    },
+    {
+      "name": "word_timestamps",
+      "type": "BOOL",
+      "label": "词级时间戳",
+      "required": true,
+      "default": false,
+      "widget": "toggle",
+      "options": [],
+      "description": "输出每句的词级 {word,start,end}，供对话细切"
+    },
+    {
+      "name": "api_key",
+      "type": "STRING",
+      "label": "API Key",
+      "required": false,
+      "default": "",
+      "widget": "password",
+      "options": [],
+      "description": "远程引擎用；支持 @secret:名称 引用保险箱"
+    },
+    {
+      "name": "base_url",
+      "type": "STRING",
+      "label": "中转地址",
+      "required": true,
+      "default": "https://api.openai.com/v1",
+      "widget": "text",
+      "options": [],
+      "description": "OpenAI 兼容 /audio/transcriptions 地址"
+    },
+    {
+      "name": "remote_model",
+      "type": "STRING",
+      "label": "远程模型",
+      "required": true,
+      "default": "whisper-1",
+      "widget": "text",
+      "options": [],
+      "description": "远程转写模型名"
     }
   ],
-  "permission": {},
+  "permission": {
+    "secret": {
+      "refs": [
+        "*"
+      ]
+    }
+  },
   "signature": {
     "alg": "ed25519",
     "key_id": "a8998646b062c170",
-    "value": "c/TQxGWhYM0+/UBWj4/8bKAtbnF5142syLgrvJ43k+eyFEGN4j6jb/1wHlH0pFNZMIP/QhMPc4x/qWJQwRysBA==",
+    "value": "FNotN57ZiPTU2gi7deYZnt7ehrpZ7e6MrHlHn6Hb5Bkwtrggp+VIhQcmkSq2zfgSoL3fGNx2N/7Xkn2QwQYdAQ==",
     "over": "manifest"
   }
 }

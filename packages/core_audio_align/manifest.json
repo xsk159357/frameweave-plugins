@@ -1,0 +1,161 @@
+{
+  "schema_version": 2,
+  "engine_api": "1.0",
+  "type_id": "core/audio_align",
+  "title": "配音-字幕对齐",
+  "category": "音频",
+  "description": "Whisper 词级转写 + difflib 字符级对齐；插值/尾pad/降级等分，逐条报告漏读/多读/置信度",
+  "version": "1.0.0",
+  "kind": "python",
+  "runtime": "python",
+  "entrypoint": "node.py",
+  "class_name": "AudioAlignNode",
+  "inputs": [
+    {
+      "name": "audio",
+      "type": "AUDIO",
+      "label": "配音音频",
+      "required": true,
+      "default": null,
+      "widget": "text",
+      "options": [],
+      "description": "整段外部配音"
+    },
+    {
+      "name": "script",
+      "type": "SCRIPT",
+      "label": "分镜文案",
+      "required": true,
+      "default": null,
+      "widget": "text",
+      "options": [],
+      "description": "纯文本（自动分段）或 [{text},...]"
+    }
+  ],
+  "outputs": [
+    {
+      "name": "aligned",
+      "type": "SUBTITLE",
+      "label": "对齐字幕",
+      "required": true,
+      "default": null,
+      "widget": "text",
+      "options": [],
+      "description": "[{index,text,start,end}] 真实起止时间"
+    },
+    {
+      "name": "report",
+      "type": "JSON",
+      "label": "对齐报告",
+      "required": true,
+      "default": null,
+      "widget": "text",
+      "options": [],
+      "description": "匹配率/漏读/多读/策略/warnings"
+    }
+  ],
+  "params": [
+    {
+      "name": "whisper_model",
+      "type": "STRING",
+      "label": "Whisper 模型",
+      "required": true,
+      "default": "large-v3",
+      "widget": "select",
+      "options": [
+        "large-v3",
+        "medium",
+        "small",
+        "base"
+      ],
+      "description": "词级转写模型"
+    },
+    {
+      "name": "language",
+      "type": "STRING",
+      "label": "语言",
+      "required": true,
+      "default": "auto",
+      "widget": "select",
+      "options": [
+        "auto",
+        "zh",
+        "en",
+        "ja",
+        "ko",
+        "es"
+      ],
+      "description": "auto=自动（按中文占比猜测）"
+    },
+    {
+      "name": "model_dir",
+      "type": "STRING",
+      "label": "模型目录",
+      "required": true,
+      "default": "",
+      "widget": "text",
+      "options": [],
+      "description": "faster-whisper 模型路径；留空尝试默认位置"
+    },
+    {
+      "name": "tail_pad",
+      "type": "FLOAT",
+      "label": "尾段延伸(秒)",
+      "required": true,
+      "default": 0.3,
+      "widget": "number",
+      "options": [],
+      "description": "段尾向空隙延伸上限（0.03s 防线）"
+    },
+    {
+      "name": "fallback",
+      "type": "STRING",
+      "label": "降级策略",
+      "required": true,
+      "default": "proportional",
+      "widget": "select",
+      "options": [
+        "proportional",
+        "equal"
+      ],
+      "description": "Whisper 不可用时按字符占比/等分切分"
+    },
+    {
+      "name": "avg_segment_chars",
+      "type": "INT",
+      "label": "自动分段字数",
+      "required": true,
+      "default": 25,
+      "widget": "number",
+      "options": [],
+      "description": "纯文本文案按约该字数分句"
+    },
+    {
+      "name": "ffmpeg_path",
+      "type": "STRING",
+      "label": "ffmpeg 路径",
+      "required": true,
+      "default": "",
+      "widget": "text",
+      "options": [],
+      "description": "时长探测用；留空自动探测"
+    }
+  ],
+  "permission": {
+    "subprocess": {
+      "enabled": true,
+      "argv_allowlist": [
+        "ffmpeg",
+        "ffprobe",
+        "python",
+        "python.exe"
+      ]
+    }
+  },
+  "signature": {
+    "alg": "ed25519",
+    "key_id": "a8998646b062c170",
+    "value": "TxiCh4y3FaC+YyHmE8jd+BfLGWd9aebEQUgofJH43XBYmkL+O+Fq4DPmHbMDeaqXhSiB6iAHPkg8EPSYkbGbBw==",
+    "over": "manifest"
+  }
+}

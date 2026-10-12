@@ -1,0 +1,142 @@
+{
+  "schema_version": 2,
+  "engine_api": "1.0",
+  "type_id": "user/jsm_image_generate",
+  "title": "文生图",
+  "category": "输出",
+  "description": "OpenAI 兼容图像生成 API，支持多画幅、批量图片资产和明确失败报告。",
+  "version": "1.0.0",
+  "kind": "python",
+  "runtime": "python",
+  "entrypoint": "node.py",
+  "class_name": "ImageGenerateNode",
+  "inputs": [
+    {
+      "name": "prompt",
+      "type": "SCRIPT",
+      "label": "提示词",
+      "required": true
+    }
+  ],
+  "outputs": [
+    {
+      "name": "image",
+      "type": "IMAGE",
+      "label": "第一张图片"
+    },
+    {
+      "name": "images",
+      "type": "JSON",
+      "label": "图片列表"
+    },
+    {
+      "name": "report",
+      "type": "JSON",
+      "label": "处理报告"
+    }
+  ],
+  "params": [
+    {
+      "name": "provider",
+      "type": "STRING",
+      "label": "提供商",
+      "default": "openai",
+      "widget": "select",
+      "options": [
+        "openai",
+        "custom"
+      ]
+    },
+    {
+      "name": "base_url",
+      "type": "STRING",
+      "label": "API 地址",
+      "default": "https://api.openai.com/v1",
+      "widget": "text"
+    },
+    {
+      "name": "model",
+      "type": "STRING",
+      "label": "模型",
+      "default": "gpt-image-1",
+      "widget": "text"
+    },
+    {
+      "name": "api_key",
+      "type": "STRING",
+      "label": "API Key",
+      "default": "",
+      "widget": "password"
+    },
+    {
+      "name": "aspect_ratio",
+      "type": "STRING",
+      "label": "画幅",
+      "default": "1:1",
+      "widget": "select",
+      "options": [
+        "1:1",
+        "16:9",
+        "9:16",
+        "4:3",
+        "3:4",
+        "2.35:1",
+        "2:1",
+        "1.85:1",
+        "9:19.5"
+      ]
+    },
+    {
+      "name": "size",
+      "type": "STRING",
+      "label": "尺寸",
+      "default": "1024x1024",
+      "widget": "text"
+    },
+    {
+      "name": "quality",
+      "type": "STRING",
+      "label": "质量",
+      "default": "auto",
+      "widget": "select",
+      "options": [
+        "auto",
+        "low",
+        "medium",
+        "high"
+      ]
+    },
+    {
+      "name": "count",
+      "type": "INT",
+      "label": "数量",
+      "default": 1,
+      "widget": "number"
+    }
+  ],
+  "permission": {
+    "fs": {
+      "write": [
+        "scratch/**"
+      ]
+    },
+    "network": {
+      "allow": [
+        "api.openai.com",
+        "127.0.0.1",
+        "localhost"
+      ]
+    },
+    "secret": {
+      "refs": [
+        "*"
+      ]
+    }
+  },
+  "signature": {
+    "alg": "ed25519",
+    "key_id": "a8998646b062c170",
+    "value": "DNW0TFZiEUZbK7k9rLeOsU4FpBiDj2l7LO14N8MEdEBXoU+btxkOjLpaBQRUA5nPUCfSum6EX2x7LZl+Kb3TBg==",
+    "over": "manifest"
+  }
+}

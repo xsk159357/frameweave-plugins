@@ -1,0 +1,90 @@
+{
+  "schema_version": 2,
+  "engine_api": "1.0",
+  "type_id": "user/jsm_video_remux",
+  "title": "视频格式转换",
+  "category": "剪辑",
+  "description": "流拷贝 remux 格式转换，默认不重新编码，快速且无画质损失。",
+  "version": "1.0.0",
+  "kind": "python",
+  "runtime": "python",
+  "entrypoint": "node.py",
+  "class_name": "VideoRemuxNode",
+  "inputs": [
+    {
+      "name": "video",
+      "type": "VIDEO",
+      "label": "源视频",
+      "required": true
+    }
+  ],
+  "outputs": [
+    {
+      "name": "formatted",
+      "type": "VIDEO",
+      "label": "格式视频"
+    },
+    {
+      "name": "stats",
+      "type": "JSON",
+      "label": "格式报告"
+    }
+  ],
+  "params": [
+    {
+      "name": "container",
+      "type": "STRING",
+      "label": "目标格式",
+      "default": "mkv",
+      "widget": "select",
+      "options": [
+        "mp4",
+        "mkv",
+        "webm",
+        "mov",
+        "ts",
+        "m4v"
+      ]
+    },
+    {
+      "name": "remove_metadata",
+      "type": "BOOL",
+      "label": "移除元数据",
+      "default": true,
+      "widget": "toggle"
+    },
+    {
+      "name": "faststart",
+      "type": "BOOL",
+      "label": "快速启动",
+      "default": true,
+      "widget": "toggle"
+    },
+    {
+      "name": "output_name",
+      "type": "STRING",
+      "label": "输出文件名",
+      "default": "formatted",
+      "widget": "text"
+    }
+  ],
+  "permission": {
+    "fs": {
+      "write": [
+        "scratch/**"
+      ]
+    },
+    "subprocess": {
+      "enabled": true,
+      "argv_allowlist": [
+        "ffmpeg"
+      ]
+    }
+  },
+  "signature": {
+    "alg": "ed25519",
+    "key_id": "a8998646b062c170",
+    "value": "s4tH1WCBlB8F3AgNxnDE/hiTPqy4RDEsdeZk4zBOSo8ZMhdv2Xti+e9MkywD2QpymerTQW6qCq8Z0TUDjm7CBg==",
+    "over": "manifest"
+  }
+}

@@ -1,0 +1,177 @@
+{
+  "schema_version": 2,
+  "engine_api": "1.0",
+  "type_id": "core/video_compress",
+  "title": "视频压缩转码",
+  "category": "输出",
+  "description": "HEVC/H.264 压缩转码：硬件加速探测与自动软编回退、码率上限=原码率×0.7、HEVC CRF 偏移+5、进度与统计报告。",
+  "version": "1.0.0",
+  "kind": "python",
+  "runtime": "python",
+  "entrypoint": "node.py",
+  "class_name": "VideoCompressNode",
+  "inputs": [
+    {
+      "name": "video",
+      "type": "VIDEO",
+      "label": "源视频",
+      "required": true,
+      "default": null,
+      "widget": "text",
+      "options": [],
+      "description": "待压缩视频资产"
+    }
+  ],
+  "outputs": [
+    {
+      "name": "compressed",
+      "type": "VIDEO",
+      "label": "压缩后视频",
+      "required": true,
+      "default": null,
+      "widget": "text",
+      "options": [],
+      "description": "压缩转码后的视频资产"
+    },
+    {
+      "name": "stats",
+      "type": "JSON",
+      "label": "压缩统计",
+      "required": false,
+      "default": null,
+      "widget": "text",
+      "options": [],
+      "description": "压缩统计（体积/码率/编码器/回退信息）"
+    }
+  ],
+  "params": [
+    {
+      "name": "encoder",
+      "type": "STRING",
+      "label": "编码器",
+      "required": true,
+      "default": "auto",
+      "widget": "select",
+      "options": [
+        "auto",
+        "hevc_nvenc",
+        "h264_nvenc",
+        "libx265",
+        "libx264",
+        "libsvtav1"
+      ],
+      "description": "auto=硬件优先，失败回退 libx265"
+    },
+    {
+      "name": "crf",
+      "type": "INT",
+      "label": "CRF 质量",
+      "required": true,
+      "default": 23,
+      "widget": "number",
+      "options": [],
+      "description": "质量系数（HEVC 系自动 +5 偏移）"
+    },
+    {
+      "name": "preset",
+      "type": "STRING",
+      "label": "预设",
+      "required": true,
+      "default": "medium",
+      "widget": "text",
+      "options": [],
+      "description": "编码预设（NVENC 用 p1-p7，软件用 veryslow~ultrafast）"
+    },
+    {
+      "name": "max_width",
+      "type": "INT",
+      "label": "最大宽度",
+      "required": true,
+      "default": 0,
+      "widget": "number",
+      "options": [],
+      "description": "0=保持原宽"
+    },
+    {
+      "name": "max_height",
+      "type": "INT",
+      "label": "最大高度",
+      "required": true,
+      "default": 0,
+      "widget": "number",
+      "options": [],
+      "description": "0=保持原高"
+    },
+    {
+      "name": "fps",
+      "type": "INT",
+      "label": "输出帧率",
+      "required": true,
+      "default": 0,
+      "widget": "number",
+      "options": [],
+      "description": "0=保持原帧率"
+    },
+    {
+      "name": "audio_bitrate",
+      "type": "STRING",
+      "label": "音频码率",
+      "required": true,
+      "default": "192k",
+      "widget": "text",
+      "options": [],
+      "description": "AAC 音频码率"
+    },
+    {
+      "name": "hardware_accel",
+      "type": "BOOL",
+      "label": "硬件加速优先",
+      "required": true,
+      "default": true,
+      "widget": "toggle",
+      "options": [],
+      "description": "true 时优先 NVENC/AMF/QSV，失败自动回退软编"
+    },
+    {
+      "name": "remove_metadata",
+      "type": "BOOL",
+      "label": "去除元数据",
+      "required": true,
+      "default": true,
+      "widget": "toggle",
+      "options": [],
+      "description": "map_metadata -1 去除全局元数据"
+    },
+    {
+      "name": "output_name",
+      "type": "STRING",
+      "label": "输出文件名",
+      "required": true,
+      "default": "compressed",
+      "widget": "text",
+      "options": [],
+      "description": "输出文件名（不含扩展名）"
+    }
+  ],
+  "permission": {
+    "subprocess": {
+      "enabled": true,
+      "argv_allowlist": [
+        "ffmpeg",
+        "ffprobe"
+      ]
+    },
+    "fs": {
+      "write": [
+        "compress_outputs/**",
+        "assets/**"
+      ]
+    }
+  },
+  "signature": {
+    "alg": "ed25519",
+    "key_id": "a8998646b062c170",
+    "value": "9cyOknjzSZljkNB3vxFbQG/7fx89dVAiNmxT9OBv21X4cqQJGZm8ZGmxlz8W/TR8GF8q7VTr4RFdxpUz3ROODA==",
+    "over": "manifest"
+  }
+}

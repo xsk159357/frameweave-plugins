@@ -2,10 +2,10 @@
   "schema_version": 2,
   "engine_api": "1.0",
   "type_id": "core/tts",
-  "title": "TTS 配音",
+  "title": "TTS 配音（多引擎）",
   "category": "音频",
-  "description": "文字转语音：Edge免费 / 本地克隆 / 云端音色 / 人工配音",
-  "version": "1.0.0",
+  "description": "文字转语音：Edge免费 / IndexTTS2本地克隆 / 云端兼容 / 人工配音；支持长文本分块与分段批量合成",
+  "version": "2.0.0",
   "kind": "python",
   "runtime": "python",
   "entrypoint": "node.py",
@@ -15,11 +15,21 @@
       "name": "script",
       "type": "SCRIPT",
       "label": "文案",
-      "required": true,
+      "required": false,
       "default": null,
       "widget": "text",
       "options": [],
-      "description": ""
+      "description": "整段解说文案（单条合成）；与 segments 二选一"
+    },
+    {
+      "name": "segments",
+      "type": "SEGMENTS",
+      "label": "分段列表",
+      "required": false,
+      "default": null,
+      "widget": "text",
+      "options": [],
+      "description": "分段批量合成：每段取 text/narration/source_text 字段"
     },
     {
       "name": "audio_in",
@@ -29,7 +39,7 @@
       "default": null,
       "widget": "text",
       "options": [],
-      "description": ""
+      "description": "manual 引擎使用"
     },
     {
       "name": "audio_ref",
@@ -39,7 +49,7 @@
       "default": null,
       "widget": "text",
       "options": [],
-      "description": ""
+      "description": "indextts 引擎使用"
     }
   ],
   "outputs": [
@@ -51,7 +61,17 @@
       "default": null,
       "widget": "text",
       "options": [],
-      "description": ""
+      "description": "合成音频（批量合并时=合并文件，未合并=首个成功段）"
+    },
+    {
+      "name": "duration",
+      "type": "FLOAT",
+      "label": "音频时长(秒)",
+      "required": true,
+      "default": null,
+      "widget": "text",
+      "options": [],
+      "description": "合成音频总时长"
     },
     {
       "name": "marks",
@@ -61,7 +81,17 @@
       "default": null,
       "widget": "text",
       "options": [],
-      "description": ""
+      "description": "分段/分块时间戳与状态"
+    },
+    {
+      "name": "report",
+      "type": "JSON",
+      "label": "合成报告",
+      "required": true,
+      "default": null,
+      "widget": "text",
+      "options": [],
+      "description": "引擎/策略/重试/耗时/warnings"
     }
   ],
   "params": [
@@ -88,7 +118,7 @@
         "indextts",
         "cloud"
       ],
-      "description": ""
+      "description": "edge=微软免费；manual=人工导入；indextts=IndexTTS2 本地克隆；cloud=OpenAI 兼容云端"
     },
     {
       "name": "voice",
@@ -116,7 +146,6 @@
         "zh-CN-XiaozhenNeural",
         "zh-CN-YunfengNeural",
         "zh-CN-YunhaoNeural",
-        "zh-CN-YunjianNeural",
         "zh-CN-YunzeNeural",
         "zh-TW-HsiaoChenNeural",
         "zh-TW-HsiaoYuNeural",
@@ -139,7 +168,7 @@
         "ko-KR-SunHiNeural",
         "ko-KR-InJoonNeural"
       ],
-      "description": ""
+      "description": "edge 音色；indextts/cloud 由 lang/cloud_voice 等控制"
     },
     {
       "name": "rate",
@@ -159,7 +188,17 @@
       "default": "+0Hz",
       "widget": "text",
       "options": [],
-      "description": ""
+      "description": "edge-tts 音调"
+    },
+    {
+      "name": "volume",
+      "type": "STRING",
+      "label": "音量",
+      "required": true,
+      "default": "+0%",
+      "widget": "text",
+      "options": [],
+      "description": "edge-tts 音量如 -20%"
     },
     {
       "name": "output_format",
@@ -189,7 +228,7 @@
         "ES",
         "AR"
       ],
-      "description": ""
+      "description": "indextts 引擎"
     },
     {
       "name": "duration_factor",
@@ -199,17 +238,17 @@
       "default": "1.0",
       "widget": "text",
       "options": [],
-      "description": "0.5~2.0, 1.0 为原速"
+      "description": "0.5~2.0，1.0 为原速；indextts 合成后变速"
     },
     {
       "name": "server_url",
       "type": "STRING",
       "label": "克隆服务地址",
       "required": true,
-      "default": "http://127.0.0.1:8791",
+      "default": "http://127.0.0.1:3900",
       "widget": "text",
       "options": [],
-      "description": "IndexTTS2 常驻服务"
+      "description": "IndexTTS2/OmniVoice 常驻服务（兼容旧版 8791）"
     },
     {
       "name": "auto_start_server",
@@ -227,9 +266,9 @@
       "label": "API Key",
       "required": true,
       "default": null,
-      "widget": "text",
+      "widget": "password",
       "options": [],
-      "description": "云端 TTS 用户自带 Key（ameaao 中转）"
+      "description": "云端 TTS Key；可填 @secret:名称 引用保险箱"
     },
     {
       "name": "base_url",
@@ -239,7 +278,7 @@
       "default": "https://ameaaos.com/v1",
       "widget": "text",
       "options": [],
-      "description": ""
+      "description": "OpenAI 兼容 base（含 /v1）"
     },
     {
       "name": "cloud_model",
@@ -270,6 +309,56 @@
       "widget": "text",
       "options": [],
       "description": "0.25~4.0"
+    },
+    {
+      "name": "chunk_chars",
+      "type": "INT",
+      "label": "长文本分块字数",
+      "required": true,
+      "default": 800,
+      "widget": "number",
+      "options": [],
+      "description": "edge/indextts 按标点分块合成再合并，避免超长输入截断"
+    },
+    {
+      "name": "max_concurrent",
+      "type": "INT",
+      "label": "批量并发",
+      "required": true,
+      "default": 5,
+      "widget": "number",
+      "options": [],
+      "description": "分段/分块并行上限（edge 生效；provider 默认不高于 5）"
+    },
+    {
+      "name": "retries",
+      "type": "INT",
+      "label": "单条重试次数",
+      "required": true,
+      "default": 3,
+      "widget": "number",
+      "options": [],
+      "description": "网络/超时类错误指数退避重试"
+    },
+    {
+      "name": "merge_audio",
+      "type": "BOOL",
+      "label": "批量合并音频",
+      "required": true,
+      "default": true,
+      "widget": "toggle",
+      "options": [],
+      "description": "分段批量时是否合并为单个音频；关闭时 audio=首个成功段"
+    },
+    {
+      "name": "ffmpeg_path",
+      "type": "STRING",
+      "label": "ffmpeg 路径",
+      "required": true,
+      "default": "",
+      "widget": "text",
+      "options": [],
+      "description": "留空自动探测（PATH / FRAMEWEAVE_FFMPEG / 默认安装位置）"
     }
   ],
   "permission": {
@@ -282,6 +371,15 @@
         "ffprobe"
       ]
     },
+    "network": {
+      "allow": [
+        "*",
+        "127.0.0.1:3900",
+        "127.0.0.1:8791",
+        "localhost:3900",
+        "localhost:8791"
+      ]
+    },
     "secret": {
       "refs": [
         "*"
@@ -291,7 +389,7 @@
   "signature": {
     "alg": "ed25519",
     "key_id": "a8998646b062c170",
-    "value": "ekJDmtQIi9efMa2/DYWN7R/AAUI2sGrEYCao4fauVZl6K9Dd12vDaBxlZ6/3izkQeBOg4HpZY3ObXkclQPbaBQ==",
+    "value": "KDLUeF3UwCUrsHbrj9EXMNacokdpOjbNsjCTjufXHg1iQB7c4fH6vVGMZ9A+t+esuCD09IIIaPdbSg0KEN2GBg==",
     "over": "manifest"
   }
 }

@@ -4,8 +4,8 @@
   "type_id": "core/load_video",
   "title": "导入视频",
   "category": "输入",
-  "description": "导入本地视频文件并解析元数据",
-  "version": "1.0.0",
+  "description": "导入本地视频并解析完整元数据；paths 支持 JSON/换行/通配符批量导入为批次信封",
+  "version": "2.0.0",
   "kind": "python",
   "runtime": "python",
   "entrypoint": "node.py",
@@ -16,11 +16,11 @@
       "name": "video",
       "type": "VIDEO",
       "label": "视频",
-      "required": true,
+      "required": false,
       "default": null,
       "widget": "text",
       "options": [],
-      "description": "导入的视频资产"
+      "description": "单文件模式导入的视频资产"
     },
     {
       "name": "meta",
@@ -30,7 +30,27 @@
       "default": null,
       "widget": "text",
       "options": [],
-      "description": "ffprobe 解析的媒体元数据"
+      "description": "ffprobe 解析的完整媒体元数据"
+    },
+    {
+      "name": "batch",
+      "type": "JSON",
+      "label": "批次信封",
+      "required": false,
+      "default": null,
+      "widget": "text",
+      "options": [],
+      "description": "批量模式（paths 非空）输出的标准批次信封"
+    },
+    {
+      "name": "report",
+      "type": "JSON",
+      "label": "导入报告",
+      "required": false,
+      "default": null,
+      "widget": "text",
+      "options": [],
+      "description": "导入汇总报告（单文件或批量）"
     }
   ],
   "params": [
@@ -38,18 +58,58 @@
       "name": "path",
       "type": "STRING",
       "label": "视频路径",
-      "required": true,
+      "required": false,
       "default": null,
       "widget": "file",
       "options": [],
-      "description": "本地视频文件路径"
+      "description": "单文件模式：本地视频文件路径"
+    },
+    {
+      "name": "paths",
+      "type": "STRING",
+      "label": "批量路径/通配符",
+      "required": false,
+      "default": "",
+      "widget": "text",
+      "options": [],
+      "description": "批量模式：JSON 数组 / 换行或分号分隔 / glob 通配符；启用后输出 batch/report"
+    },
+    {
+      "name": "copy_into_store",
+      "type": "BOOL",
+      "label": "复制到素材库",
+      "required": false,
+      "default": true,
+      "widget": "toggle",
+      "options": [],
+      "description": "是否将源文件复制进平台素材库（不覆盖源文件）"
+    },
+    {
+      "name": "probe_timeout",
+      "type": "INT",
+      "label": "探测超时(秒)",
+      "required": false,
+      "default": 30,
+      "widget": "number",
+      "options": [],
+      "description": "ffprobe 探测超时上限"
     }
   ],
-  "permission": {},
+  "permission": {
+    "subprocess": {
+      "enabled": true,
+      "argv_allowlist": [
+        "ffmpeg",
+        "ffmpeg.exe",
+        "ffprobe",
+        "ffprobe.exe"
+      ]
+    }
+  },
   "signature": {
     "alg": "ed25519",
     "key_id": "a8998646b062c170",
-    "value": "SiOP2wsjI13civN86HnDVrHVkWXs5zBh+REgrlB6qCyzYiD6uxOj1cjTvTZVLaVOkL4J6gE0oQVUpwpjXMDeDQ==",
+    "value": "/tdxfeK6rnwZjnLgwjkSXw0ZsYt2oHih+CjhI2X1AMlYkS+nd2zpGsH4Y40NrJrT/bJxXAHBbCH5vO1AHHOdCA==",
     "over": "manifest"
   }
 }

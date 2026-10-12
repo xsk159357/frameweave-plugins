@@ -1,0 +1,192 @@
+{
+  "schema_version": 2,
+  "engine_api": "1.0",
+  "type_id": "user/jsm_portrait_matte",
+  "title": "人像抠像 / 绿幕合成",
+  "category": "剪辑",
+  "description": "口播/人像视频抠像：绿幕或纯色背景自动抠像（chroma 色键 / auto 背景色自动检测 / ai 可选 rembg 人像分割），支持溢色抑制、边缘羽化、时间平滑，合成到背景图或输出蒙版。效果优于解说猫原版（原版无抠像能力）。",
+  "version": "1.0.0",
+  "kind": "python",
+  "runtime": "python",
+  "entrypoint": "node.py",
+  "class_name": "PortraitMatteNode",
+  "inputs": [
+    {
+      "name": "video",
+      "type": "VIDEO",
+      "label": "源视频",
+      "required": true,
+      "default": null,
+      "widget": "text",
+      "options": [],
+      "description": "含人像/前景的视频"
+    },
+    {
+      "name": "background",
+      "type": "IMAGE",
+      "label": "背景图",
+      "required": false,
+      "default": null,
+      "widget": "text",
+      "options": [],
+      "description": "可选背景图；未连接时输出黑底蒙版视频 + 蒙版图"
+    }
+  ],
+  "outputs": [
+    {
+      "name": "video_out",
+      "type": "VIDEO",
+      "label": "合成视频",
+      "required": true,
+      "default": null,
+      "widget": "text",
+      "options": [],
+      "description": "抠像合成结果（连接背景=替换背景；未连接=黑底透明可视蒙版）"
+    },
+    {
+      "name": "mask",
+      "type": "IMAGE",
+      "label": "人像蒙版图",
+      "required": true,
+      "default": null,
+      "widget": "text",
+      "options": [],
+      "description": "单帧 alpha 蒙版 PNG：白=前景人像，黑=背景"
+    },
+    {
+      "name": "report",
+      "type": "JSON",
+      "label": "处理报告",
+      "required": true,
+      "default": null,
+      "widget": "text",
+      "options": [],
+      "description": "模式/键色/相似度/混合/警告/探测信息"
+    }
+  ],
+  "params": [
+    {
+      "name": "matte_mode",
+      "type": "STRING",
+      "label": "抠像模式",
+      "required": true,
+      "default": "chroma",
+      "widget": "select",
+      "options": [
+        "chroma",
+        "auto",
+        "ai"
+      ],
+      "description": "chroma=指定键色；auto=自动检测纯色背景主色；ai=可选 rembg 人像分割（需安装 rembg+onnxruntime，模型首次运行自动下载）"
+    },
+    {
+      "name": "key_color",
+      "type": "STRING",
+      "label": "键色",
+      "required": false,
+      "default": "#00FF00",
+      "widget": "text",
+      "options": [],
+      "description": "chroma 模式键色，如 #00FF00（绿幕）/#0000FF（蓝幕）"
+    },
+    {
+      "name": "similarity",
+      "type": "FLOAT",
+      "label": "相似度容差",
+      "required": false,
+      "default": 0.12,
+      "widget": "number",
+      "options": [],
+      "description": "0.01~0.99，越大抠得越狠"
+    },
+    {
+      "name": "blend",
+      "type": "FLOAT",
+      "label": "边缘混合",
+      "required": false,
+      "default": 0.08,
+      "widget": "number",
+      "options": [],
+      "description": "0~0.99，软化边缘过渡"
+    },
+    {
+      "name": "despill",
+      "type": "BOOL",
+      "label": "溢色抑制",
+      "required": false,
+      "default": true,
+      "widget": "toggle",
+      "options": [],
+      "description": "去除前景边缘绿/蓝溢色（despill）"
+    },
+    {
+      "name": "edge_feather",
+      "type": "FLOAT",
+      "label": "边缘羽化",
+      "required": false,
+      "default": 1.0,
+      "widget": "number",
+      "options": [],
+      "description": "对 alpha 做高斯羽化半径（像素）；0=关闭"
+    },
+    {
+      "name": "temporal_smooth",
+      "type": "BOOL",
+      "label": "时间平滑",
+      "required": false,
+      "default": false,
+      "widget": "toggle",
+      "options": [],
+      "description": "对输出做 tmedian 时域中值滤波，抑制逐帧抖动（耗时较高）"
+    },
+    {
+      "name": "keep_audio",
+      "type": "BOOL",
+      "label": "保留原音轨",
+      "required": false,
+      "default": true,
+      "widget": "toggle",
+      "options": [],
+      "description": "保留源视频音频轨"
+    },
+    {
+      "name": "mask_time",
+      "type": "FLOAT",
+      "label": "蒙版取样时刻(秒)",
+      "required": false,
+      "default": 0.5,
+      "widget": "number",
+      "options": [],
+      "description": "生成蒙版图所用的时间点；小于 0 取中间帧"
+    },
+    {
+      "name": "output_name",
+      "type": "STRING",
+      "label": "输出文件名",
+      "required": false,
+      "default": "portrait_matte",
+      "widget": "text",
+      "options": [],
+      "description": ""
+    }
+  ],
+  "permission": {
+    "fs": {
+      "write": [
+        "scratch/**"
+      ]
+    },
+    "subprocess": {
+      "enabled": true,
+      "argv_allowlist": [
+        "ffmpeg"
+      ]
+    }
+  },
+  "signature": {
+    "alg": "ed25519",
+    "key_id": "a8998646b062c170",
+    "value": "aZEp/+H6gE5mpEL+YqN3+KpwUqXTLECKHPOwYDHicGyKWSEMD8sv+Ka9R3yHiH8xsrfg/mqrBFIao5QJPCfbAA==",
+    "over": "manifest"
+  }
+}

@@ -1,0 +1,157 @@
+{
+  "schema_version": 2,
+  "engine_api": "1.0",
+  "type_id": "core/vocal_separate",
+  "title": "人声分离",
+  "category": "音频",
+  "description": "Demucs htdemucs 人声/伴奏分离（tracked 子进程，GPU 崩溃自动 CPU 重试）",
+  "version": "1.0.0",
+  "kind": "python",
+  "runtime": "python",
+  "entrypoint": "node.py",
+  "class_name": "VocalSeparateNode",
+  "inputs": [
+    {
+      "name": "audio",
+      "type": "AUDIO",
+      "label": "音频(可选)",
+      "required": false,
+      "default": null,
+      "widget": "text",
+      "options": [],
+      "description": "音频输入；与 video 二选一"
+    },
+    {
+      "name": "video",
+      "type": "VIDEO",
+      "label": "视频(可选)",
+      "required": false,
+      "default": null,
+      "widget": "text",
+      "options": [],
+      "description": "视频输入（自动提取音轨）；与 audio 二选一"
+    }
+  ],
+  "outputs": [
+    {
+      "name": "vocals",
+      "type": "AUDIO",
+      "label": "人声",
+      "required": true,
+      "default": null,
+      "widget": "text",
+      "options": [],
+      "description": "分离的人声轨"
+    },
+    {
+      "name": "accompaniment",
+      "type": "AUDIO",
+      "label": "伴奏",
+      "required": true,
+      "default": null,
+      "widget": "text",
+      "options": [],
+      "description": "分离的伴奏轨（非人声）"
+    },
+    {
+      "name": "report",
+      "type": "JSON",
+      "label": "分离报告",
+      "required": true,
+      "default": null,
+      "widget": "text",
+      "options": [],
+      "description": "模型/设备/耗时/降级信息"
+    }
+  ],
+  "params": [
+    {
+      "name": "model",
+      "type": "STRING",
+      "label": "模型",
+      "required": true,
+      "default": "htdemucs",
+      "widget": "select",
+      "options": [
+        "htdemucs",
+        "htdemucs_ft",
+        "mdx_extra_q"
+      ],
+      "description": "Demucs 预训练模型"
+    },
+    {
+      "name": "stems",
+      "type": "INT",
+      "label": "分轨数",
+      "required": true,
+      "default": 2,
+      "widget": "number",
+      "options": [],
+      "description": "2=人声/伴奏；4=鼓/贝斯/其他/人声"
+    },
+    {
+      "name": "device",
+      "type": "STRING",
+      "label": "设备",
+      "required": true,
+      "default": "auto",
+      "widget": "select",
+      "options": [
+        "auto",
+        "cuda",
+        "cpu"
+      ],
+      "description": "auto=有 GPU 用 GPU，失败自动 CPU 重试"
+    },
+    {
+      "name": "python_exe",
+      "type": "STRING",
+      "label": "Python 解释器",
+      "required": true,
+      "default": "",
+      "widget": "text",
+      "options": [],
+      "description": "装有 demucs 的解释器；留空用当前进程（需已安装 demucs）"
+    },
+    {
+      "name": "format",
+      "type": "STRING",
+      "label": "输出格式",
+      "required": true,
+      "default": "wav",
+      "widget": "select",
+      "options": [
+        "wav",
+        "flac"
+      ],
+      "description": "分离输出格式"
+    },
+    {
+      "name": "ffmpeg_path",
+      "type": "STRING",
+      "label": "ffmpeg 路径",
+      "required": true,
+      "default": "",
+      "widget": "text",
+      "options": [],
+      "description": "视频输入提取音轨用；留空自动探测"
+    }
+  ],
+  "permission": {
+    "subprocess": {
+      "enabled": true,
+      "argv_allowlist": [
+        "python",
+        "python.exe",
+        "ffmpeg",
+        "ffprobe"
+      ]
+    }
+  },
+  "signature": {
+    "alg": "ed25519",
+    "key_id": "a8998646b062c170",
+    "value": "ezZ1zVX26P/JTMiLQ8rv6MlZxJ7/MYkXkK3ZZrp8IKeniE6jj1QN1gKQ2JQqHOGg5URAoSxNz7hLiJd6UsAGAA==",
+    "over": "manifest"
+  }
+}

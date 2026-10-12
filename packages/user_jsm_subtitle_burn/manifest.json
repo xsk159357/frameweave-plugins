@@ -1,0 +1,122 @@
+{
+  "schema_version": 2,
+  "engine_api": "1.0",
+  "type_id": "user/jsm_subtitle_burn",
+  "title": "口播字幕烧录",
+  "category": "剪辑",
+  "description": "独立字幕烧录节点，提供六套口播字幕样式和正确 ASS 颜色映射，修复原版黄字红边等样式失效问题。",
+  "version": "1.0.0",
+  "kind": "python",
+  "runtime": "python",
+  "entrypoint": "node.py",
+  "class_name": "SubtitleBurnNode",
+  "inputs": [
+    {
+      "name": "video",
+      "type": "VIDEO",
+      "label": "源视频",
+      "required": true
+    },
+    {
+      "name": "subtitles",
+      "type": "SUBTITLE",
+      "label": "字幕列表",
+      "required": true
+    }
+  ],
+  "outputs": [
+    {
+      "name": "video_out",
+      "type": "VIDEO",
+      "label": "字幕视频"
+    },
+    {
+      "name": "report",
+      "type": "JSON",
+      "label": "处理报告"
+    }
+  ],
+  "params": [
+    {
+      "name": "style",
+      "type": "STRING",
+      "label": "字幕样式",
+      "default": "经典-白字黑边",
+      "widget": "select",
+      "options": [
+        "经典-白字黑边",
+        "综艺-黄字黑边",
+        "影视-红字白边",
+        "霓虹-青蓝光",
+        "阅读-黑底白字",
+        "沉稳-黑字白边"
+      ]
+    },
+    {
+      "name": "font",
+      "type": "STRING",
+      "label": "字体",
+      "default": "Microsoft YaHei",
+      "widget": "text"
+    },
+    {
+      "name": "size",
+      "type": "INT",
+      "label": "字号",
+      "default": 48,
+      "widget": "number"
+    },
+    {
+      "name": "position",
+      "type": "STRING",
+      "label": "位置",
+      "default": "bottom",
+      "widget": "select",
+      "options": [
+        "bottom",
+        "top",
+        "center"
+      ]
+    },
+    {
+      "name": "margin_v",
+      "type": "INT",
+      "label": "边距",
+      "default": 60,
+      "widget": "number"
+    },
+    {
+      "name": "outline",
+      "type": "INT",
+      "label": "描边宽度",
+      "default": 3,
+      "widget": "number"
+    },
+    {
+      "name": "output_name",
+      "type": "STRING",
+      "label": "输出文件名",
+      "default": "subtitle_burn",
+      "widget": "text"
+    }
+  ],
+  "permission": {
+    "fs": {
+      "write": [
+        "scratch/**"
+      ]
+    },
+    "subprocess": {
+      "enabled": true,
+      "argv_allowlist": [
+        "ffmpeg"
+      ]
+    }
+  },
+  "signature": {
+    "alg": "ed25519",
+    "key_id": "a8998646b062c170",
+    "value": "bqvLyO6lucHQKKJFKcoyLbeeeX6LBlsxawimRuaIsKRbuA1rjetvtNp0FVXNhfoLKzEX+E9/8PKIjsCxW08BDw==",
+    "over": "manifest"
+  }
+}

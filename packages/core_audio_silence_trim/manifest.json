@@ -1,0 +1,117 @@
+{
+  "schema_version": 2,
+  "engine_api": "1.0",
+  "type_id": "core/audio_silence_trim",
+  "title": "静音裁剪",
+  "category": "音频",
+  "description": "自适应阈值裁剪头尾静音（mp3 先转 wav 再裁，避免反复重编码损耗），保留语气停顿",
+  "version": "1.0.0",
+  "kind": "python",
+  "runtime": "python",
+  "entrypoint": "node.py",
+  "class_name": "AudioTrimNode",
+  "inputs": [
+    {
+      "name": "audio",
+      "type": "AUDIO",
+      "label": "源音频",
+      "required": true,
+      "default": null,
+      "widget": "text",
+      "options": [],
+      "description": "待裁剪音频"
+    }
+  ],
+  "outputs": [
+    {
+      "name": "trimmed",
+      "type": "AUDIO",
+      "label": "裁剪后音频",
+      "required": true,
+      "default": null,
+      "widget": "text",
+      "options": [],
+      "description": "裁剪后的音频"
+    },
+    {
+      "name": "trim_report",
+      "type": "JSON",
+      "label": "裁剪报告",
+      "required": true,
+      "default": null,
+      "widget": "text",
+      "options": [],
+      "description": "原/净时长、裁剪量、阈值与静音区间"
+    }
+  ],
+  "params": [
+    {
+      "name": "threshold_db",
+      "type": "FLOAT",
+      "label": "静音阈值(dB)",
+      "required": true,
+      "default": 0.0,
+      "widget": "number",
+      "options": [],
+      "description": "0=自适应（均值-25dB，夹在[-45,-25]）；显式值如 -35"
+    },
+    {
+      "name": "min_silence_ms",
+      "type": "INT",
+      "label": "最小静音(ms)",
+      "required": true,
+      "default": 200,
+      "widget": "number",
+      "options": [],
+      "description": "短于此的静音视为语气停顿保留"
+    },
+    {
+      "name": "edge_keep_ms",
+      "type": "INT",
+      "label": "切点保留(ms)",
+      "required": true,
+      "default": 80,
+      "widget": "number",
+      "options": [],
+      "description": "头尾裁剪处保留的过渡余量"
+    },
+    {
+      "name": "output_format",
+      "type": "STRING",
+      "label": "输出格式",
+      "required": true,
+      "default": "wav",
+      "widget": "select",
+      "options": [
+        "wav",
+        "mp3"
+      ],
+      "description": "默认 wav 避免有损重编码累积损耗"
+    },
+    {
+      "name": "ffmpeg_path",
+      "type": "STRING",
+      "label": "ffmpeg 路径",
+      "required": true,
+      "default": "",
+      "widget": "text",
+      "options": [],
+      "description": "留空自动探测"
+    }
+  ],
+  "permission": {
+    "subprocess": {
+      "enabled": true,
+      "argv_allowlist": [
+        "ffmpeg",
+        "ffprobe"
+      ]
+    }
+  },
+  "signature": {
+    "alg": "ed25519",
+    "key_id": "a8998646b062c170",
+    "value": "+0BBNJnrcg0DnYHrDpwZO1lliD3dTQxzpVrtxLjcoOCQgFwLhgJCGVjsiLxUoLf+0AFk9BV3DkkF+MHJddGDDA==",
+    "over": "manifest"
+  }
+}

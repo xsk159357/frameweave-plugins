@@ -1,0 +1,106 @@
+{
+  "schema_version": 2,
+  "engine_api": "1.0",
+  "type_id": "user/jsm_image_edit",
+  "title": "图生图 / 图片编辑",
+  "category": "输出",
+  "description": "OpenAI 兼容图片编辑 API，支持参考图与提示词。",
+  "version": "1.0.0",
+  "kind": "python",
+  "runtime": "python",
+  "entrypoint": "node.py",
+  "class_name": "ImageEditNode",
+  "inputs": [
+    {
+      "name": "reference_image",
+      "type": "IMAGE",
+      "label": "参考图",
+      "required": true
+    },
+    {
+      "name": "prompt",
+      "type": "SCRIPT",
+      "label": "编辑提示词",
+      "required": true
+    }
+  ],
+  "outputs": [
+    {
+      "name": "image",
+      "type": "IMAGE",
+      "label": "第一张图片"
+    },
+    {
+      "name": "images",
+      "type": "JSON",
+      "label": "图片列表"
+    },
+    {
+      "name": "report",
+      "type": "JSON",
+      "label": "处理报告"
+    }
+  ],
+  "params": [
+    {
+      "name": "base_url",
+      "type": "STRING",
+      "label": "API 地址",
+      "default": "https://api.openai.com/v1",
+      "widget": "text"
+    },
+    {
+      "name": "model",
+      "type": "STRING",
+      "label": "模型",
+      "default": "gpt-image-1",
+      "widget": "text"
+    },
+    {
+      "name": "api_key",
+      "type": "STRING",
+      "label": "API Key",
+      "default": "",
+      "widget": "password"
+    },
+    {
+      "name": "size",
+      "type": "STRING",
+      "label": "尺寸",
+      "default": "1024x1024",
+      "widget": "text"
+    },
+    {
+      "name": "count",
+      "type": "INT",
+      "label": "数量",
+      "default": 1,
+      "widget": "number"
+    }
+  ],
+  "permission": {
+    "fs": {
+      "write": [
+        "scratch/**"
+      ]
+    },
+    "network": {
+      "allow": [
+        "api.openai.com",
+        "127.0.0.1",
+        "localhost"
+      ]
+    },
+    "secret": {
+      "refs": [
+        "*"
+      ]
+    }
+  },
+  "signature": {
+    "alg": "ed25519",
+    "key_id": "a8998646b062c170",
+    "value": "HikrLbd7Snn7+j1CHFmxmfc71B031VZVnay8iF+vdrjSFaB/woH7ZnVvMY0YHw4RyqlJ9/pf3KF74YLwn2NjBQ==",
+    "over": "manifest"
+  }
+}

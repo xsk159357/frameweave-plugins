@@ -1,0 +1,376 @@
+{
+  "schema_version": 2,
+  "engine_api": "1.0",
+  "type_id": "core/pipeline_analyze",
+  "title": "视频分析流水线",
+  "category": "分析",
+  "description": "场景检测→ASR 字幕→文案生成 一键编排；支持批次信封批量与断点续跑",
+  "version": "2.0.0",
+  "kind": "python",
+  "runtime": "python",
+  "entrypoint": "node.py",
+  "class_name": "PipelineAnalyzeNode",
+  "inputs": [
+    {
+      "name": "video",
+      "type": "VIDEO",
+      "label": "视频",
+      "required": false,
+      "default": null,
+      "widget": "text",
+      "options": [],
+      "description": "单视频模式输入"
+    },
+    {
+      "name": "items",
+      "type": "JSON",
+      "label": "批次条目",
+      "required": false,
+      "default": null,
+      "widget": "text",
+      "options": [],
+      "description": "标准批次信封；item.input 含 video_id 或 path"
+    }
+  ],
+  "outputs": [
+    {
+      "name": "scenes",
+      "type": "SEGMENTS",
+      "label": "场景片段",
+      "required": false,
+      "default": null,
+      "widget": "text",
+      "options": [],
+      "description": "单模式：本视频场景；批量：首条成功项场景"
+    },
+    {
+      "name": "subtitles",
+      "type": "SUBTITLE",
+      "label": "字幕",
+      "required": false,
+      "default": null,
+      "widget": "text",
+      "options": [],
+      "description": "单模式：本视频字幕；批量：首条成功项字幕"
+    },
+    {
+      "name": "script",
+      "type": "SCRIPT",
+      "label": "解说文案",
+      "required": false,
+      "default": null,
+      "widget": "text",
+      "options": [],
+      "description": "单模式：本视频文案；批量：首条成功项文案"
+    },
+    {
+      "name": "results",
+      "type": "JSON",
+      "label": "批次结果",
+      "required": false,
+      "default": null,
+      "widget": "text",
+      "options": [],
+      "description": "批量模式的结果信封（含每项资产 id 与状态）"
+    },
+    {
+      "name": "report",
+      "type": "JSON",
+      "label": "流水线报告",
+      "required": true,
+      "default": null,
+      "widget": "text",
+      "options": [],
+      "description": "批量汇总或单视频阶段报告"
+    }
+  ],
+  "params": [
+    {
+      "name": "scene_strategy",
+      "type": "STRING",
+      "label": "场景策略",
+      "required": true,
+      "default": "auto",
+      "widget": "select",
+      "options": [
+        "auto",
+        "framediff",
+        "transnetv2",
+        "fixed_interval"
+      ],
+      "description": ""
+    },
+    {
+      "name": "scene_sample_fps",
+      "type": "FLOAT",
+      "label": "场景抽样帧率",
+      "required": true,
+      "default": 1.0,
+      "widget": "number",
+      "options": [],
+      "description": ""
+    },
+    {
+      "name": "scene_diff_threshold",
+      "type": "FLOAT",
+      "label": "场景帧差阈值",
+      "required": true,
+      "default": 0.1,
+      "widget": "number",
+      "options": [],
+      "description": ""
+    },
+    {
+      "name": "scene_min_duration",
+      "type": "FLOAT",
+      "label": "最小场景(秒)",
+      "required": true,
+      "default": 1.0,
+      "widget": "number",
+      "options": [],
+      "description": ""
+    },
+    {
+      "name": "scene_max_duration",
+      "type": "FLOAT",
+      "label": "最大场景(秒)",
+      "required": true,
+      "default": 30.0,
+      "widget": "number",
+      "options": [],
+      "description": ""
+    },
+    {
+      "name": "asr_engine",
+      "type": "STRING",
+      "label": "ASR 引擎",
+      "required": true,
+      "default": "auto",
+      "widget": "select",
+      "options": [
+        "auto",
+        "local",
+        "remote"
+      ],
+      "description": ""
+    },
+    {
+      "name": "asr_model",
+      "type": "STRING",
+      "label": "ASR 模型",
+      "required": true,
+      "default": "small",
+      "widget": "select",
+      "options": [
+        "tiny",
+        "base",
+        "small",
+        "medium",
+        "large-v3"
+      ],
+      "description": "faster-whisper 模型"
+    },
+    {
+      "name": "asr_language",
+      "type": "STRING",
+      "label": "ASR 语言",
+      "required": true,
+      "default": "zh",
+      "widget": "select",
+      "options": [
+        "zh",
+        "en",
+        "ja",
+        "ko",
+        "auto"
+      ],
+      "description": ""
+    },
+    {
+      "name": "narrate_mode",
+      "type": "STRING",
+      "label": "文案模式",
+      "required": true,
+      "default": "上帝视角",
+      "widget": "select",
+      "options": [
+        "上帝视角",
+        "扩写",
+        "配画面",
+        "仿写"
+      ],
+      "description": ""
+    },
+    {
+      "name": "narrate_style",
+      "type": "STRING",
+      "label": "文案风格",
+      "required": true,
+      "default": "悬疑解说",
+      "widget": "select",
+      "options": [
+        "悬疑解说",
+        "搞笑解说",
+        "知识科普",
+        "情感讲述",
+        "客观平实",
+        "自定义"
+      ],
+      "description": ""
+    },
+    {
+      "name": "narrate_language",
+      "type": "STRING",
+      "label": "文案语言",
+      "required": true,
+      "default": "中文",
+      "widget": "select",
+      "options": [
+        "中文",
+        "英语",
+        "日语",
+        "韩语",
+        "泰语",
+        "越南语",
+        "自动"
+      ],
+      "description": ""
+    },
+    {
+      "name": "provider",
+      "type": "STRING",
+      "label": "LLM Provider",
+      "required": true,
+      "default": "auto",
+      "widget": "select",
+      "options": [
+        "auto",
+        "openai",
+        "gemini"
+      ],
+      "description": ""
+    },
+    {
+      "name": "api_key",
+      "type": "STRING",
+      "label": "API Key",
+      "required": false,
+      "default": "",
+      "widget": "password",
+      "options": [],
+      "description": "支持 @secret:名称 引用保险箱"
+    },
+    {
+      "name": "base_url",
+      "type": "STRING",
+      "label": "API 地址",
+      "required": false,
+      "default": "",
+      "widget": "text",
+      "options": [],
+      "description": ""
+    },
+    {
+      "name": "model",
+      "type": "STRING",
+      "label": "LLM 模型",
+      "required": true,
+      "default": "gpt-4o",
+      "widget": "text",
+      "options": [],
+      "description": ""
+    },
+    {
+      "name": "target_duration",
+      "type": "FLOAT",
+      "label": "目标时长(秒,0=自动)",
+      "required": true,
+      "default": 0,
+      "widget": "number",
+      "options": [],
+      "description": ""
+    },
+    {
+      "name": "target_chars",
+      "type": "INT",
+      "label": "目标字数(0=自动)",
+      "required": true,
+      "default": 0,
+      "widget": "number",
+      "options": [],
+      "description": ""
+    },
+    {
+      "name": "temperature",
+      "type": "FLOAT",
+      "label": "温度",
+      "required": true,
+      "default": 0.7,
+      "widget": "number",
+      "options": [],
+      "description": ""
+    },
+    {
+      "name": "concurrency",
+      "type": "INT",
+      "label": "并发数",
+      "required": true,
+      "default": 2,
+      "widget": "number",
+      "options": [],
+      "description": "批量模式条目并发上限"
+    },
+    {
+      "name": "resume",
+      "type": "BOOL",
+      "label": "断点续跑",
+      "required": true,
+      "default": true,
+      "widget": "toggle",
+      "options": [],
+      "description": "成功条目跨运行复用（checkpoint 落盘）"
+    },
+    {
+      "name": "json_mode",
+      "type": "BOOL",
+      "label": "结构化输出",
+      "required": true,
+      "default": true,
+      "widget": "toggle",
+      "options": [],
+      "description": ""
+    },
+    {
+      "name": "local_match",
+      "type": "BOOL",
+      "label": "本地匹配兜底",
+      "required": true,
+      "default": true,
+      "widget": "toggle",
+      "options": [],
+      "description": ""
+    }
+  ],
+  "permission": {
+    "subprocess": {
+      "enabled": true,
+      "argv_allowlist": [
+        "ffmpeg",
+        "ffmpeg.exe",
+        "ffprobe",
+        "ffprobe.exe"
+      ]
+    },
+    "secret": {
+      "refs": [
+        "*"
+      ]
+    }
+  },
+  "signature": {
+    "alg": "ed25519",
+    "key_id": "a8998646b062c170",
+    "value": "X2YuOe3GMxEzFY3qCpT46E9uW85S3JTKMYBLrjyVeoJRR+lbELiQ8olu+/K4sutQSBnZ4NokPumfIm0KJUhjDA==",
+    "over": "manifest"
+  }
+}

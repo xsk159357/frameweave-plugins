@@ -1,0 +1,588 @@
+{
+    "schema_version":  1,
+    "track_count":  33,
+    "tracks":  [
+                   {
+                       "track_id":  "elegant_trailerv",
+                       "music_id":  "7492251004718663718",
+                       "role":  "铺垫",
+                       "intensity":  2,
+                       "default_volume":  0.24,
+                       "safe_ranges":  [
+                                           [
+                                               0.0,
+                                               42.0
+                                           ]
+                                       ]
+                   },
+                   {
+                       "track_id":  "soma",
+                       "music_id":  "7377566352755181607",
+                       "role":  "高潮",
+                       "intensity":  4,
+                       "default_volume":  0.3,
+                       "safe_ranges":  [
+                                           [
+                                               0.0,
+                                               96.0
+                                           ]
+                                       ]
+                   },
+                   {
+                       "track_id":  "sunrise",
+                       "music_id":  "6618871733141113604",
+                       "role":  "铺垫",
+                       "intensity":  2,
+                       "default_volume":  0.24,
+                       "safe_ranges":  [
+                                           [
+                                               0.0,
+                                               30.0
+                                           ]
+                                       ]
+                   },
+                   {
+                       "track_id":  "intro",
+                       "music_id":  "6674391749772708616",
+                       "role":  "铺垫",
+                       "intensity":  1,
+                       "default_volume":  0.24,
+                       "safe_ranges":  [
+                                           [
+                                               0.0,
+                                               30.0
+                                           ]
+                                       ]
+                   },
+                   {
+                       "track_id":  "bygone_bumps",
+                       "music_id":  "6867611562039838722",
+                       "role":  "推进",
+                       "intensity":  3,
+                       "default_volume":  0.26,
+                       "safe_ranges":  [
+                                           [
+                                               0.0,
+                                               30.0
+                                           ]
+                                       ]
+                   },
+                   {
+                       "track_id":  "spoons_for_loons",
+                       "music_id":  "6867622379724474370",
+                       "role":  "推进",
+                       "intensity":  3,
+                       "default_volume":  0.26,
+                       "safe_ranges":  [
+                                           [
+                                               0.0,
+                                               30.0
+                                           ]
+                                       ]
+                   },
+                   {
+                       "track_id":  "melody_original_mix",
+                       "music_id":  "6869039835424753672",
+                       "role":  "推进",
+                       "intensity":  3,
+                       "default_volume":  0.26,
+                       "safe_ranges":  [
+                                           [
+                                               0.0,
+                                               30.0
+                                           ]
+                                       ]
+                   },
+                   {
+                       "track_id":  "woman_theme",
+                       "music_id":  "7037053077140015104",
+                       "role":  "高潮",
+                       "intensity":  4,
+                       "default_volume":  0.3,
+                       "safe_ranges":  [
+                                           [
+                                               0.0,
+                                               30.0
+                                           ]
+                                       ]
+                   },
+                   {
+                       "track_id":  "dragonfly_keeper",
+                       "music_id":  "7188944958856890406",
+                       "role":  "铺垫",
+                       "intensity":  2,
+                       "default_volume":  0.24,
+                       "safe_ranges":  [
+                                           [
+                                               0.0,
+                                               30.0
+                                           ]
+                                       ]
+                   },
+                   {
+                       "track_id":  "snowy_morning",
+                       "music_id":  "7273791318668871741",
+                       "role":  "铺垫",
+                       "intensity":  1,
+                       "default_volume":  0.24,
+                       "safe_ranges":  [
+                                           [
+                                               0.0,
+                                               30.0
+                                           ]
+                                       ]
+                   },
+                   {
+                       "track_id":  "spring_in_my_step",
+                       "music_id":  "7328387457236895745",
+                       "role":  "推进",
+                       "intensity":  3,
+                       "default_volume":  0.26,
+                       "safe_ranges":  [
+                                           [
+                                               0.0,
+                                               30.0
+                                           ]
+                                       ]
+                   },
+                   {
+                       "track_id":  "old_school",
+                       "music_id":  "7331808078790887433",
+                       "role":  "推进",
+                       "intensity":  3,
+                       "default_volume":  0.26,
+                       "safe_ranges":  [
+                                           [
+                                               0.0,
+                                               30.0
+                                           ]
+                                       ]
+                   },
+                   {
+                       "track_id":  "the_right_path",
+                       "music_id":  "7337384568766531595",
+                       "role":  "推进",
+                       "intensity":  3,
+                       "default_volume":  0.26,
+                       "safe_ranges":  [
+                                           [
+                                               0.0,
+                                               30.0
+                                           ]
+                                       ]
+                   },
+                   {
+                       "track_id":  "the_sun_also_rises",
+                       "music_id":  "7387681584592766977",
+                       "role":  "推进",
+                       "intensity":  3,
+                       "default_volume":  0.26,
+                       "safe_ranges":  [
+                                           [
+                                               0.0,
+                                               30.0
+                                           ]
+                                       ]
+                   },
+                   {
+                       "track_id":  "letting_go_piano",
+                       "music_id":  "7390017069159843875",
+                       "role":  "收束",
+                       "intensity":  2,
+                       "default_volume":  0.24,
+                       "safe_ranges":  [
+                                           [
+                                               0.0,
+                                               30.0
+                                           ]
+                                       ]
+                   },
+                   {
+                       "track_id":  "opr",
+                       "music_id":  "7431928673422624804",
+                       "role":  "紧张",
+                       "intensity":  4,
+                       "default_volume":  0.27,
+                       "safe_ranges":  [
+                                           [
+                                               0.0,
+                                               30.0
+                                           ]
+                                       ]
+                   },
+                   {
+                       "track_id":  "got_to_be_real",
+                       "music_id":  "7509270688461965313",
+                       "role":  "推进",
+                       "intensity":  4,
+                       "default_volume":  0.27,
+                       "safe_ranges":  [
+                                           [
+                                               0.0,
+                                               30.0
+                                           ]
+                                       ]
+                   },
+                   {
+                       "track_id":  "my_way",
+                       "music_id":  "7510429818296092722",
+                       "role":  "收束",
+                       "intensity":  2,
+                       "default_volume":  0.24,
+                       "safe_ranges":  [
+                                           [
+                                               0.0,
+                                               30.0
+                                           ]
+                                       ]
+                   },
+                   {
+                       "track_id":  "time_to_love_atmosphere",
+                       "music_id":  "7528240845541034023",
+                       "role":  "收束",
+                       "intensity":  2,
+                       "default_volume":  0.24,
+                       "safe_ranges":  [
+                                           [
+                                               0.0,
+                                               30.0
+                                           ]
+                                       ]
+                   },
+                   {
+                       "track_id":  "void",
+                       "music_id":  "7534918707950635018",
+                       "role":  "紧张",
+                       "intensity":  4,
+                       "default_volume":  0.27,
+                       "safe_ranges":  [
+                                           [
+                                               0.0,
+                                               30.0
+                                           ]
+                                       ]
+                   },
+                   {
+                       "track_id":  "get_the_groove",
+                       "music_id":  "7538639053123242022",
+                       "role":  "推进",
+                       "intensity":  4,
+                       "default_volume":  0.27,
+                       "safe_ranges":  [
+                                           [
+                                               0.0,
+                                               30.0
+                                           ]
+                                       ]
+                   },
+                   {
+                       "track_id":  "monkeybiz",
+                       "music_id":  "7561328301798230062",
+                       "role":  "推进",
+                       "intensity":  3,
+                       "default_volume":  0.26,
+                       "safe_ranges":  [
+                                           [
+                                               0.0,
+                                               30.0
+                                           ]
+                                       ]
+                   },
+                   {
+                       "track_id":  "faded",
+                       "music_id":  "7561635569169565722",
+                       "role":  "收束",
+                       "intensity":  2,
+                       "default_volume":  0.24,
+                       "safe_ranges":  [
+                                           [
+                                               0.0,
+                                               30.0
+                                           ]
+                                       ]
+                   },
+                   {
+                       "track_id":  "solstice",
+                       "music_id":  "7561638056501053478",
+                       "role":  "铺垫",
+                       "intensity":  2,
+                       "default_volume":  0.24,
+                       "safe_ranges":  [
+                                           [
+                                               0.0,
+                                               30.0
+                                           ]
+                                       ]
+                   },
+                   {
+                       "track_id":  "tempt_scandal",
+                       "music_id":  "7581837586068604934",
+                       "role":  "紧张",
+                       "intensity":  4,
+                       "default_volume":  0.27,
+                       "safe_ranges":  [
+                                           [
+                                               0.0,
+                                               30.0
+                                           ]
+                                       ]
+                   },
+                   {
+                       "track_id":  "scheming_weasel",
+                       "music_id":  "7582992322025441331",
+                       "role":  "紧张",
+                       "intensity":  3,
+                       "default_volume":  0.26,
+                       "safe_ranges":  [
+                                           [
+                                               0.0,
+                                               30.0
+                                           ]
+                                       ]
+                   },
+                   {
+                       "track_id":  "panorama_i",
+                       "music_id":  "7610050088946370623",
+                       "role":  "紧张",
+                       "intensity":  3,
+                       "default_volume":  0.26,
+                       "safe_ranges":  [
+                                           [
+                                               0.0,
+                                               30.0
+                                           ]
+                                       ]
+                   },
+                   {
+                       "track_id":  "dream_for_today",
+                       "music_id":  "7643302954922395663",
+                       "role":  "推进",
+                       "intensity":  2,
+                       "default_volume":  0.24,
+                       "safe_ranges":  [
+                                           [
+                                               0.0,
+                                               30.0
+                                           ]
+                                       ]
+                   },
+                   {
+                       "track_id":  "curly_wurly",
+                       "music_id":  "7643308175758051362",
+                       "role":  "推进",
+                       "intensity":  3,
+                       "default_volume":  0.26,
+                       "safe_ranges":  [
+                                           [
+                                               0.0,
+                                               30.0
+                                           ]
+                                       ]
+                   },
+                   {
+                       "track_id":  "donde_estas_yolanda",
+                       "music_id":  "7650721332377028614",
+                       "role":  "高潮",
+                       "intensity":  4,
+                       "default_volume":  0.3,
+                       "safe_ranges":  [
+                                           [
+                                               0.0,
+                                               30.0
+                                           ]
+                                       ]
+                   },
+                   {
+                       "track_id":  "oops",
+                       "music_id":  "7654795642729383978",
+                       "role":  "推进",
+                       "intensity":  2,
+                       "default_volume":  0.24,
+                       "safe_ranges":  [
+                                           [
+                                               0.0,
+                                               30.0
+                                           ]
+                                       ]
+                   },
+                   {
+                       "track_id":  "elsinore_revisited",
+                       "music_id":  "7657773999291074606",
+                       "role":  "收束",
+                       "intensity":  3,
+                       "default_volume":  0.26,
+                       "safe_ranges":  [
+                                           [
+                                               0.0,
+                                               30.0
+                                           ]
+                                       ]
+                   },
+                   {
+                       "track_id":  "dance_for_me_wallis",
+                       "music_id":  "7657786295464495131",
+                       "role":  "收束",
+                       "intensity":  3,
+                       "default_volume":  0.26,
+                       "safe_ranges":  [
+                                           [
+                                               0.0,
+                                               30.0
+                                           ]
+                                       ]
+                   }
+               ],
+    "content_section_limits":  [
+                                   [
+                                       300000000,
+                                       3
+                                   ],
+                                   [
+                                       450000000,
+                                       4
+                                   ],
+                                   [
+                                       600000000,
+                                       5
+                                   ]
+                               ],
+    "crossfade_us":  800000,
+    "max_content_sections":  6,
+    "min_content_segment_us":  15000000,
+    "min_terminal_segment_us":  30000000,
+    "content_cues":  [
+                         [
+                             "收束",
+                             2,
+                             [
+                                 "到这里",
+                                 "故事最后",
+                                 "最终真相",
+                                 "最终一切",
+                                 "结局",
+                                 "从此",
+                                 "落下帷幕",
+                                 "故事结束",
+                                 "真相大白"
+                             ]
+                         ],
+                         [
+                             "高潮",
+                             5,
+                             [
+                                 "突然",
+                                 "瞬间",
+                                 "爆炸",
+                                 "反击",
+                                 "冲出",
+                                 "开枪",
+                                 "决战",
+                                 "崩溃",
+                                 "失控",
+                                 "生死",
+                                 "炸锅",
+                                 "浮出水面"
+                             ]
+                         ],
+                         [
+                             "紧张",
+                             4,
+                             [
+                                 "危机",
+                                 "危险",
+                                 "威胁",
+                                 "追杀",
+                                 "逃跑",
+                                 "拦截",
+                                 "绑架",
+                                 "恐惧",
+                                 "不安",
+                                 "血淋淋"
+                             ]
+                         ],
+                         [
+                             "推进",
+                             3,
+                             [
+                                 "随后",
+                                 "紧接着",
+                                 "与此同时",
+                                 "接下来",
+                                 "发现",
+                                 "决定",
+                                 "开始行动"
+                             ]
+                         ]
+                     ],
+    "role_fallbacks":  {
+                           "铺垫":  [
+                                      "铺垫",
+                                      "推进",
+                                      "收束",
+                                      "紧张",
+                                      "高潮"
+                                  ],
+                           "推进":  [
+                                      "推进",
+                                      "紧张",
+                                      "铺垫",
+                                      "高潮",
+                                      "收束"
+                                  ],
+                           "紧张":  [
+                                      "紧张",
+                                      "推进",
+                                      "高潮",
+                                      "铺垫",
+                                      "收束"
+                                  ],
+                           "高潮":  [
+                                      "高潮",
+                                      "紧张",
+                                      "推进",
+                                      "铺垫",
+                                      "收束"
+                                  ],
+                           "收束":  [
+                                      "收束",
+                                      "铺垫",
+                                      "推进",
+                                      "紧张",
+                                      "高潮"
+                                  ]
+                       },
+    "story_node_roles":  {
+                             "背景":  [
+                                        "铺垫",
+                                        1
+                                    ],
+                             "目标":  [
+                                        "铺垫",
+                                        2
+                                    ],
+                             "阻碍":  [
+                                        "紧张",
+                                        3
+                                    ],
+                             "行动":  [
+                                        "推进",
+                                        3
+                                    ],
+                             "转折":  [
+                                        "高潮",
+                                        5
+                                    ],
+                             "后果":  [
+                                        "紧张",
+                                        4
+                                    ],
+                             "新选择":  [
+                                         "推进",
+                                         4
+                                     ],
+                             "阶段结果":  [
+                                          "收束",
+                                          2
+                                      ]
+                         }
+}

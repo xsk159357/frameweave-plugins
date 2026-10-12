@@ -1,0 +1,236 @@
+{
+  "schema_version": 2,
+  "engine_api": "1.0",
+  "type_id": "user/jsm_highlight_mixcut",
+  "title": "精彩混剪",
+  "category": "语义",
+  "description": "精彩片段混剪：候选构建（按角色/间隙合并）+ 精彩度打分（LLM 分批 0-10 或本地启发式）+ 全局贪心择优凑满目标时长 + 钩子开场。批量可用。效果优于原版：失败批次保留本地打分与原因（原版默认 5 分吞错）、打分参数可调、hook 开关真实生效。",
+  "version": "1.0.0",
+  "kind": "python",
+  "runtime": "python",
+  "entrypoint": "node.py",
+  "class_name": "HighlightMixcutNode",
+  "inputs": [
+    {
+      "name": "rows",
+      "type": "JSON",
+      "label": "候选行",
+      "required": false,
+      "default": null,
+      "widget": "text",
+      "options": [],
+      "description": "[{start,end,role,text}]，已按时间排序（对白/字幕行）"
+    },
+    {
+      "name": "items",
+      "type": "JSON",
+      "label": "批量条目",
+      "required": false,
+      "default": null,
+      "widget": "text",
+      "options": [],
+      "description": "标准批次信封；每项 input={rows:[...], target_seconds?}"
+    }
+  ],
+  "outputs": [
+    {
+      "name": "selected",
+      "type": "JSON",
+      "label": "入选片段",
+      "required": true,
+      "default": null,
+      "widget": "text",
+      "options": [],
+      "description": "[{start,end,role,text,score,reason,is_hook}] 按时间排序"
+    },
+    {
+      "name": "timeline",
+      "type": "TIMELINE",
+      "label": "混剪时间线",
+      "required": true,
+      "default": null,
+      "widget": "text",
+      "options": [],
+      "description": "入选片段重组时间线（含 LAY_INDEX）"
+    },
+    {
+      "name": "report",
+      "type": "JSON",
+      "label": "混剪报告",
+      "required": true,
+      "default": null,
+      "widget": "text",
+      "options": [],
+      "description": "候选数/打分方式/批失败/贪心统计"
+    },
+    {
+      "name": "results",
+      "type": "JSON",
+      "label": "批量结果",
+      "required": true,
+      "default": null,
+      "widget": "text",
+      "options": [],
+      "description": "标准批次信封（单条=1 项，批量=多项）"
+    }
+  ],
+  "params": [
+    {
+      "name": "target_seconds",
+      "type": "FLOAT",
+      "label": "目标时长(秒)",
+      "required": true,
+      "default": 300.0,
+      "widget": "number",
+      "options": [],
+      "description": "入选总时长目标"
+    },
+    {
+      "name": "min_clip",
+      "type": "FLOAT",
+      "label": "最短片段(秒)",
+      "required": true,
+      "default": 3.0,
+      "widget": "number",
+      "options": [],
+      "description": "不足与邻段合并"
+    },
+    {
+      "name": "max_clip",
+      "type": "FLOAT",
+      "label": "单段上限(秒)",
+      "required": true,
+      "default": 20.0,
+      "widget": "number",
+      "options": [],
+      "description": "超出截断"
+    },
+    {
+      "name": "merge_gap",
+      "type": "FLOAT",
+      "label": "合并间隙(秒)",
+      "required": true,
+      "default": 1.5,
+      "widget": "number",
+      "options": [],
+      "description": "相邻同角色/跨角色候选合并最大间隙"
+    },
+    {
+      "name": "hook_max",
+      "type": "FLOAT",
+      "label": "钩子时长(秒)",
+      "required": true,
+      "default": 5.0,
+      "widget": "number",
+      "options": [],
+      "description": "钩子开场截取最高分段前 N 秒"
+    },
+    {
+      "name": "hook_enabled",
+      "type": "BOOL",
+      "label": "钩子开场",
+      "required": true,
+      "default": false,
+      "widget": "toggle",
+      "options": [],
+      "description": "开头插入最高分段前几秒副本"
+    },
+    {
+      "name": "scoring",
+      "type": "STRING",
+      "label": "打分方式",
+      "required": true,
+      "default": "auto",
+      "widget": "select",
+      "options": [
+        "auto",
+        "local",
+        "llm"
+      ],
+      "description": "auto=有 Key 用 LLM，否则本地启发式"
+    },
+    {
+      "name": "api_key",
+      "type": "STRING",
+      "label": "API Key",
+      "required": false,
+      "default": "",
+      "widget": "password",
+      "options": [],
+      "description": "可选；LLM 分批精彩度打分"
+    },
+    {
+      "name": "base_url",
+      "type": "STRING",
+      "label": "中转地址",
+      "required": true,
+      "default": "https://ameaaos.com/v1",
+      "widget": "text",
+      "options": [],
+      "description": ""
+    },
+    {
+      "name": "model",
+      "type": "STRING",
+      "label": "模型",
+      "required": true,
+      "default": "gpt-4o",
+      "widget": "text",
+      "options": [],
+      "description": ""
+    },
+    {
+      "name": "batch_size",
+      "type": "INT",
+      "label": "LLM 批大小",
+      "required": true,
+      "default": 40,
+      "widget": "number",
+      "options": [],
+      "description": "每批候选数"
+    },
+    {
+      "name": "max_concurrent",
+      "type": "INT",
+      "label": "批量并发",
+      "required": true,
+      "default": 2,
+      "widget": "number",
+      "options": [],
+      "description": ""
+    },
+    {
+      "name": "retries",
+      "type": "INT",
+      "label": "重试次数",
+      "required": true,
+      "default": 1,
+      "widget": "number",
+      "options": [],
+      "description": ""
+    },
+    {
+      "name": "resume",
+      "type": "BOOL",
+      "label": "断点续跑",
+      "required": true,
+      "default": true,
+      "widget": "toggle",
+      "options": [],
+      "description": ""
+    }
+  ],
+  "permission": {
+    "network": {
+      "allow": [
+        "*"
+      ]
+    }
+  },
+  "signature": {
+    "alg": "ed25519",
+    "key_id": "a8998646b062c170",
+    "value": "JAQuIgMw5un26rYC8BPRLBpvorRwVNz+SjT7v4j6mgTHigh0RHpefbDQOLHCWLusGWaTrOWCTYbMyqk+Zk8WDQ==",
+    "over": "manifest"
+  }
+}

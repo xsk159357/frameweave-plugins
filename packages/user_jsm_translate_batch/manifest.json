@@ -1,0 +1,206 @@
+{
+  "schema_version": 2,
+  "engine_api": "1.0",
+  "type_id": "user/jsm_translate_batch",
+  "title": "多语翻译·批量",
+  "category": "语义",
+  "description": "解说文案/字幕多语翻译（13+ 语言）：先整批一次调用、解析失败或条数不符降级单条、单条失败保留原文并标记；[pause]/[emphasis] 标记保留；长度容差 ±% 校验；语言名/码双向映射；稳定 item_id。效果优于原版：翻译失败不静默、语言映射更全、长度校验可见。",
+  "version": "1.0.0",
+  "kind": "python",
+  "runtime": "python",
+  "entrypoint": "node.py",
+  "class_name": "TranslateBatchNode",
+  "inputs": [
+    {
+      "name": "texts",
+      "type": "JSON",
+      "label": "待翻译文本",
+      "required": false,
+      "default": null,
+      "widget": "text",
+      "options": [],
+      "description": "字符串数组 [{id,text}] 或纯字符串数组；与 subtitles 二选一"
+    },
+    {
+      "name": "subtitles",
+      "type": "SUBTITLE",
+      "label": "字幕",
+      "required": false,
+      "default": null,
+      "widget": "text",
+      "options": [],
+      "description": "字幕行列表 [{start,end,text,...}]；翻译后保留时间轴"
+    },
+    {
+      "name": "items",
+      "type": "JSON",
+      "label": "批量条目",
+      "required": false,
+      "default": null,
+      "widget": "text",
+      "options": [],
+      "description": "标准批次信封；每项 input={texts:[...] 或 subtitles:[...]}"
+    }
+  ],
+  "outputs": [
+    {
+      "name": "translations",
+      "type": "JSON",
+      "label": "翻译结果",
+      "required": true,
+      "default": null,
+      "widget": "text",
+      "options": [],
+      "description": "[{item_id,text,translated,status,length_ratio,warning}]"
+    },
+    {
+      "name": "translated_subtitles",
+      "type": "SUBTITLE",
+      "label": "翻译字幕",
+      "required": false,
+      "default": null,
+      "widget": "text",
+      "options": [],
+      "description": "字幕输入时输出（保留时间轴与样式字段）"
+    },
+    {
+      "name": "report",
+      "type": "JSON",
+      "label": "翻译报告",
+      "required": true,
+      "default": null,
+      "widget": "text",
+      "options": [],
+      "description": "模式（batch/fallback）/语言/统计/长度校验"
+    },
+    {
+      "name": "results",
+      "type": "JSON",
+      "label": "批量结果",
+      "required": true,
+      "default": null,
+      "widget": "text",
+      "options": [],
+      "description": "标准批次信封（单条=1 项，批量=多项）"
+    }
+  ],
+  "params": [
+    {
+      "name": "target_language",
+      "type": "STRING",
+      "label": "目标语言",
+      "required": true,
+      "default": "英语",
+      "widget": "select",
+      "options": [
+        "英语",
+        "中文",
+        "日语",
+        "韩语",
+        "泰语",
+        "印尼语",
+        "越南语",
+        "马来语",
+        "西班牙语",
+        "葡萄牙语",
+        "俄语",
+        "法语",
+        "德语"
+      ],
+      "description": "显示名或语言码皆可"
+    },
+    {
+      "name": "api_key",
+      "type": "STRING",
+      "label": "API Key",
+      "required": false,
+      "default": "",
+      "widget": "password",
+      "options": [],
+      "description": "可填 @secret:名称 引用保险箱；空则节点报错（不伪翻译）"
+    },
+    {
+      "name": "base_url",
+      "type": "STRING",
+      "label": "中转地址",
+      "required": true,
+      "default": "https://ameaaos.com/v1",
+      "widget": "text",
+      "options": [],
+      "description": "OpenAI 兼容 base（含 /v1）"
+    },
+    {
+      "name": "model",
+      "type": "STRING",
+      "label": "模型",
+      "required": true,
+      "default": "gpt-4o-mini",
+      "widget": "text",
+      "options": [],
+      "description": ""
+    },
+    {
+      "name": "keep_style",
+      "type": "BOOL",
+      "label": "保留解说风格",
+      "required": true,
+      "default": true,
+      "widget": "toggle",
+      "options": [],
+      "description": "口号保持原文与节奏，避免翻译腔"
+    },
+    {
+      "name": "length_tolerance",
+      "type": "FLOAT",
+      "label": "长度容差",
+      "required": true,
+      "default": 0.2,
+      "widget": "number",
+      "options": [],
+      "description": "译文与原文长度比超出 ±20% 记 warning"
+    },
+    {
+      "name": "max_concurrent",
+      "type": "INT",
+      "label": "批量并发",
+      "required": true,
+      "default": 2,
+      "widget": "number",
+      "options": [],
+      "description": ""
+    },
+    {
+      "name": "retries",
+      "type": "INT",
+      "label": "重试次数",
+      "required": true,
+      "default": 2,
+      "widget": "number",
+      "options": [],
+      "description": ""
+    },
+    {
+      "name": "resume",
+      "type": "BOOL",
+      "label": "断点续跑",
+      "required": true,
+      "default": true,
+      "widget": "toggle",
+      "options": [],
+      "description": ""
+    }
+  ],
+  "permission": {
+    "network": {
+      "allow": [
+        "*"
+      ]
+    }
+  },
+  "signature": {
+    "alg": "ed25519",
+    "key_id": "a8998646b062c170",
+    "value": "+GIqeGbwEs4C3Dk2tHrXeZ2h6SjVb1rElLtcdlH2o46T+jH62ztNeC7c8qpzkG43raebPQLERoBKPKXlgayLCQ==",
+    "over": "manifest"
+  }
+}

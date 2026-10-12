@@ -1,0 +1,189 @@
+{
+  "schema_version": 2,
+  "engine_api": "1.0",
+  "type_id": "core/audio_master",
+  "title": "音频母带",
+  "category": "音频",
+  "description": "响度/音量/限幅/静音缩短/边缘静音裁剪 FFmpeg 滤镜链，输出前/后量测报告（峰值/RMS/LUFS）",
+  "version": "1.0.0",
+  "kind": "python",
+  "runtime": "python",
+  "entrypoint": "node.py",
+  "class_name": "AudioMasterNode",
+  "inputs": [
+    {
+      "name": "audio",
+      "type": "AUDIO",
+      "label": "源音频",
+      "required": true,
+      "default": null,
+      "widget": "text",
+      "options": [],
+      "description": "待母带音频"
+    }
+  ],
+  "outputs": [
+    {
+      "name": "mastered",
+      "type": "AUDIO",
+      "label": "母带音频",
+      "required": true,
+      "default": null,
+      "widget": "text",
+      "options": [],
+      "description": "滤镜链处理后的音频"
+    },
+    {
+      "name": "report",
+      "type": "JSON",
+      "label": "母带报告",
+      "required": true,
+      "default": null,
+      "widget": "text",
+      "options": [],
+      "description": "滤镜清单与量测结果"
+    }
+  ],
+  "params": [
+    {
+      "name": "enable_volume_boost",
+      "type": "BOOL",
+      "label": "启用音量提升",
+      "required": true,
+      "default": false,
+      "widget": "toggle",
+      "options": [],
+      "description": ""
+    },
+    {
+      "name": "volume_boost_db",
+      "type": "FLOAT",
+      "label": "音量提升(dB)",
+      "required": true,
+      "default": 3.0,
+      "widget": "number",
+      "options": [],
+      "description": "volume= 滤镜增益"
+    },
+    {
+      "name": "enable_limiter",
+      "type": "BOOL",
+      "label": "启用限幅",
+      "required": true,
+      "default": false,
+      "widget": "toggle",
+      "options": [],
+      "description": "alimiter 强制限幅"
+    },
+    {
+      "name": "limiter_ceiling_db",
+      "type": "FLOAT",
+      "label": "限幅上限(dB)",
+      "required": true,
+      "default": -3.0,
+      "widget": "number",
+      "options": [],
+      "description": "-12 ~ 0"
+    },
+    {
+      "name": "limiter_input_gain_db",
+      "type": "FLOAT",
+      "label": "限幅输入增益(dB)",
+      "required": true,
+      "default": 6.0,
+      "widget": "number",
+      "options": [],
+      "description": ""
+    },
+    {
+      "name": "enable_loudnorm",
+      "type": "BOOL",
+      "label": "启用响度归一",
+      "required": true,
+      "default": false,
+      "widget": "toggle",
+      "options": [],
+      "description": "EBU R128 loudnorm"
+    },
+    {
+      "name": "loudnorm_target_lufs",
+      "type": "FLOAT",
+      "label": "目标响度(LUFS)",
+      "required": true,
+      "default": -6.0,
+      "widget": "number",
+      "options": [],
+      "description": "如 -16（口播）/-6（成片）"
+    },
+    {
+      "name": "enable_silence_shorten",
+      "type": "BOOL",
+      "label": "缩短静音段",
+      "required": true,
+      "default": false,
+      "widget": "toggle",
+      "options": [],
+      "description": "将超过阈值的静音缩短"
+    },
+    {
+      "name": "silence_max_ms",
+      "type": "INT",
+      "label": "静音上限(ms)",
+      "required": true,
+      "default": 250,
+      "widget": "number",
+      "options": [],
+      "description": "超过该长度的静音缩短"
+    },
+    {
+      "name": "trim_edge_silence",
+      "type": "BOOL",
+      "label": "裁剪边缘静音",
+      "required": true,
+      "default": true,
+      "widget": "toggle",
+      "options": [],
+      "description": "silenceremove 头尾静音"
+    },
+    {
+      "name": "output_format",
+      "type": "STRING",
+      "label": "输出格式",
+      "required": true,
+      "default": "wav",
+      "widget": "select",
+      "options": [
+        "wav",
+        "mp3",
+        "m4a",
+        "flac"
+      ],
+      "description": ""
+    },
+    {
+      "name": "ffmpeg_path",
+      "type": "STRING",
+      "label": "ffmpeg 路径",
+      "required": true,
+      "default": "",
+      "widget": "text",
+      "options": [],
+      "description": "留空自动探测"
+    }
+  ],
+  "permission": {
+    "subprocess": {
+      "enabled": true,
+      "argv_allowlist": [
+        "ffmpeg",
+        "ffprobe"
+      ]
+    }
+  },
+  "signature": {
+    "alg": "ed25519",
+    "key_id": "a8998646b062c170",
+    "value": "4zWrt82wdLFXvf+JMWq6F2sQo5ZV54xA6DluzIhijiWoM2zdw3Z4TzIS1+55/KBknQ9WnJw6rx5l7V274LqHDw==",
+    "over": "manifest"
+  }
+}

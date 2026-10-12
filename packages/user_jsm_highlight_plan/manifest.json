@@ -1,0 +1,205 @@
+{
+  "schema_version": 2,
+  "engine_api": "1.0",
+  "type_id": "user/jsm_highlight_plan",
+  "title": "高光片段规划",
+  "category": "语义",
+  "description": "单视频混剪选片规划：focus 主题选片（CORE/SUPPORT）与 story 剧情主线（STORY 节点类型 + 章节 + 引导）双合同。结构化 JSON 输出（不依赖原版黑盒文本行解析）；无 API Key 时用确定性启发式打分本地规划，有 Key 时 LLM 增强；解析失败显式回退并报告。",
+  "version": "1.0.0",
+  "kind": "python",
+  "runtime": "python",
+  "entrypoint": "node.py",
+  "class_name": "HighlightPlanNode",
+  "inputs": [
+    {
+      "name": "scenes",
+      "type": "SEGMENTS",
+      "label": "场景列表",
+      "required": false,
+      "default": null,
+      "widget": "text",
+      "options": [],
+      "description": "候选场景 [{start,end,text,...}]；text 可为 ASR 对白/画面描述"
+    },
+    {
+      "name": "instruction",
+      "type": "SCRIPT",
+      "label": "主题指令",
+      "required": false,
+      "default": null,
+      "widget": "text",
+      "options": [],
+      "description": "可选；有方向=focus 主题选片，空=story 剧情主线"
+    },
+    {
+      "name": "items",
+      "type": "JSON",
+      "label": "批量条目",
+      "required": false,
+      "default": null,
+      "widget": "text",
+      "options": [],
+      "description": "标准批次信封；每项 input={scenes:[...], instruction?}"
+    }
+  ],
+  "outputs": [
+    {
+      "name": "plan",
+      "type": "JSON",
+      "label": "选片计划",
+      "required": true,
+      "default": null,
+      "widget": "text",
+      "options": [],
+      "description": "items[{start,end,score,reason,story_node,focus_tier,story_order,is_hook,chapter}], chapters, guides, planner_status, selection_mode"
+    },
+    {
+      "name": "chapters",
+      "type": "JSON",
+      "label": "章节",
+      "required": true,
+      "default": null,
+      "widget": "text",
+      "options": [],
+      "description": "章节列表 [{chapter,title,start,end,story_orders}]（story 模式合成/focus 自动）"
+    },
+    {
+      "name": "report",
+      "type": "JSON",
+      "label": "规划报告",
+      "required": true,
+      "default": null,
+      "widget": "text",
+      "options": [],
+      "description": "模式/LLM 状态/解析回退/统计"
+    },
+    {
+      "name": "results",
+      "type": "JSON",
+      "label": "批量结果",
+      "required": true,
+      "default": null,
+      "widget": "text",
+      "options": [],
+      "description": "标准批次信封（单条=1 项，批量=多项）"
+    }
+  ],
+  "params": [
+    {
+      "name": "mode",
+      "type": "STRING",
+      "label": "规划模式",
+      "required": true,
+      "default": "focus",
+      "widget": "select",
+      "options": [
+        "focus",
+        "story"
+      ],
+      "description": "focus=主题核心/承接；story=剧情主线节点类型"
+    },
+    {
+      "name": "target_duration",
+      "type": "FLOAT",
+      "label": "目标时长(秒)",
+      "required": true,
+      "default": 300.0,
+      "widget": "number",
+      "options": [],
+      "description": "混剪目标总时长"
+    },
+    {
+      "name": "max_clip",
+      "type": "FLOAT",
+      "label": "单段上限(秒)",
+      "required": true,
+      "default": 50.0,
+      "widget": "number",
+      "options": [],
+      "description": "超过上限截断"
+    },
+    {
+      "name": "hook_enabled",
+      "type": "BOOL",
+      "label": "钩子开场",
+      "required": true,
+      "default": true,
+      "widget": "toggle",
+      "options": [],
+      "description": "最高分片段副本置于开头"
+    },
+    {
+      "name": "api_key",
+      "type": "STRING",
+      "label": "API Key",
+      "required": false,
+      "default": "",
+      "widget": "password",
+      "options": [],
+      "description": "可选；填写则 LLM 增强规划，留空走本地启发式"
+    },
+    {
+      "name": "base_url",
+      "type": "STRING",
+      "label": "中转地址",
+      "required": true,
+      "default": "https://ameaaos.com/v1",
+      "widget": "text",
+      "options": [],
+      "description": "OpenAI 兼容 base（含 /v1）"
+    },
+    {
+      "name": "model",
+      "type": "STRING",
+      "label": "模型",
+      "required": true,
+      "default": "gpt-4o",
+      "widget": "text",
+      "options": [],
+      "description": ""
+    },
+    {
+      "name": "max_concurrent",
+      "type": "INT",
+      "label": "批量并发",
+      "required": true,
+      "default": 2,
+      "widget": "number",
+      "options": [],
+      "description": ""
+    },
+    {
+      "name": "retries",
+      "type": "INT",
+      "label": "重试次数",
+      "required": true,
+      "default": 1,
+      "widget": "number",
+      "options": [],
+      "description": "网络/超时类重试"
+    },
+    {
+      "name": "resume",
+      "type": "BOOL",
+      "label": "断点续跑",
+      "required": true,
+      "default": true,
+      "widget": "toggle",
+      "options": [],
+      "description": ""
+    }
+  ],
+  "permission": {
+    "network": {
+      "allow": [
+        "*"
+      ]
+    }
+  },
+  "signature": {
+    "alg": "ed25519",
+    "key_id": "a8998646b062c170",
+    "value": "5VNOGyTBSJcLDn/Dd20+7TLW879kqU1dra2acZa/eWgiOIsPfW9YoeA71ZgMqFXkMXJdorUVYAraAhQpj0+fDQ==",
+    "over": "manifest"
+  }
+}

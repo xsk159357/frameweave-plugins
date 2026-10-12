@@ -1,0 +1,149 @@
+{
+  "schema_version": 2,
+  "engine_api": "1.0",
+  "type_id": "core/ost_select",
+  "title": "OST 原声穿插选择",
+  "category": "音频",
+  "description": "对白候选筛选→打分（启发式/时长/LLM评分）→相邻合并→时间线重构（解说前置+原声插入）",
+  "version": "1.0.0",
+  "kind": "python",
+  "runtime": "python",
+  "entrypoint": "node.py",
+  "class_name": "OstSelectNode",
+  "inputs": [
+    {
+      "name": "dialogues",
+      "type": "SUBTITLE",
+      "label": "原片对白",
+      "required": true,
+      "default": null,
+      "widget": "text",
+      "options": [],
+      "description": "[{id?,text,start,end}] 原片识别对白"
+    },
+    {
+      "name": "timeline",
+      "type": "TIMELINE",
+      "label": "解说时间线",
+      "required": false,
+      "default": null,
+      "widget": "text",
+      "options": [],
+      "description": "解说段；与 OST 段合成 mixed_timeline"
+    },
+    {
+      "name": "cues",
+      "type": "JSON",
+      "label": "锚点提示",
+      "required": false,
+      "default": null,
+      "widget": "text",
+      "options": [],
+      "description": "可选：外部锚点 [{id|index, reason}]"
+    },
+    {
+      "name": "llm_scores",
+      "type": "JSON",
+      "label": "LLM 评分",
+      "required": false,
+      "default": null,
+      "widget": "text",
+      "options": [],
+      "description": "{候选id或index: 分数}；缺失项回退启发式打分"
+    }
+  ],
+  "outputs": [
+    {
+      "name": "mixed_timeline",
+      "type": "TIMELINE",
+      "label": "重构时间线",
+      "required": true,
+      "default": null,
+      "widget": "text",
+      "options": [],
+      "description": "解说+OST 交错段列表"
+    },
+    {
+      "name": "report",
+      "type": "JSON",
+      "label": "选择报告",
+      "required": true,
+      "default": null,
+      "widget": "text",
+      "options": [],
+      "description": "候选/筛选/打分/合并/warnings"
+    }
+  ],
+  "params": [
+    {
+      "name": "ratio",
+      "type": "FLOAT",
+      "label": "OST 占比",
+      "required": true,
+      "default": 0.3,
+      "widget": "number",
+      "options": [],
+      "description": "选中候选数 = round(候选数 × ratio)"
+    },
+    {
+      "name": "min_duration",
+      "type": "FLOAT",
+      "label": "最短候选(秒)",
+      "required": true,
+      "default": 2.0,
+      "widget": "number",
+      "options": [],
+      "description": "短于该值剔除"
+    },
+    {
+      "name": "max_duration",
+      "type": "FLOAT",
+      "label": "最长候选(秒)",
+      "required": true,
+      "default": 20.0,
+      "widget": "number",
+      "options": [],
+      "description": "超长截断到该值（保留尾段）"
+    },
+    {
+      "name": "anchor_count",
+      "type": "INT",
+      "label": "锚点数",
+      "required": true,
+      "default": 5,
+      "widget": "number",
+      "options": [],
+      "description": "启发式打分时的爆点锚点数量上限"
+    },
+    {
+      "name": "merge_gap_s",
+      "type": "FLOAT",
+      "label": "相邻合并阈值(秒)",
+      "required": true,
+      "default": 1.0,
+      "widget": "number",
+      "options": [],
+      "description": "选中项间隔≤该值则合并（原版阈值近似失效，此处真实生效）"
+    },
+    {
+      "name": "scoring",
+      "type": "STRING",
+      "label": "打分方式",
+      "required": true,
+      "default": "heuristic",
+      "widget": "select",
+      "options": [
+        "heuristic",
+        "duration",
+        "llm_first"
+      ],
+      "description": "heuristic=情绪/信息/冲突启发式；llm_first=优先 llm_scores 输入"
+    }
+  ],
+  "signature": {
+    "alg": "ed25519",
+    "key_id": "a8998646b062c170",
+    "value": "T11fIwzMtVI75Bpy5goNEboEdzxMFZKHJRJi5UkB2aqZfDxDkUF+7VWbBlGnpPttce4cyxc9MXG68xFlNm2CBg==",
+    "over": "manifest"
+  }
+}

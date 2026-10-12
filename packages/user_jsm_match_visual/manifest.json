@@ -1,0 +1,213 @@
+{
+  "schema_version": 2,
+  "engine_api": "1.0",
+  "type_id": "user/jsm_match_visual",
+  "title": "文案-画面匹配",
+  "category": "语义",
+  "description": "解说文案逐句匹配视频场景：CLIP/Chinese-CLIP 双塔特征或本地 n-gram 嵌入 + 关键帧采样 + 余弦贪心分配；可批量；质量报告与低相似警告。效果优于原版：avoid_adjacent_repeat 开关真实生效、质量阈值参数化、降级链透明。",
+  "version": "1.0.0",
+  "kind": "python",
+  "runtime": "python",
+  "entrypoint": "node.py",
+  "class_name": "MatchVisualNode",
+  "inputs": [
+    {
+      "name": "video",
+      "type": "VIDEO",
+      "label": "视频",
+      "required": false,
+      "default": null,
+      "widget": "text",
+      "options": [],
+      "description": "可选；连接后按关键帧提取视觉特征（需 CLIP 或本地视觉降级）"
+    },
+    {
+      "name": "script",
+      "type": "SCRIPT",
+      "label": "解说文案",
+      "required": false,
+      "default": null,
+      "widget": "text",
+      "options": [],
+      "description": "单条文案；与 items 二选一"
+    },
+    {
+      "name": "scenes",
+      "type": "SEGMENTS",
+      "label": "场景列表",
+      "required": false,
+      "default": null,
+      "widget": "text",
+      "options": [],
+      "description": "场景切分结果 [{start,end,...}]；缺省时按整段视频单场景"
+    },
+    {
+      "name": "items",
+      "type": "JSON",
+      "label": "批量条目",
+      "required": false,
+      "default": null,
+      "widget": "text",
+      "options": [],
+      "description": "标准批次信封/数组；每项 input={script_text 或 script, scenes?, video?}"
+    }
+  ],
+  "outputs": [
+    {
+      "name": "matches",
+      "type": "JSON",
+      "label": "匹配结果",
+      "required": true,
+      "default": null,
+      "widget": "text",
+      "options": [],
+      "description": "逐句匹配 {sentence_index,scene_index,similarity,sentence,start_time,end_time,strategy}"
+    },
+    {
+      "name": "timeline",
+      "type": "TIMELINE",
+      "label": "匹配时间线",
+      "required": true,
+      "default": null,
+      "widget": "text",
+      "options": [],
+      "description": "split_cam 风格 [{start,end,narration,LAY_INDEX}]"
+    },
+    {
+      "name": "report",
+      "type": "JSON",
+      "label": "质量报告",
+      "required": true,
+      "default": null,
+      "widget": "text",
+      "options": [],
+      "description": "strategy/embedder/质量指标/低相似警告"
+    },
+    {
+      "name": "results",
+      "type": "JSON",
+      "label": "批量结果",
+      "required": true,
+      "default": null,
+      "widget": "text",
+      "options": [],
+      "description": "标准批次信封（单条=1 项，批量=多项）"
+    }
+  ],
+  "params": [
+    {
+      "name": "embedder",
+      "type": "STRING",
+      "label": "嵌入器",
+      "required": true,
+      "default": "auto",
+      "widget": "select",
+      "options": [
+        "auto",
+        "clip",
+        "text"
+      ],
+      "description": "auto=优先 CLIP，不可用降级本地 n-gram（report 记录）；clip=强制双塔；text=纯本地字符 n-gram"
+    },
+    {
+      "name": "model_dir",
+      "type": "STRING",
+      "label": "CLIP 模型目录",
+      "required": false,
+      "default": "",
+      "widget": "text",
+      "options": [],
+      "description": "Chinese-CLIP 权重目录；空=自动探测环境变量 FRAMEWEAVE_CLIP_DIR"
+    },
+    {
+      "name": "frame_positions",
+      "type": "STRING",
+      "label": "关键帧采样位置",
+      "required": true,
+      "default": "0.1,0.5,0.9",
+      "widget": "text",
+      "options": [],
+      "description": "每场景内 0~1 相对采样位置，逗号分隔"
+    },
+    {
+      "name": "min_similarity",
+      "type": "FLOAT",
+      "label": "最低相似度",
+      "required": true,
+      "default": 0.2,
+      "widget": "number",
+      "options": [],
+      "description": "低于该值生成低相似警告（不中断）"
+    },
+    {
+      "name": "avoid_adjacent_repeat",
+      "type": "BOOL",
+      "label": "相邻句避免同场景",
+      "required": true,
+      "default": true,
+      "widget": "toggle",
+      "options": [],
+      "description": "原版开关失效；本节点真实生效（false 时允许相邻复用）"
+    },
+    {
+      "name": "allow_reuse",
+      "type": "BOOL",
+      "label": "允许场景复用",
+      "required": true,
+      "default": true,
+      "widget": "toggle",
+      "options": [],
+      "description": "场景数<句数时允许复用（原版行为，显式化）"
+    },
+    {
+      "name": "max_concurrent",
+      "type": "INT",
+      "label": "批量并发",
+      "required": true,
+      "default": 2,
+      "widget": "number",
+      "options": [],
+      "description": "批量条目并发上限"
+    },
+    {
+      "name": "retries",
+      "type": "INT",
+      "label": "重试次数",
+      "required": true,
+      "default": 1,
+      "widget": "number",
+      "options": [],
+      "description": "网络/超时类重试"
+    },
+    {
+      "name": "resume",
+      "type": "BOOL",
+      "label": "断点续跑",
+      "required": true,
+      "default": true,
+      "widget": "toggle",
+      "options": [],
+      "description": "同一 batch_id 恢复已成功条目"
+    }
+  ],
+  "permission": {
+    "subprocess": {
+      "enabled": true,
+      "argv_allowlist": [
+        "ffmpeg",
+        "ffprobe"
+      ]
+    },
+    "fs": {
+      "write": [
+        "match_frames/**"
+      ]
+    }
+  },
+  "signature": {
+    "alg": "ed25519",
+    "key_id": "a8998646b062c170",
+    "value": "FijsVtT8D4e9epvXni2oZrMirhLtNRqf8asyXnLl7jIat2yQVRe5ms4c3go+fuMDU+R69LeTMGdFfhpGT/9+CQ==",
+    "over": "manifest"
+  }
+}

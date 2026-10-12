@@ -4,8 +4,8 @@
   "type_id": "core/ai_narrate",
   "title": "AI 文案生成",
   "category": "语义",
-  "description": "生成解说文案：上帝视角自动分析 / 用户文案扩写 / 配画面 / 风格仿写",
-  "version": "1.0.0",
+  "description": "解说文案：上帝视角（视频/场景/描述）· 扩写 · 配画面 · 仿写；OpenAI/Gemini 兼容",
+  "version": "2.0.0",
   "kind": "python",
   "runtime": "python",
   "entrypoint": "node.py",
@@ -19,39 +19,49 @@
       "default": null,
       "widget": "text",
       "options": [],
-      "description": ""
+      "description": "上帝视角关键帧来源"
     },
     {
-      "name": "segments",
+      "name": "scenes",
       "type": "SEGMENTS",
-      "label": "片段列表",
+      "label": "场景片段",
       "required": false,
       "default": null,
       "widget": "text",
       "options": [],
-      "description": ""
+      "description": "场景列表（配画面/时间戳本地匹配用）"
     },
     {
-      "name": "script",
-      "type": "SCRIPT",
-      "label": "文案草稿",
+      "name": "descriptions",
+      "type": "JSON",
+      "label": "场景描述",
       "required": false,
       "default": null,
       "widget": "text",
       "options": [],
-      "description": ""
+      "description": "分块视觉分析的场景描述（上帝视角免关键帧、省 Token）"
+    },
+    {
+      "name": "draft",
+      "type": "SCRIPT",
+      "label": "文案草稿/示例",
+      "required": false,
+      "default": null,
+      "widget": "text",
+      "options": [],
+      "description": "扩写草稿 / 配画面文案 / 仿写示例"
     }
   ],
   "outputs": [
     {
-      "name": "narration_script",
+      "name": "script",
       "type": "SCRIPT",
       "label": "解说文案",
       "required": true,
       "default": null,
       "widget": "text",
       "options": [],
-      "description": ""
+      "description": "最终文案（text/chars/duration_estimate）"
     },
     {
       "name": "narration",
@@ -61,7 +71,17 @@
       "default": null,
       "widget": "text",
       "options": [],
-      "description": ""
+      "description": "分段 {text,start,end,scene_ids,tts_duration} + 覆盖率"
+    },
+    {
+      "name": "report",
+      "type": "JSON",
+      "label": "生成报告",
+      "required": false,
+      "default": null,
+      "widget": "text",
+      "options": [],
+      "description": "provider/model/策略/警告"
     }
   ],
   "params": [
@@ -92,7 +112,31 @@
         "搞笑解说",
         "知识科普",
         "情感讲述",
-        "客观平实"
+        "客观平实",
+        "自定义"
+      ],
+      "description": "内置风格包（钩子/禁词/语速）"
+    },
+    {
+      "name": "custom_style",
+      "type": "STRING",
+      "label": "自定义风格描述",
+      "required": false,
+      "default": "",
+      "widget": "text",
+      "options": [],
+      "description": "style=自定义 时的角色/语气描述"
+    },
+    {
+      "name": "perspective",
+      "type": "STRING",
+      "label": "视角",
+      "required": true,
+      "default": "第三人称",
+      "widget": "select",
+      "options": [
+        "第三人称",
+        "第一人称"
       ],
       "description": ""
     },
@@ -108,30 +152,45 @@
         "英语",
         "日语",
         "韩语",
-        "缅甸语",
-        "越南语"
+        "泰语",
+        "越南语",
+        "自动"
       ],
       "description": ""
+    },
+    {
+      "name": "provider",
+      "type": "STRING",
+      "label": "Provider",
+      "required": true,
+      "default": "auto",
+      "widget": "select",
+      "options": [
+        "auto",
+        "openai",
+        "gemini"
+      ],
+      "description": "auto=按 base_url 识别（generativelanguage → gemini）"
     },
     {
       "name": "api_key",
       "type": "STRING",
       "label": "API Key",
-      "required": true,
-      "default": null,
-      "widget": "text",
+      "required": false,
+      "default": "",
+      "widget": "password",
       "options": [],
-      "description": "用户自带 Key（本机加密存储）"
+      "description": "支持 @secret:名称 引用保险箱"
     },
     {
       "name": "base_url",
       "type": "STRING",
-      "label": "中转地址",
-      "required": true,
-      "default": "https://ameaaos.com/v1",
+      "label": "API 地址",
+      "required": false,
+      "default": "",
       "widget": "text",
       "options": [],
-      "description": ""
+      "description": "留空按 provider 默认（OpenAI / Gemini）"
     },
     {
       "name": "model",
@@ -144,14 +203,94 @@
       "description": ""
     },
     {
-      "name": "word_count",
-      "type": "INT",
-      "label": "目标字数",
+      "name": "target_duration",
+      "type": "FLOAT",
+      "label": "目标时长(秒,0=自动)",
       "required": true,
-      "default": 800,
+      "default": 0,
+      "widget": "number",
+      "options": [],
+      "description": "0=按视频时长 80% 自动推算"
+    },
+    {
+      "name": "target_chars",
+      "type": "INT",
+      "label": "目标字数(0=自动)",
+      "required": true,
+      "default": 0,
+      "widget": "number",
+      "options": [],
+      "description": "0=时长 × 4.5 字/秒 自动推算"
+    },
+    {
+      "name": "avg_segment_chars",
+      "type": "INT",
+      "label": "平均每段字数",
+      "required": true,
+      "default": 25,
+      "widget": "number",
+      "options": [],
+      "description": "估算分段数用"
+    },
+    {
+      "name": "temperature",
+      "type": "FLOAT",
+      "label": "温度",
+      "required": true,
+      "default": 0.7,
       "widget": "number",
       "options": [],
       "description": ""
+    },
+    {
+      "name": "max_tokens",
+      "type": "INT",
+      "label": "最大 Token",
+      "required": true,
+      "default": 4096,
+      "widget": "number",
+      "options": [],
+      "description": ""
+    },
+    {
+      "name": "keyframes",
+      "type": "INT",
+      "label": "关键帧数",
+      "required": true,
+      "default": 8,
+      "widget": "number",
+      "options": [],
+      "description": "上帝视角无描述时的抽帧数量"
+    },
+    {
+      "name": "json_mode",
+      "type": "BOOL",
+      "label": "结构化输出",
+      "required": true,
+      "default": true,
+      "widget": "toggle",
+      "options": [],
+      "description": "要求 LLM 输出 JSON 分段，失败回退纯文本"
+    },
+    {
+      "name": "local_match",
+      "type": "BOOL",
+      "label": "本地匹配兜底",
+      "required": true,
+      "default": true,
+      "widget": "toggle",
+      "options": [],
+      "description": "零 Token 本地场景匹配（顺序消费/全局去重/超长后扩）"
+    },
+    {
+      "name": "retries",
+      "type": "INT",
+      "label": "重试次数",
+      "required": true,
+      "default": 2,
+      "widget": "number",
+      "options": [],
+      "description": "LLM 请求失败重试次数"
     }
   ],
   "permission": {
@@ -159,7 +298,7 @@
       "enabled": true,
       "argv_allowlist": [
         "ffmpeg",
-        "ffprobe"
+        "ffmpeg.exe"
       ]
     },
     "secret": {
@@ -171,7 +310,7 @@
   "signature": {
     "alg": "ed25519",
     "key_id": "a8998646b062c170",
-    "value": "tYQtA7K91cGIZggnf2IfwA3YqmQQiI0mw1XFS9ZZcs1xK0KmxzbQzLCFycHBCBxaMO040sFfPuvZ3vdBQp5dAw==",
+    "value": "AZARsZznMVFtHqdt/ToKGz/A9qvkNEVorgbWP1vveXW5iPSr3IN5135KyEjuNVBcP4kC54drcXKjmfzilRSLCg==",
     "over": "manifest"
   }
 }

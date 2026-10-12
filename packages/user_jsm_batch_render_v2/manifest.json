@@ -1,0 +1,36 @@
+{
+  "schema_version": 2,
+  "engine_api": "1.0",
+  "type_id": "user/jsm_batch_render_v2",
+  "title": "批量出片 V2",
+  "category": "控制",
+  "description": "标准批次信封、断点续跑、逐条错误隔离的批量渲染。",
+  "version": "1.0.0",
+  "kind": "python",
+  "runtime": "python",
+  "entrypoint": "node.py",
+  "class_name": "BatchRenderV2Node",
+  "inputs": [
+    {"name":"video","type":"VIDEO","label":"源视频","required":true},
+    {"name":"segments","type":"SEGMENTS","label":"片段列表","required":true},
+    {"name":"items","type":"JSON","label":"批次条目","required":false,"default":null}
+  ],
+  "outputs": [
+    {"name":"results","type":"JSON","label":"批次结果"},
+    {"name":"report","type":"JSON","label":"执行报告"},
+    {"name":"first_video","type":"VIDEO","label":"第一项成片","required":false,"default":null}
+  ],
+  "params": [
+    {"name":"manual_items","type":"STRING","label":"矩阵条目","default":"","widget":"text"},
+    {"name":"variables","type":"STRING","label":"模板变量","default":"","widget":"text"},
+    {"name":"voice","type":"STRING","label":"音色","default":"zh-CN-XiaoxiaoNeural","widget":"text"},
+    {"name":"aspect","type":"STRING","label":"画幅","default":"16:9","widget":"select","options":["16:9","9:16","1:1"]},
+    {"name":"resolution","type":"STRING","label":"分辨率","default":"1080p","widget":"select","options":["1080p","720p","4k"]},
+    {"name":"fps","type":"INT","label":"帧率","default":30,"widget":"number"},
+    {"name":"output_prefix","type":"STRING","label":"输出前缀","default":"batch_","widget":"text"},
+    {"name":"max_concurrent","type":"INT","label":"最大并发","default":2,"widget":"number"},
+    {"name":"retries","type":"INT","label":"重试次数","default":1,"widget":"number"},
+    {"name":"resume","type":"BOOL","label":"断点续跑","default":true,"widget":"toggle"}
+  ],
+  "permission": {"fs":{"write":["batch_checkpoints/**"]}}
+}
