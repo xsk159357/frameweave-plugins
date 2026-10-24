@@ -5,7 +5,7 @@
   "title": "TTS 配音（多引擎）",
   "category": "音频",
   "description": "文字转语音：Edge免费 / IndexTTS2本地克隆 / OpenAI兼容 / 阿里NLS+CosyVoice / 豆包火山；支持长文本分块与分段批量合成",
-  "version": "2.1.0",
+  "version": "2.2.0",
   "kind": "python",
   "runtime": "python",
   "entrypoint": "node.py",
@@ -82,6 +82,16 @@
       "widget": "text",
       "options": [],
       "description": "分段/分块时间戳与状态"
+    },
+    {
+      "name": "subtitles",
+      "type": "SUBTITLE",
+      "label": "配音字幕",
+      "required": true,
+      "default": null,
+      "widget": "text",
+      "options": [],
+      "description": "按配音自身时间轴生成的字幕 cue（文字=解说文案，时间=配音实测/估计，带 timing_source）"
     },
     {
       "name": "report",

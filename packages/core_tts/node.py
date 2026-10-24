@@ -357,6 +357,33 @@ def _resolve_secret(ctx, key: str) -> str:
     return key
 
 
+def _cues_from_rows(rows: List[tuple]) -> List[Dict[str, Any]]:
+    """[(start, end, text, timing_source)] → SUBTITLE 载荷。
+
+    subtitle_compose 消费的就是 list[{start,end,text}]（它只校验 isinstance(list)），
+    多出的 `timing_source` 会原样透传到 styled_subtitle，供判据区分实测/估计。
+    """
+    cues = []
+    for start, end, text, source in rows:
+        text = str(text or "").strip()
+        if not text:
+            continue
+        cues.append({"start": round(float(start), 3), "end": round(float(end), 3),
+                     "text": text, "timing_source": source or "estimated"})
+    return cues
+
+
+def _subtitles_from_marks(marks: Dict[str, Any]) -> List[Dict[str, Any]]:
+    """marks → SUBTITLE：时间轴直接取段边界，不二次推算（C 方案的核心）。"""
+    rows = []
+    for s in ((marks or {}).get("segments") or []):
+        if not isinstance(s, dict):
+            continue
+        rows.append((s.get("start", 0.0), s.get("end", 0.0), s.get("text"),
+                     s.get("duration_source")))
+    return _cues_from_rows(rows)
+
+
 class TTSNode(NodeBase):
     @classmethod
     def spec(cls) -> NodeSpec:
@@ -375,6 +402,7 @@ class TTSNode(NodeBase):
                 PortSpec(name="audio", type=PortType.AUDIO, label="配音音频"),
                 PortSpec(name="duration", type=PortType.FLOAT, label="音频时长(秒)"),
                 PortSpec(name="marks", type=PortType.JSON, label="时间戳标记"),
+                PortSpec(name="subtitles", type=PortType.SUBTITLE, label="配音字幕"),
                 PortSpec(name="report", type=PortType.JSON, label="合成报告"),
             ],
             params=[
@@ -545,6 +573,21 @@ class TTSNode(NodeBase):
         store.save_asset(asset)
         return asset
 
+    def _save_subtitles(self, store, cues: List[Dict[str, Any]]):
+        """把 cue 列表存成 SUBTITLE 资产（C 方案：tts 直接出字幕轨）。
+
+        载荷结构 = subtitle_compose 读取的那一种（list[{start,end,text}]），
+        它只校验 isinstance(list)，多出的 timing_source 会透传到 styled_subtitle。
+        """
+        payload = list(cues or [])
+        n_measured = sum(1 for c in payload if c.get("timing_source") == "measured")
+        return store.save_asset(
+            Asset(id="", kind=PortType.SUBTITLE.value,
+                  meta={"count": len(payload), "from": "core/tts",
+                        "timing_measured": n_measured,
+                        "timing_estimated": len(payload) - n_measured}),
+            payload=payload)
+
     async def _synth_worker(self, ctx, engine: str, p: Dict[str, Any],
                             text: str, out_path: str,
                             inputs: Optional[dict] = None) -> Dict[str, Any]:
@@ -639,24 +682,40 @@ class TTSNode(NodeBase):
                   "chunks": len(chunks), "duration": total_dur,
                   "chars": len(text), "rt_s": round(time.time() - started, 1),
                   "warnings": [f"分块合成 {len(chunks)} 段并合并"] if len(chunks) > 1 else []}
-        return {"audio": asset, "duration": total_dur, "marks": marks, "report": report}
+        report["duration_measured"] = marks.get("duration_measured", 0)
+        report["duration_estimated"] = marks.get("duration_estimated", 0)
+        return {"audio": asset, "duration": total_dur, "marks": marks,
+                "subtitles": self._save_subtitles(ctx["store"], _subtitles_from_marks(marks)),
+                "report": report}
 
     @staticmethod
     def _build_marks(chunks: List[str], durations: List[float], weights: List[int],
                      total_dur: Optional[float]) -> Dict[str, Any]:
-        """按实测块时长（缺则按字符占比估计）累计时间戳。"""
+        """按实测块时长（缺则按字符占比估计）累计时间戳。
+
+        每段带 `duration_source`：measured = 该段时长来自 ffprobe 实测；estimated = 按字数占比估的。
+        没有这个字段时，「cue 边界 == marks 段边界」这类判据在估计值上照样能过，
+        而成片字幕其实对不上嘴——判据看不出问题，这是字幕自证缺口（FW-DEV-36 同族）。
+        """
         segments = []
         cursor = 0.0
+        n_measured = 0
         for i, c in enumerate(chunks):
             if i < len(durations) and durations[i]:
                 d = durations[i]
+                source = "measured"
+                n_measured += 1
             else:
                 d = (total_dur or 0.0) * weights[i] / max(sum(weights), 1)
+                source = "estimated"
             segments.append({"index": i, "text": c, "start": round(cursor, 3),
-                             "end": round(cursor + d, 3), "duration": round(d, 3)})
+                             "end": round(cursor + d, 3), "duration": round(d, 3),
+                             "duration_source": source})
             cursor += d
         return {"voice": None, "rate": None, "text_len": sum(len(c) for c in chunks),
-                "segments": segments, "total_duration": round(cursor, 3)}
+                "segments": segments, "total_duration": round(cursor, 3),
+                "duration_measured": n_measured,
+                "duration_estimated": len(chunks) - n_measured}
 
     # ------------------------------------------------------------ manual
 
@@ -668,9 +727,13 @@ class TTSNode(NodeBase):
         progress(1.0)
         asset = await self._save_audio(ctx["store"], audio_in.path,
                                        {"engine": "manual", "source": "user"}, duration=duration)
-        marks = {"engine": "manual", "segments": [], "total_duration": duration}
-        report = {"engine": "manual", "duration": duration, "warnings": []}
-        return {"audio": asset, "duration": duration or 0.0, "marks": marks, "report": report}
+        marks = {"engine": "manual", "segments": [], "total_duration": duration,
+                 "duration_measured": 0, "duration_estimated": 0}
+        report = {"engine": "manual", "duration": duration,
+                  "duration_measured": 0, "duration_estimated": 0, "warnings": []}
+        return {"audio": asset, "duration": duration or 0.0, "marks": marks,
+                "subtitles": self._save_subtitles(ctx["store"], _subtitles_from_marks(marks)),
+                "report": report}
 
     # ------------------------------------------------------------ indextts
 
@@ -910,7 +973,11 @@ class TTSNode(NodeBase):
         report = {"engine": "indextts", "chunks": len(chunks), "duration": total_dur,
                   "rt_s": round(time.time() - started, 1),
                   "warnings": [f"分块合成 {len(chunks)} 段并合并"] if len(chunks) > 1 else []}
-        return {"audio": asset, "duration": total_dur, "marks": marks, "report": report}
+        report["duration_measured"] = marks.get("duration_measured", 0)
+        report["duration_estimated"] = marks.get("duration_estimated", 0)
+        return {"audio": asset, "duration": total_dur, "marks": marks,
+                "subtitles": self._save_subtitles(ctx["store"], _subtitles_from_marks(marks)),
+                "report": report}
 
     async def _indextts_synth_once(self, ctx, params, text: str, ref_path: str, out_path: str,
                                    lang: str, duration_factor: float, base: str,
@@ -1156,7 +1223,11 @@ class TTSNode(NodeBase):
                   "chunks": len(chunks), "duration": total_dur,
                   "rt_s": round(time.time() - started, 1),
                   "warnings": [f"分块合成 {len(chunks)} 段并合并"] if len(chunks) > 1 else []}
-        return {"audio": asset, "duration": total_dur, "marks": marks, "report": report}
+        report["duration_measured"] = marks.get("duration_measured", 0)
+        report["duration_estimated"] = marks.get("duration_estimated", 0)
+        return {"audio": asset, "duration": total_dur, "marks": marks,
+                "subtitles": self._save_subtitles(ctx["store"], _subtitles_from_marks(marks)),
+                "report": report}
 
     # ------------------------------------------------------------ aliyun（NLS + CosyVoice，C4）
 
@@ -1504,14 +1575,37 @@ class TTSNode(NodeBase):
                                        {"engine": engine, "voice": voice, "batch": True,
                                         "merged": merge, "segments": len(segs),
                                         "rt_s": round(time.time() - started, 1)}, duration=total_dur)
+        # 字幕（C 方案）：cue 时间轴 = **合并后音频的真实累计时长**。
+        # 批量里 worker 返回的 start/end 是「输入分段」的时间轴（来自 SEGMENTS 资产），
+        # 合并音频后不可直接搬用——按 succeeded 的原序累加各段实测时长才与成片对齐。
+        text_by_index = {s["index"]: s["text"] for s in segs}
+        cue_rows = []
+        cursor = 0.0
+        for it in succeeded:
+            r = it.get("result") or {}
+            r_dur = r.get("duration")
+            if r_dur:
+                r_src = "measured"
+                r_dur = float(r_dur)
+            else:
+                r_src = "estimated"
+                r_dur = (total_dur or 0.0) / max(len(succeeded), 1)
+            cue_rows.append((cursor, cursor + r_dur, text_by_index.get(r.get("index")), r_src))
+            cursor += r_dur
+        subtitles = self._save_subtitles(store, _cues_from_rows(cue_rows))
         marks = {"engine": engine, "voice": voice, "batch": True, "segments": marks_items,
-                 "total_duration": total_dur}
+                 "total_duration": total_dur,
+                 "duration_measured": sum(1 for c in cue_rows if c[3] == "measured"),
+                 "duration_estimated": sum(1 for c in cue_rows if c[3] == "estimated")}
         report = {"engine": engine, "voice": voice, "batch": True,
                   "summary": {k: report_base[k] for k in ("total", "succeeded", "failed", "pending")},
                   "error_categories": report_base.get("error_categories", {}),
                   "duration": total_dur, "rt_s": round(time.time() - started, 1),
+                  "duration_measured": marks["duration_measured"],
+                  "duration_estimated": marks["duration_estimated"],
                   "warnings": []}
-        return {"audio": asset, "duration": total_dur, "marks": marks, "report": report}
+        return {"audio": asset, "duration": total_dur, "marks": marks,
+                "subtitles": subtitles, "report": report}
 
 
 def _validate_wav(path: str) -> bool:
