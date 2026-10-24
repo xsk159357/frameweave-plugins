@@ -256,12 +256,21 @@
       "refs": [
         "*"
       ]
+    },
+    "subprocess": {
+      "enabled": true,
+      "argv_allowlist": [
+        "ffmpeg",
+        "ffmpeg.exe",
+        "ffprobe",
+        "ffprobe.exe"
+      ]
     }
   },
   "signature": {
     "alg": "ed25519",
     "key_id": "a8998646b062c170",
-    "value": "ydH6T6wZGotMTohfm2eLeOvgcZNR5wPJZ/8yiIS8azeOAWLrqoJ92anevh93YpnRfylxOSNn0DMBfQBn0kAqBg==",
+    "value": "bD57uACGQ09L0UiX6gu1x1DeqEPDar24+Puu6mDWAE8BbjJqQQn0GaBs7d1lmcqjK4f+853ZATrG+evqK3oMDA==",
     "over": "manifest"
   }
 }
