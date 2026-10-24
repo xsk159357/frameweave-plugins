@@ -320,8 +320,12 @@ def parse_silencedetect(text: str, duration: float = 0.0) -> List[Tuple[float, f
 
 
 def punch_silences(rows: List[Dict[str, Any]], silences: List[Tuple[float, float]],
-                   tol: float = 0.05, min_keep: float = 0.1) -> Tuple[int, int]:
-    """把静默从行区间里"挖掉"（FW-DEV-46）。返回 (修正行数, 存疑未动的行数)。
+                   tol: float = 0.05, min_keep: float = 0.1) -> Tuple[int, int, int]:
+    """把静默从行区间里"挖掉"（FW-DEV-46）。返回 (punched_tail, punched_head, ambiguous_rows)。
+
+    **两个计数必须分开**（3.1.5 起）：3.1.4 只报一个 `punched`，把"截行尾"和"推下一行行首"
+    都算进去（实测 74）；3.1.5 的行首由前置条件保证，`punched_head` 单独计。
+    所以 74 → 37 是**语义变了，不是修复退化**——对着两个数说"少挖了一半"是误读。
 
     **安全规则（3.1.5，由 RMS 独立校验逼出来的）**：只有当一个行区间内**恰好**包含
     一段完整静默时，才把行尾截到该静默起点，并在必要时把下一行行首推到静默终点。
@@ -339,7 +343,8 @@ def punch_silences(rows: List[Dict[str, Any]], silences: List[Tuple[float, float
     永不删除可能含语音的部分；代价是含多句的行保持原样（该处间隙仍为 0，
     但不会被谎报成静默）。连续语音没有静默段 ⇒ 一行都不动。
     """
-    punched = 0
+    punched_tail = 0
+    punched_head = 0
     ambiguous = 0
     for i, row in enumerate(rows):
         try:
@@ -370,10 +375,11 @@ def punch_silences(rows: List[Dict[str, Any]], silences: List[Tuple[float, float
         if s - rs < min_keep:
             continue
         row["end"] = round(s, 3)
-        punched += 1
+        punched_tail += 1
         if nxt is not None and nstart < e and nend - e >= min_keep:
             nxt["start"] = round(e, 3)
-    return punched, ambiguous
+            punched_head += 1
+    return punched_tail, punched_head, ambiguous
 
 
 def _ffmpeg_probe_duration(src_path: str) -> Optional[float]:
@@ -580,10 +586,11 @@ class ASRNode(NodeBase):
         if rows:
             silences, silence_info = await self._detect_silences(ctx, src_path)
             if silences:
-                punched, ambiguous = punch_silences(rows, silences)
-                silence_info["punched"] = punched
+                _tail, _head, ambiguous = punch_silences(rows, silences)
+                silence_info["punched_tail"] = _tail
+                silence_info["punched_head"] = _head
                 silence_info["ambiguous_rows"] = ambiguous
-                if not punched:
+                if not _tail:
                     warnings.append(
                         "静默 %d 段但没有任何行恰好跨一段静默——未改动行边界" % len(silences))
                 elif ambiguous:
@@ -672,7 +679,10 @@ class ASRNode(NodeBase):
                               if engine_used == "local" else "remote_engine"),
             "window_seconds": window_seconds if engine_used == "gemini" else None,
             "media": {"path": src_path, "kind": getattr(src_asset, "kind", "")},
-            # FW-DEV-46：静默修正的取证。silence.punched=0 且 count>0 说明分段本来就对齐；
+            # FW-DEV-46：静默修正的取证。punched_tail=0 且 count>0 说明分段本来就对齐；
+            # punched_tail / punched_head 分开计（3.1.4 只报一个 punched，把两者相加，
+            # 所以 3.1.4 的 74 与 3.1.5 的 37 不是同一个量）；ambiguous_rows>0 表示
+            # 有"一行多句"被按安全规则跳过，该处间隙保持原值。
             # 下游用对白行算候选片段时，可以据此判断间隙是否可信。
             "silence": silence_info,
             "warnings": warnings,
