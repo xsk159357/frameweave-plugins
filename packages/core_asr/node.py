@@ -292,6 +292,70 @@ def _chat_gemini_audio(audio_b64: str, mime: str, prompt: str, api_key: str,
         raise RuntimeError("gemini: 响应解析失败: " + json.dumps(data, ensure_ascii=False)[:300]) from e
 
 
+_SILENCE_START_RE = re.compile(r"silence_start:\s*(-?[0-9.]+)")
+_SILENCE_END_RE = re.compile(r"silence_end:\s*(-?[0-9.]+)")
+
+
+def parse_silencedetect(text: str, duration: float = 0.0) -> List[Tuple[float, float]]:
+    """解析 `-af silencedetect` 的输出为 [(start, end)]（秒，FW-DEV-46）。
+
+    ffmpeg 把结果打在 stderr：`silence_start: 3.629` /
+    `silence_end: 9.088 | silence_duration: 5.459`。文件以静默收尾时只有 start，
+    此时用媒体时长补齐（补不到就丢掉这一段，不猜）。
+    """
+    starts = [float(x) for x in _SILENCE_START_RE.findall(text or "")]
+    ends = [float(x) for x in _SILENCE_END_RE.findall(text or "")]
+    out: List[Tuple[float, float]] = []
+    for i, s in enumerate(starts):
+        if i < len(ends):
+            e = ends[i]
+        elif duration > s:
+            e = duration
+        else:
+            continue
+        if e > s:
+            out.append((round(s, 3), round(e, 3)))
+    out.sort()
+    return out
+
+
+def punch_silences(rows: List[Dict[str, Any]], silences: List[Tuple[float, float]],
+                   tol: float = 0.05, min_keep: float = 0.1) -> int:
+    """把静默从行区间里"挖掉"（FW-DEV-46），返回修正的行数。
+
+    两种形态都处理（现场是①）：
+      ① 行**跨过**整段静默：vad_filter=True 时 faster-whisper 把语音拼成连续流再转写，
+         restore_speech_timestamps 只把边界吸附回原时间轴，实测边界正好落在静默**结束**处
+         （行 0→8.94，静默 3.8→8.94）⇒ 整段静默被这一行吞掉；
+      ② 边界落在静默内部。
+    两种都是「越过静默起点的行尾截到静默起点，落在静默内的行首推到静默终点」。
+    整行都落在静默内的（幻觉行）不碰——不做删行这种不可逆动作。
+    连续语音没有静默段 ⇒ 一行都不动（不凭空造间隙）。
+    """
+    punched = 0
+    for s, e in silences:
+        for row in rows:
+            try:
+                rs = float(row.get("start", 0.0))
+                re_ = float(row.get("end", 0.0))
+            except (TypeError, ValueError):
+                continue
+            if re_ <= s + tol:            # 整行在静默起点之前
+                continue
+            if rs >= e - tol:             # 整行在静默终点之后（rows 按时间有序）
+                break
+            if rs >= s + tol:             # 行首落在静默内 → 推到静默终点
+                if re_ - e >= min_keep:
+                    row["start"] = round(e, 3)
+                    punched += 1
+                continue
+            # 行首在静默之前、行尾越过静默起点 → 行尾截到静默起点
+            if s - rs >= min_keep:
+                row["end"] = round(s, 3)
+                punched += 1
+    return punched
+
+
 def _ffmpeg_probe_duration(src_path: str) -> Optional[float]:
     """ffprobe 取媒体时长（秒）；失败返回 None（不阻断，fallback 60s 窗）。"""
     from app.plugin import deps
@@ -402,7 +466,7 @@ class ASRNode(NodeBase):
                          widget="text",
                          description="sherpa-onnx 说话人区分模型目录（含 model.onnx/segmentation 与 embedding 模型）；留空自动探测 models/diarization"),
             ],
-            version="3.1.0",
+            version="3.1.4",
         )
 
     async def run(self, ctx: dict, inputs: dict, params: dict) -> Dict[str, Any]:
@@ -486,6 +550,24 @@ class ASRNode(NodeBase):
             raise RuntimeError(
                 "contract: 无可用的 ASR 引擎——安装 faster-whisper（local）或提供 api_key（gemini/remote）")
 
+        # FW-DEV-46：把静默从行区间里挖掉。
+        # 现场：40 句语音、句间 4.5 s 静默，ASR 输出 38 行、相邻间隙恒 0.00 s、
+        # 覆盖 0.0→360.42 s ⇒ 静默被吸进 segment 区间 ⇒ 下游 mixcut 的 merge_gap
+        # 永远命中 ⇒ 38 段并成 1 个候选。根因在分段边界，不在 mixcut、不在素材。
+        # 检测器与判据同源（ffmpeg silencedetect -35dB d=1.0），只改边界、不改文本；
+        # 连续语音没有静默段 ⇒ 一行都不动。
+        silence_info: Dict[str, Any] = {}
+        if rows:
+            silences, silence_info = await self._detect_silences(ctx, src_path)
+            if silences:
+                silence_info["punched"] = punch_silences(rows, silences)
+                if not silence_info["punched"]:
+                    warnings.append(
+                        "静默 %d 段但没有任何行越界——分段已对齐，未改动" % len(silences))
+            elif silence_info.get("error"):
+                warnings.append("静默检测失败（%s），本次不改行边界"
+                                % silence_info["error"])
+
         # G2：可选说话人区分（sherpa-onnx SpeakerDiarization；模型缺失/失败 → 降级警告不阻断）
         diar_warnings: List[str] = []
         if enable_diarization:
@@ -564,6 +646,9 @@ class ASRNode(NodeBase):
                               if engine_used == "local" else "remote_engine"),
             "window_seconds": window_seconds if engine_used == "gemini" else None,
             "media": {"path": src_path, "kind": getattr(src_asset, "kind", "")},
+            # FW-DEV-46：静默修正的取证。silence.punched=0 且 count>0 说明分段本来就对齐；
+            # 下游用对白行算候选片段时，可以据此判断间隙是否可信。
+            "silence": silence_info,
             "warnings": warnings,
             "diarization": {"enabled": enable_diarization,
                             "model_dir": diarization_model_dir or "",
@@ -591,6 +676,48 @@ class ASRNode(NodeBase):
         else:
             blob.update({"ready": True, "source": "remote"})
         return blob
+
+    async def _detect_silences(self, ctx, src_path: str,
+                               noise: str = "-35dB", min_dur: float = 1.0):
+        """量出媒体里的静默区间（FW-DEV-46）。返回 ([(start, end)], info)。
+
+        检测器与验收判据**同源**：ffmpeg `silencedetect=noise=-35dB:d=1.0`
+        （测试就是用这条命令当 ground truth：39 段、5.459/5.484/5.447/5.413）。
+        命令走 ctx.run_tracked_full（门控 + 记账 + 超时归平台），拿不到再退回裸
+        subprocess；任何失败都不阻断转写，只把原因记进 report。
+        """
+        info: Dict[str, Any] = {"detector": "ffmpeg silencedetect",
+                                "params": {"noise": noise, "min_duration_s": min_dur}}
+        try:
+            from app.plugin import deps
+            r = deps.resolve_binary("ffmpeg", env=os.environ)
+            ff = str(r["path"]) if r.get("ready") else "ffmpeg"
+        except Exception:  # noqa: BLE001
+            ff = "ffmpeg"
+        duration = float(_ffmpeg_probe_duration(src_path) or 0.0)
+        argv = [ff, "-hide_banner", "-nostats", "-i", src_path,
+                "-af", "silencedetect=noise=%s:d=%s" % (noise, min_dur),
+                "-f", "null", "-"]
+        text = ""
+        try:
+            if hasattr(ctx, "run_tracked_full"):
+                res = await ctx.run_tracked_full(argv, timeout=180)
+                text = str(getattr(res, "stderr", "") or "")
+                info["source"] = "ctx.run_tracked_full"
+            else:
+                import subprocess
+                p = subprocess.run(argv, capture_output=True, text=True,
+                                   encoding="utf-8", errors="replace", timeout=180)
+                text = p.stderr or ""
+                info["source"] = "subprocess"
+        except Exception as e:  # noqa: BLE001
+            info["error"] = "%s: %s" % (type(e).__name__, e)
+            return [], info
+        silences = parse_silencedetect(text, duration)
+        info.update({"count": len(silences),
+                     "total_silence_s": round(sum(e - s for s, e in silences), 3),
+                     "media_duration": duration})
+        return silences, info
 
     async def _transcribe_local(self, src_path: str, model: str, language: str, device: str,
                                 compute_type: str, vad: bool, word_ts: bool,
