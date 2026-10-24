@@ -1,0 +1,241 @@
+{
+  "tpl_id": "jsm_batch_pipeline",
+  "name": "批量出片",
+  "description": "多视频批量完整出片：load_video(paths 批量导入)→批次映射标准化→jsm_batch_pipeline 逐条完整流水线（分析/文案/匹配/字幕/配音/渲染）→结果信封落盘；矩阵变体：单视频×多文案用 core/batch_render 批量渲染。断点续跑 resume、并发隔离。",
+  "version": "1.0.0",
+  "kind": "workflow",
+  "tags": [
+    "解说猫复刻",
+    "批量",
+    "出片",
+    "矩阵",
+    "官方"
+  ],
+  "nodes": [
+    {
+      "id": "n1",
+      "type": "core/load_video",
+      "x": 40,
+      "y": 300,
+      "params": {
+        "path": "",
+        "paths": "",
+        "copy_into_store": true,
+        "probe_timeout": 30,
+        "trim_start": 0.0,
+        "trim_end": 0.0
+      },
+      "status": "pending",
+      "inputs": {}
+    },
+    {
+      "id": "n2",
+      "type": "user/jsm_batch_map",
+      "x": 260,
+      "y": 300,
+      "params": {
+        "mapping": "",
+        "concurrency": 2,
+        "checkpoint": true
+      },
+      "status": "pending",
+      "inputs": {
+        "items": "n1"
+      }
+    },
+    {
+      "id": "n3",
+      "type": "user/jsm_batch_pipeline",
+      "x": 480,
+      "y": 300,
+      "params": {
+        "scene_strategy": "auto",
+        "scene_sample_fps": 1.0,
+        "scene_diff_threshold": 0.1,
+        "scene_min_duration": 1.0,
+        "scene_max_duration": 30.0,
+        "chunk_enabled": false,
+        "chunk_target_duration": 180.0,
+        "chunk_min_duration": 120.0,
+        "chunk_max_duration": 240.0,
+        "asr_mode": "auto",
+        "asr_model": "small",
+        "asr_language": "zh",
+        "asr_api_key": "",
+        "asr_base_url": "https://api.openai.com/v1",
+        "narrate_mode": "上帝视角",
+        "narrate_style": "客观平实",
+        "narrate_language": "中文",
+        "provider": "auto",
+        "api_key": "@secret:llm_api_key",
+        "base_url": "",
+        "model": "",
+        "temperature": 0.7,
+        "target_duration": 0.0,
+        "target_chars": 0,
+        "json_mode": true,
+        "local_match": true,
+        "match_embedder": "text",
+        "match_min_similarity": 0.2,
+        "subtitle_preset": "默认",
+        "tts_engine": "edge",
+        "tts_voice": "zh-CN-XiaoxiaoNeural",
+        "tts_rate": "+0%",
+        "segments_source": "scenes",
+        "render_aspect": "original",
+        "render_resolution": "source",
+        "render_fps": 30,
+        "render_transition": "cut",
+        "render_transition_duration": 0.5,
+        "render_audio_mix": "narration_only",
+        "render_narration_volume": 1.0,
+        "render_original_volume": 0.35,
+        "render_burn_subtitle": true,
+        "output_name": "batch_out",
+        "concurrency": 2,
+        "resume": true,
+        "retries": 1
+      },
+      "status": "pending",
+      "inputs": {
+        "items": "n2"
+      }
+    },
+    {
+      "id": "n4",
+      "type": "core/file_output",
+      "x": 700,
+      "y": 300,
+      "params": {
+        "filename": "batch_results.json"
+      },
+      "status": "pending",
+      "inputs": {
+        "data": "n3"
+      }
+    },
+    {
+      "id": "n5",
+      "type": "core/load_video",
+      "x": 480,
+      "y": 620,
+      "params": {
+        "path": "",
+        "paths": "",
+        "copy_into_store": true,
+        "probe_timeout": 30,
+        "trim_start": 0.0,
+        "trim_end": 0.0
+      },
+      "status": "pending",
+      "inputs": {}
+    },
+    {
+      "id": "n6",
+      "type": "core/scene_detect",
+      "x": 680,
+      "y": 620,
+      "params": {
+        "strategy": "auto",
+        "sample_fps": 1.0,
+        "diff_threshold": 0.1,
+        "threshold": 0.5,
+        "min_duration": 1.0,
+        "max_duration": 30.0,
+        "merge_policy": "previous",
+        "fast_mode": false,
+        "transnet_model_path": ""
+      },
+      "status": "pending",
+      "inputs": {
+        "video": "n5"
+      }
+    },
+    {
+      "id": "n7",
+      "type": "core/batch_render",
+      "x": 880,
+      "y": 620,
+      "params": {
+        "manual_items": "",
+        "variables": "",
+        "voice": "zh-CN-YunxiNeural",
+        "aspect": "16:9",
+        "resolution": "1080p",
+        "fps": 30,
+        "transition": "cut",
+        "output_prefix": "batch_",
+        "max_concurrent": 2
+      },
+      "status": "pending",
+      "inputs": {
+        "video": "n5",
+        "segments": "n6",
+        "items": "n2"
+      }
+    },
+    {
+      "id": "n8",
+      "type": "core/file_output",
+      "x": 1100,
+      "y": 620,
+      "params": {
+        "filename": "matrix_results.json"
+      },
+      "status": "pending",
+      "inputs": {
+        "data": "n7"
+      }
+    }
+  ],
+  "edges": [
+    {
+      "source": "n1",
+      "target": "n2",
+      "sourceHandle": "batch",
+      "targetHandle": "items"
+    },
+    {
+      "source": "n2",
+      "target": "n3",
+      "sourceHandle": "batch",
+      "targetHandle": "items"
+    },
+    {
+      "source": "n3",
+      "target": "n4",
+      "sourceHandle": "results",
+      "targetHandle": "data"
+    },
+    {
+      "source": "n5",
+      "target": "n6",
+      "sourceHandle": "video",
+      "targetHandle": "video"
+    },
+    {
+      "source": "n5",
+      "target": "n7",
+      "sourceHandle": "video",
+      "targetHandle": "video"
+    },
+    {
+      "source": "n6",
+      "target": "n7",
+      "sourceHandle": "scenes",
+      "targetHandle": "segments"
+    },
+    {
+      "source": "n2",
+      "target": "n7",
+      "sourceHandle": "batch",
+      "targetHandle": "items"
+    },
+    {
+      "source": "n7",
+      "target": "n8",
+      "sourceHandle": "results",
+      "targetHandle": "data"
+    }
+  ]
+}

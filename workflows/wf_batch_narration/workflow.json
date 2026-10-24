@@ -1,0 +1,146 @@
+{
+  "tpl_id": "wf_batch_narration",
+  "name": "批量影视解说",
+  "description": "多视频批量分析→高光剪辑→批量配音→竖屏短视频输出",
+  "version": "1.0.0",
+  "kind": "workflow",
+  "tags": [
+    "影视解说",
+    "批量",
+    "官方"
+  ],
+  "nodes": [
+    {
+      "id": "n0",
+      "type": "core/load_video",
+      "x": 40,
+      "y": 160,
+      "params": {
+        "path": "",
+        "paths": "",
+        "copy_into_store": true,
+        "probe_timeout": 30,
+        "trim_start": 0.0,
+        "trim_end": 0.0
+      },
+      "status": "pending",
+      "inputs": {}
+    },
+    {
+      "id": "n1",
+      "type": "user/jsm_batch_pipeline",
+      "x": 40,
+      "y": 300,
+      "params": {
+        "scene_strategy": "auto",
+        "asr_mode": "auto",
+        "asr_language": "zh",
+        "chunk_enabled": true
+      },
+      "status": "pending",
+      "inputs": {
+        "items": "n0"
+      },
+      "input_slots": {
+        "items": 2
+      }
+    },
+    {
+      "id": "n2",
+      "type": "user/jsm_highlight_mixcut",
+      "x": 320,
+      "y": 300,
+      "params": {
+        "target_seconds": 90,
+        "min_clip": 2,
+        "max_clip": 8,
+        "hook_enabled": true,
+        "scoring": "ai"
+      },
+      "status": "pending",
+      "inputs": {
+        "items": "n1"
+      },
+      "input_slots": {
+        "items": 0
+      }
+    },
+    {
+      "id": "n3",
+      "type": "core/tts",
+      "x": 600,
+      "y": 300,
+      "params": {
+        "engine": "edge",
+        "voice": "zh-CN-XiaoxiaoNeural",
+        "rate": "+0%",
+        "output_format": "mp3"
+      },
+      "status": "pending",
+      "inputs": {
+        "script": "n1"
+      },
+      "input_slots": {
+        "script": 0
+      }
+    },
+    {
+      "id": "n4",
+      "type": "core/video_render",
+      "x": 880,
+      "y": 300,
+      "params": {
+        "aspect": "9:16",
+        "resolution": "1080p",
+        "fps": 30,
+        "burn_subtitle": true,
+        "audio_mix": "narration_only",
+        "output_name": "批量短视频成片"
+      },
+      "status": "pending",
+      "inputs": {
+        "video": "n0",
+        "segments": "n2",
+        "audio": "n3"
+      }
+    }
+  ],
+  "edges": [
+    {
+      "source": "n1",
+      "target": "n2",
+      "sourceHandle": "results",
+      "targetHandle": "items"
+    },
+    {
+      "source": "n1",
+      "target": "n3",
+      "sourceHandle": "results",
+      "targetHandle": "script"
+    },
+    {
+      "source": "n2",
+      "target": "n4",
+      "sourceHandle": "segments",
+      "targetHandle": "segments"
+    },
+    {
+      "source": "n3",
+      "target": "n4",
+      "sourceHandle": "audio",
+      "targetHandle": "audio"
+    },
+    {
+      "source": "n0",
+      "target": "n1",
+      "sourceHandle": "batch",
+      "targetHandle": "items"
+    },
+    {
+      "source": "n0",
+      "target": "n4",
+      "sourceHandle": "video",
+      "targetHandle": "video"
+    }
+  ]
+}

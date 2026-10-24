@@ -1,0 +1,59 @@
+{
+  "schema_version": 2,
+  "engine_api": "1.0",
+  "type_id": "user/web_demo",
+  "title": "Web 扩展示例（画布注入）",
+  "category": "用户节点",
+  "description": "S1-T7 示例插件（R-平台-7）：携带 web 目录，平台加载并在画布注入自定义 UI 组件（EXTENSION_WEB_DIRS 等价）。安装后画布右上角出现「Web 扩展组件」面板，可点击计数验证脚本在画布上下文执行。",
+  "version": "1.0.0",
+  "kind": "transform",
+  "runtime": "transform",
+  "inputs": [
+    {
+      "name": "text",
+      "type": "STRING",
+      "label": "文本",
+      "required": false,
+      "default": "",
+      "widget": "text",
+      "options": [],
+      "description": "演示输入"
+    }
+  ],
+  "outputs": [
+    {
+      "name": "result",
+      "type": "STRING",
+      "label": "结果",
+      "required": false,
+      "widget": "text",
+      "options": [],
+      "description": "演示输出"
+    }
+  ],
+  "params": [],
+  "transform": {
+    "result": {
+      "op": "concat",
+      "sources": [
+        {
+          "$input": "text"
+        }
+      ],
+      "prefix": "[web-demo] "
+    }
+  },
+  "web": {
+    "entry": "web/index.js",
+    "sandbox": {},
+    "capabilities": [
+      "canvas"
+    ]
+  },
+  "signature": {
+    "alg": "ed25519",
+    "key_id": "a8998646b062c170",
+    "value": "Uf1VQ5eBEFUHwiBKs3V0Fhbrky4wr8kJAi+0uwJV7ZwW4LjJB5h1ezLKioN7QRP5KrDZLd12kZNsiBz6nOrZDw==",
+    "over": "manifest"
+  }
+}

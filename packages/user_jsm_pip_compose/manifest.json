@@ -1,0 +1,122 @@
+{
+  "schema_version": 2,
+  "engine_api": "1.0",
+  "type_id": "user/jsm_pip_compose",
+  "title": "口播画中画合成",
+  "category": "剪辑",
+  "description": "将口播视频或图片作为画中画叠加到主视频，支持位置、比例、边框和音频混合。",
+  "version": "1.0.0",
+  "kind": "python",
+  "runtime": "python",
+  "entrypoint": "node.py",
+  "class_name": "PipComposeNode",
+  "inputs": [
+    {
+      "name": "video",
+      "type": "VIDEO",
+      "label": "主视频",
+      "required": true
+    },
+    {
+      "name": "pip_video",
+      "type": "VIDEO",
+      "label": "画中画视频",
+      "required": false
+    },
+    {
+      "name": "pip_image",
+      "type": "IMAGE",
+      "label": "画中画图片",
+      "required": false
+    }
+  ],
+  "outputs": [
+    {
+      "name": "video_out",
+      "type": "VIDEO",
+      "label": "合成视频"
+    },
+    {
+      "name": "report",
+      "type": "JSON",
+      "label": "处理报告"
+    }
+  ],
+  "params": [
+    {
+      "name": "position",
+      "type": "STRING",
+      "label": "位置",
+      "default": "bottom-right",
+      "widget": "select",
+      "options": [
+        "top-left",
+        "top-right",
+        "bottom-left",
+        "bottom-right",
+        "center"
+      ]
+    },
+    {
+      "name": "width_ratio",
+      "type": "FLOAT",
+      "label": "宽度比例",
+      "default": 0.35,
+      "widget": "number"
+    },
+    {
+      "name": "margin",
+      "type": "INT",
+      "label": "边距",
+      "default": 20,
+      "widget": "number"
+    },
+    {
+      "name": "border_width",
+      "type": "INT",
+      "label": "边框宽度",
+      "default": 4,
+      "widget": "number"
+    },
+    {
+      "name": "border_color",
+      "type": "STRING",
+      "label": "边框颜色",
+      "default": "white",
+      "widget": "text"
+    },
+    {
+      "name": "pip_volume",
+      "type": "FLOAT",
+      "label": "画中画音量",
+      "default": 0.0,
+      "widget": "number"
+    },
+    {
+      "name": "output_name",
+      "type": "STRING",
+      "label": "输出文件名",
+      "default": "pip_compose",
+      "widget": "text"
+    }
+  ],
+  "permission": {
+    "fs": {
+      "write": [
+        "scratch/**"
+      ]
+    },
+    "subprocess": {
+      "enabled": true,
+      "argv_allowlist": [
+        "ffmpeg"
+      ]
+    }
+  },
+  "signature": {
+    "alg": "ed25519",
+    "key_id": "a8998646b062c170",
+    "value": "u3BCMkJ/NlUhXDdjkqsw0GcW8FHYgUywCkuV0YXT+DjLt7J2avQXIqileBJQP8uttlNA19dCAsokzIv602enDg==",
+    "over": "manifest"
+  }
+}

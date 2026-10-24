@@ -1,0 +1,313 @@
+{
+  "schema_version": 2,
+  "engine_api": "1.0",
+  "type_id": "user/jsm_koubo_process",
+  "title": "口播成片编排",
+  "category": "剪辑",
+  "description": "E1 口播一键出片：剪静音→响度(-16 LUFS)→BGM 混音→随机放大(zoompan 50% 不相邻)→字幕烧录→导出剪映草稿；逐阶段错误码报告(S13)",
+  "version": "1.1.0",
+  "kind": "python",
+  "runtime": "python",
+  "entrypoint": "node.py",
+  "class_name": "JsmKouboProcessNode",
+  "inputs": [
+    {
+      "name": "video",
+      "type": "VIDEO",
+      "label": "口播视频",
+      "required": true,
+      "default": null,
+      "widget": "text",
+      "options": [],
+      "description": "口播源视频（随机放大/烧录/导出基础）"
+    },
+    {
+      "name": "subtitles",
+      "type": "SUBTITLE",
+      "label": "字幕",
+      "required": false,
+      "default": null,
+      "widget": "text",
+      "options": [],
+      "description": "口播字幕（缺省时 enable_asr 走 core/asr 识别）"
+    },
+    {
+      "name": "scenes",
+      "type": "SEGMENTS",
+      "label": "分段",
+      "required": false,
+      "default": null,
+      "widget": "text",
+      "options": [],
+      "description": "随机放大分段依据（缺省=整片单段）"
+    },
+    {
+      "name": "bgm",
+      "type": "AUDIO",
+      "label": "BGM 素材",
+      "required": false,
+      "default": null,
+      "widget": "text",
+      "options": [],
+      "description": "背景音乐（enable_bgm 时混音到解说音轨）"
+    }
+  ],
+  "outputs": [
+    {
+      "name": "video_out",
+      "type": "VIDEO",
+      "label": "成片视频",
+      "required": true,
+      "default": null,
+      "widget": "text",
+      "options": [],
+      "description": "一键出片：随机放大 + 字幕烧录 + 混音后最终视频"
+    },
+    {
+      "name": "audio",
+      "type": "AUDIO",
+      "label": "成片音轨",
+      "required": true,
+      "default": null,
+      "widget": "text",
+      "options": [],
+      "description": "剪静音→响度→BGM 混音后的音轨"
+    },
+    {
+      "name": "segments",
+      "type": "SEGMENTS",
+      "label": "放大决策段",
+      "required": false,
+      "default": null,
+      "widget": "text",
+      "options": [],
+      "description": "随机放大分段决策（zoom 标记，相邻段不重复放大 S10）"
+    },
+    {
+      "name": "report",
+      "type": "JSON",
+      "label": "编排报告",
+      "required": true,
+      "default": null,
+      "widget": "text",
+      "options": [],
+      "description": "逐阶段状态与错误码（S13：失败携带 code，不静默）"
+    }
+  ],
+  "params": [
+    {
+      "name": "enable_asr",
+      "type": "BOOL",
+      "label": "无字幕时 ASR",
+      "required": true,
+      "default": false,
+      "widget": "toggle",
+      "options": [],
+      "description": "subtitles 缺省时调用 core/asr 识别（需本地/远程识别引擎）"
+    },
+    {
+      "name": "enable_trim",
+      "type": "BOOL",
+      "label": "剪静音",
+      "required": true,
+      "default": true,
+      "widget": "toggle",
+      "options": [],
+      "description": "core/audio_silence_trim 阶段开关"
+    },
+    {
+      "name": "trim_threshold_db",
+      "type": "FLOAT",
+      "label": "静音阈值(dB)",
+      "required": false,
+      "default": 0.0,
+      "widget": "number",
+      "options": [],
+      "description": "透传 audio_silence_trim.threshold_db"
+    },
+    {
+      "name": "trim_min_silence_ms",
+      "type": "INT",
+      "label": "最小静音(ms)",
+      "required": false,
+      "default": 200,
+      "widget": "number",
+      "options": [],
+      "description": "透传 audio_silence_trim.min_silence_ms"
+    },
+    {
+      "name": "enable_master",
+      "type": "BOOL",
+      "label": "响度统一",
+      "required": true,
+      "default": true,
+      "widget": "toggle",
+      "options": [],
+      "description": "core/audio_master 阶段开关"
+    },
+    {
+      "name": "master_lufs",
+      "type": "FLOAT",
+      "label": "响度目标(LUFS)",
+      "required": false,
+      "default": -16.0,
+      "widget": "number",
+      "options": [],
+      "description": "透传 audio_master.loudnorm_target_lufs；默认 -16（YouTube 口播标准，对齐解说猫）"
+    },
+    {
+      "name": "enable_bgm",
+      "type": "BOOL",
+      "label": "BGM 混音",
+      "required": true,
+      "default": true,
+      "widget": "toggle",
+      "options": [],
+      "description": "bgm 输入存在时混音到解说音轨（amix + 音量参数）"
+    },
+    {
+      "name": "narration_volume",
+      "type": "FLOAT",
+      "label": "解说音量",
+      "required": false,
+      "default": 1.0,
+      "widget": "number",
+      "options": [],
+      "description": "BGM 混音时解说轨增益"
+    },
+    {
+      "name": "bgm_volume",
+      "type": "FLOAT",
+      "label": "BGM 音量",
+      "required": false,
+      "default": 0.3,
+      "widget": "number",
+      "options": [],
+      "description": "BGM 混音时音乐轨增益"
+    },
+    {
+      "name": "enable_zoom",
+      "type": "BOOL",
+      "label": "随机放大",
+      "required": true,
+      "default": true,
+      "widget": "toggle",
+      "options": [],
+      "description": "ffmpeg zoompan 随机放大（50% 不相邻，S10）"
+    },
+    {
+      "name": "zoom_ratio",
+      "type": "FLOAT",
+      "label": "放大段比例",
+      "required": true,
+      "default": 0.5,
+      "widget": "number",
+      "options": [],
+      "description": "被放大的段占比（≈50%，相邻段不重复放大）"
+    },
+    {
+      "name": "zoom_amount",
+      "type": "FLOAT",
+      "label": "放大倍率",
+      "required": true,
+      "default": 1.12,
+      "widget": "number",
+      "options": [],
+      "description": "zoompan 最大缩放倍率（1.0=不变）"
+    },
+    {
+      "name": "zoom_seed",
+      "type": "INT",
+      "label": "随机种子(0=随机)",
+      "required": false,
+      "default": 0,
+      "widget": "number",
+      "options": [],
+      "description": "放大决策随机种子（0=时间随机）"
+    },
+    {
+      "name": "zoom_width",
+      "type": "INT",
+      "label": "放大输出宽(px)",
+      "required": false,
+      "default": 1280,
+      "widget": "number",
+      "options": [],
+      "description": "zoompan 输出画幅宽（scale 到 2:1 内保持比例）"
+    },
+    {
+      "name": "subtitle_style",
+      "type": "STRING",
+      "label": "字幕样式",
+      "required": true,
+      "default": "经典-白字黑边",
+      "widget": "select",
+      "options": [
+        "经典-白字黑边",
+        "综艺-黄字黑边",
+        "影视-红字白边",
+        "霓虹-青蓝光",
+        "阅读-黑底白字",
+        "沉稳-黑字白边"
+      ],
+      "description": "透传 user/jsm_subtitle_burn.style"
+    },
+    {
+      "name": "enable_burn",
+      "type": "BOOL",
+      "label": "字幕烧录",
+      "required": true,
+      "default": true,
+      "widget": "toggle",
+      "options": [],
+      "description": "user/jsm_subtitle_burn 阶段开关（有字幕时）"
+    },
+    {
+      "name": "enable_export",
+      "type": "BOOL",
+      "label": "导出剪映草稿",
+      "required": true,
+      "default": true,
+      "widget": "toggle",
+      "options": [],
+      "description": "core/draft_export 阶段开关"
+    },
+    {
+      "name": "draft_name",
+      "type": "STRING",
+      "label": "草稿名",
+      "required": false,
+      "default": "口播成片",
+      "widget": "text",
+      "options": [],
+      "description": "透传 draft_export.draft_name"
+    },
+    {
+      "name": "output_name",
+      "type": "STRING",
+      "label": "输出文件名",
+      "required": false,
+      "default": "koubo_out",
+      "widget": "text",
+      "options": [],
+      "description": "成片视频文件名前缀"
+    }
+  ],
+  "permission": {
+    "subprocess": {
+      "enabled": true,
+      "argv_allowlist": [
+        "ffmpeg",
+        "ffmpeg.exe",
+        "ffprobe",
+        "ffprobe.exe"
+      ]
+    }
+  },
+  "signature": {
+    "alg": "ed25519",
+    "key_id": "a8998646b062c170",
+    "value": "g6Hyj069MZf96+GhCGmS+PJKyEu1RMBHIoxxcXHC12FhIiCJYQ5D7TQgpr8H1H3TZcJjvGYi+wvxKyQ2UNtjDA==",
+    "over": "manifest"
+  }
+}

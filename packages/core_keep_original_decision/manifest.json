@@ -1,0 +1,153 @@
+{
+  "schema_version": 2,
+  "engine_api": "1.0",
+  "type_id": "core/keep_original_decision",
+  "title": "保留原声决策",
+  "category": "分析",
+  "description": "B6：LLM 按风格挑选值得保留原声的台词（keep_dialogue_ids + 理由），rich_scenes mode→mixed",
+  "version": "1.0.0",
+  "kind": "python",
+  "runtime": "python",
+  "entrypoint": "node.py",
+  "class_name": "KeepOriginalDecisionNode",
+  "inputs": [
+    {
+      "name": "rich_scenes",
+      "type": "JSON",
+      "label": "富场景",
+      "required": true,
+      "default": null,
+      "widget": "text",
+      "options": [],
+      "description": "B5 输出：{scenes:[{index,dialogues[],...}]}"
+    }
+  ],
+  "outputs": [
+    {
+      "name": "rich_scenes_decided",
+      "type": "JSON",
+      "label": "富场景(已决策)",
+      "required": true,
+      "default": null,
+      "widget": "text",
+      "options": [],
+      "description": "keep 标记 + keep_dialogue_ids + mode(有保留→mixed)"
+    },
+    {
+      "name": "report",
+      "type": "JSON",
+      "label": "决策报告",
+      "required": false,
+      "default": null,
+      "widget": "text",
+      "options": [],
+      "description": "逐场景 keep/reason + summary + llm 调用统计"
+    }
+  ],
+  "params": [
+    {
+      "name": "style",
+      "type": "STRING",
+      "label": "解说风格",
+      "required": true,
+      "default": "悬疑",
+      "widget": "select",
+      "options": [
+        "悬疑",
+        "搞笑",
+        "惊悚",
+        "情感",
+        "热血",
+        "科普",
+        "通用"
+      ],
+      "description": "风格注入保留原声判断 prompt"
+    },
+    {
+      "name": "api_key",
+      "type": "STRING",
+      "label": "API Key",
+      "required": false,
+      "default": "",
+      "widget": "password",
+      "options": [],
+      "description": "支持 @secret:名称 引用保险箱"
+    },
+    {
+      "name": "base_url",
+      "type": "STRING",
+      "label": "API 地址",
+      "required": false,
+      "default": "",
+      "widget": "text",
+      "options": [],
+      "description": "OpenAI 兼容 chat/completions 地址；留空="
+    },
+    {
+      "name": "model",
+      "type": "STRING",
+      "label": "模型",
+      "required": true,
+      "default": "",
+      "widget": "text",
+      "options": [],
+      "description": ""
+    },
+    {
+      "name": "max_scenes_per_batch",
+      "type": "INT",
+      "label": "批大小(场景数)",
+      "required": true,
+      "default": 50,
+      "widget": "number",
+      "options": [],
+      "description": "LLM 每批最多场景数（对齐原版批 50）"
+    },
+    {
+      "name": "retries",
+      "type": "INT",
+      "label": "重试次数",
+      "required": true,
+      "default": 2,
+      "widget": "number",
+      "options": [],
+      "description": "LLM 请求失败重试（退避 [2,5,10] 秒）"
+    },
+    {
+      "name": "temperature",
+      "type": "FLOAT",
+      "label": "温度",
+      "required": true,
+      "default": 0.2,
+      "widget": "number",
+      "options": [],
+      "description": ""
+    },
+    {
+      "name": "on_llm_fail",
+      "type": "STRING",
+      "label": "LLM 失败策略",
+      "required": true,
+      "default": "warn",
+      "widget": "select",
+      "options": [
+        "warn",
+        "error"
+      ],
+      "description": "warn=不保留任何原声并写报告警告；error=抛错"
+    }
+  ],
+  "permission": {
+    "secret": {
+      "refs": [
+        "*"
+      ]
+    }
+  },
+  "signature": {
+    "alg": "ed25519",
+    "key_id": "a8998646b062c170",
+    "value": "IJ5YtVHmCxQy7JIY1R9BuSxNO2J/qB6ZbdZKgvK6lxy5QqiajNJGC5wJGlT3X72w2Wvs1NklX2D2KakZKbZkBw==",
+    "over": "manifest"
+  }
+}

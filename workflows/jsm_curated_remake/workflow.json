@@ -1,0 +1,244 @@
+{
+  "tpl_id": "jsm_curated_remake",
+  "name": "精选复刻",
+  "description": "解说视频×原片画面特征匹配（灰度粗筛+DINOv2/CLIP语义精排+全局时序DP+音频裁决）→ 复刻剪映草稿（对比/仅复刻）→ Premiere XML/SRT 导出 + 存疑清单。items:JSON 批次信封与直连 video 单条双路。",
+  "version": "1.0.0",
+  "kind": "workflow",
+  "tags": [
+    "解说猫复刻",
+    "精选复刻",
+    "匹配",
+    "官方"
+  ],
+  "nodes": [
+    {
+      "id": "n0",
+      "type": "core/check_models",
+      "x": 40,
+      "y": 40,
+      "params": {
+        "models": "transnetv2,faster-whisper-large-v3,chinese-clip",
+        "registry_path": "",
+        "with_hash": false
+      },
+      "status": "pending",
+      "inputs": {}
+    },
+    {
+      "id": "n9",
+      "type": "core/text_output",
+      "x": 260,
+      "y": 40,
+      "params": {
+        "note": "模型就绪检查报告"
+      },
+      "status": "pending",
+      "inputs": {
+        "text": "n0"
+      }
+    },
+    {
+      "id": "n1",
+      "type": "core/load_video",
+      "x": 40,
+      "y": 300,
+      "params": {
+        "path": "",
+        "paths": "",
+        "copy_into_store": true,
+        "probe_timeout": 30,
+        "trim_start": 0.0,
+        "trim_end": 0.0
+      },
+      "status": "pending",
+      "inputs": {}
+    },
+    {
+      "id": "n2",
+      "type": "core/load_video",
+      "x": 40,
+      "y": 560,
+      "params": {
+        "path": "",
+        "paths": "",
+        "copy_into_store": true,
+        "probe_timeout": 30,
+        "trim_start": 0.0,
+        "trim_end": 0.0
+      },
+      "status": "pending",
+      "inputs": {}
+    },
+    {
+      "id": "n3",
+      "type": "core/value_input",
+      "x": 260,
+      "y": 560,
+      "params": {
+        "type": "JSON",
+        "value": "[]"
+      },
+      "status": "pending",
+      "inputs": {}
+    },
+    {
+      "id": "n4",
+      "type": "user/jsm_remake_match",
+      "x": 480,
+      "y": 300,
+      "params": {
+        "preset": "balanced",
+        "semantic_model": "auto",
+        "model_dir": "",
+        "use_cache": true,
+        "cache_dir": "",
+        "fps": 4,
+        "subtitle_crop": 0.8,
+        "bar_detect": true,
+        "audio_refine": true,
+        "audio_win": 18.0,
+        "audio_query": 6.0,
+        "audio_suspect": 0.12,
+        "min_seg_dur": 1.0,
+        "cross_file_pen": 0.35,
+        "within_shot_jump_pen": 0.6,
+        "boundary_jump_pen": 0.1,
+        "drift_scale": 0.03,
+        "gray_suspect": 0.45,
+        "dino_suspect": 0.55,
+        "dino_strong": 0.75
+      },
+      "status": "pending",
+      "inputs": {
+        "commentary": "n1",
+        "originals": "n3"
+      }
+    },
+    {
+      "id": "n5",
+      "type": "core/load_audio",
+      "x": 260,
+      "y": 760,
+      "params": {
+        "path": ""
+      },
+      "status": "pending",
+      "inputs": {}
+    },
+    {
+      "id": "n6",
+      "type": "user/jsm_remake_draft",
+      "x": 700,
+      "y": 300,
+      "params": {
+        "mode": "compare",
+        "labels": "[\"原解说\", \"复刻后\"]",
+        "orig_volume": 0.0,
+        "output_name": "精选复刻",
+        "output_dir": "",
+        "write_suspect_list": true
+      },
+      "status": "pending",
+      "inputs": {
+        "matches": "n4",
+        "original": "n2",
+        "commentary": "n1",
+        "commentary_wav": "n5"
+      }
+    },
+    {
+      "id": "n7",
+      "type": "core/premiere_export",
+      "x": 920,
+      "y": 300,
+      "params": {
+        "fps": 30,
+        "sequence_width": 0,
+        "sequence_height": 0,
+        "enable_subtitle": true,
+        "file_base": "精选复刻",
+        "output_dir": ""
+      },
+      "status": "pending",
+      "inputs": {
+        "video": "n1",
+        "segments": "n4"
+      }
+    },
+    {
+      "id": "n8",
+      "type": "core/text_output",
+      "x": 920,
+      "y": 560,
+      "params": {
+        "note": "复刻草稿目录"
+      },
+      "status": "pending",
+      "inputs": {
+        "text": "n6"
+      }
+    }
+  ],
+  "edges": [
+    {
+      "source": "n0",
+      "target": "n9",
+      "sourceHandle": "report",
+      "targetHandle": "text"
+    },
+    {
+      "source": "n1",
+      "target": "n4",
+      "sourceHandle": "video",
+      "targetHandle": "commentary"
+    },
+    {
+      "source": "n3",
+      "target": "n4",
+      "sourceHandle": "value",
+      "targetHandle": "originals"
+    },
+    {
+      "source": "n2",
+      "target": "n6",
+      "sourceHandle": "video",
+      "targetHandle": "original"
+    },
+    {
+      "source": "n1",
+      "target": "n6",
+      "sourceHandle": "video",
+      "targetHandle": "commentary"
+    },
+    {
+      "source": "n5",
+      "target": "n6",
+      "sourceHandle": "audio",
+      "targetHandle": "commentary_wav"
+    },
+    {
+      "source": "n4",
+      "target": "n6",
+      "sourceHandle": "matches",
+      "targetHandle": "matches"
+    },
+    {
+      "source": "n1",
+      "target": "n7",
+      "sourceHandle": "video",
+      "targetHandle": "video"
+    },
+    {
+      "source": "n4",
+      "target": "n7",
+      "sourceHandle": "matches",
+      "targetHandle": "segments"
+    },
+    {
+      "source": "n6",
+      "target": "n8",
+      "sourceHandle": "draft_dir",
+      "targetHandle": "text"
+    }
+  ]
+}

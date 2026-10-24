@@ -1,0 +1,145 @@
+{
+  "schema_version": 2,
+  "engine_api": "1.0",
+  "type_id": "core/bgm_arrange",
+  "title": "BGM 自动配乐编排",
+  "category": "音频",
+  "description": "叙事 cue→角色强度、33 首曲库加权随机选曲、确定性种子、交叉淡化与安全裁剪区间",
+  "version": "1.0.0",
+  "kind": "python",
+  "runtime": "python",
+  "entrypoint": "node.py",
+  "class_name": "BgmArrangeNode",
+  "inputs": [
+    {
+      "name": "timeline",
+      "type": "TIMELINE",
+      "label": "台词时间线",
+      "required": false,
+      "default": null,
+      "widget": "text",
+      "options": [],
+      "description": "含 text/narration 字段的段落（提取叙事 cue）"
+    },
+    {
+      "name": "segments",
+      "type": "SEGMENTS",
+      "label": "分段列表",
+      "required": false,
+      "default": null,
+      "widget": "text",
+      "options": [],
+      "description": "含 text 的片段（提取叙事 cue）；与 timeline 二选一"
+    },
+    {
+      "name": "roles",
+      "type": "JSON",
+      "label": "预映射角色",
+      "required": false,
+      "default": null,
+      "widget": "text",
+      "options": [],
+      "description": "[{start,end,text,role,intensity}] 由 bgm_cue_map 产出"
+    },
+    {
+      "name": "duration",
+      "type": "FLOAT",
+      "label": "总时长(秒)",
+      "required": false,
+      "default": null,
+      "widget": "text",
+      "options": [],
+      "description": "缺省时由 timeline/segments 推算"
+    }
+  ],
+  "outputs": [
+    {
+      "name": "bgm_timeline",
+      "type": "TIMELINE",
+      "label": "BGM 时间线",
+      "required": true,
+      "default": null,
+      "widget": "text",
+      "options": [],
+      "description": "BgmSegment 列表（含淡入淡出/音量/曲目引用）"
+    },
+    {
+      "name": "report",
+      "type": "JSON",
+      "label": "配乐报告",
+      "required": true,
+      "default": null,
+      "widget": "text",
+      "options": [],
+      "description": "种子/曲目选择/未知 cue/warnings"
+    }
+  ],
+  "params": [
+    {
+      "name": "seed",
+      "type": "STRING",
+      "label": "随机种子",
+      "required": true,
+      "default": "",
+      "widget": "text",
+      "options": [],
+      "description": "留空=由内容派生（同一输入可复现）；固定值=完全确定"
+    },
+    {
+      "name": "fade_ms",
+      "type": "INT",
+      "label": "交叉淡化(ms)",
+      "required": true,
+      "default": 800,
+      "widget": "number",
+      "options": [],
+      "description": "每段首尾淡入淡出"
+    },
+    {
+      "name": "min_segment_s",
+      "type": "FLOAT",
+      "label": "内容段最短(秒)",
+      "required": true,
+      "default": 15.0,
+      "widget": "number",
+      "options": [],
+      "description": "内容点段不低于该时长"
+    },
+    {
+      "name": "terminal_segment_s",
+      "type": "FLOAT",
+      "label": "结尾段最短(秒)",
+      "required": true,
+      "default": 30.0,
+      "widget": "number",
+      "options": [],
+      "description": "收束段不低于该时长"
+    },
+    {
+      "name": "max_sections",
+      "type": "INT",
+      "label": "内容段上限",
+      "required": true,
+      "default": 6,
+      "widget": "number",
+      "options": [],
+      "description": "过长内容点数量被限制在时长阶梯内"
+    },
+    {
+      "name": "catalog_json",
+      "type": "STRING",
+      "label": "曲库覆盖(JSON)",
+      "required": true,
+      "default": "",
+      "widget": "text",
+      "options": [],
+      "description": "留空用内置 33 首曲库；填 {tracks:[...]} 覆盖"
+    }
+  ],
+  "signature": {
+    "alg": "ed25519",
+    "key_id": "a8998646b062c170",
+    "value": "xOf4oSDWtHPOzfWGc5wxNhOdXRYFs7sAPMtBTMzOWhS+MADnnk6apQI/PrU53wmRwRNxgSlS0PY4xPj3Zn1gBw==",
+    "over": "manifest"
+  }
+}

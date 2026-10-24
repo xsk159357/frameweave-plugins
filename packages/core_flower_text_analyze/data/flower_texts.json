@@ -1,0 +1,4892 @@
+{
+ "schema_version": 1,
+ "source": "jieshuomao flower_text_effects.json (迁移)",
+ "total": 814,
+ "note": "剪映花字效果库 814 条; effect_id/name/is_vip 原始字段; index 为本库索引; (name,effect_id) 去重保 814",
+ "items": [
+  {
+   "index": 0,
+   "effect_id": "7539407429763796249",
+   "is_vip": true,
+   "name": "红黄火焰综艺花字"
+  },
+  {
+   "index": 1,
+   "effect_id": "7351316503771368713",
+   "is_vip": true,
+   "name": "综艺-黑暗斑驳红色"
+  },
+  {
+   "index": 2,
+   "effect_id": "7403923146862087424",
+   "is_vip": true,
+   "name": "蓝白色立体综艺描边花字"
+  },
+  {
+   "index": 3,
+   "effect_id": "7541849024001740056",
+   "is_vip": true,
+   "name": "花字"
+  },
+  {
+   "index": 4,
+   "effect_id": "7506878563723840783",
+   "is_vip": true,
+   "name": "黄字橙光花字"
+  },
+  {
+   "index": 5,
+   "effect_id": "7351314020114124068",
+   "is_vip": true,
+   "name": "综艺-我看看 太夸张了吧!!"
+  },
+  {
+   "index": 6,
+   "effect_id": "7404884940837473590",
+   "is_vip": true,
+   "name": "黑色描边花字"
+  },
+  {
+   "index": 7,
+   "effect_id": "7272728092529986827",
+   "is_vip": true,
+   "name": "音乐节-超粗描边"
+  },
+  {
+   "index": 8,
+   "effect_id": "7160594825933262087",
+   "is_vip": true,
+   "name": "潮酷橙底黄色渐变立体花字"
+  },
+  {
+   "index": 9,
+   "effect_id": "7212892794778668345",
+   "is_vip": true,
+   "name": "美食-肉"
+  },
+  {
+   "index": 10,
+   "effect_id": "7405155739943079178",
+   "is_vip": true,
+   "name": "蓝白渐变立体花字"
+  },
+  {
+   "index": 11,
+   "effect_id": "7477040473454939454",
+   "is_vip": true,
+   "name": "橙黄色描边立体花字"
+  },
+  {
+   "index": 12,
+   "effect_id": "7406159958045232435",
+   "is_vip": true,
+   "name": "动感黄色发光故障风花字"
+  },
+  {
+   "index": 13,
+   "effect_id": "7404758577623289123",
+   "is_vip": true,
+   "name": "渐变黄红色发光字"
+  },
+  {
+   "index": 14,
+   "effect_id": "7403930784630967604",
+   "is_vip": true,
+   "name": "黄色渐变红描边发光字"
+  },
+  {
+   "index": 15,
+   "effect_id": "7371391474404986150",
+   "is_vip": true,
+   "name": "火焰燃烧花字"
+  },
+  {
+   "index": 16,
+   "effect_id": "7508541988401368345",
+   "is_vip": true,
+   "name": "618立体"
+  },
+  {
+   "index": 17,
+   "effect_id": "7404010442118515994",
+   "is_vip": true,
+   "name": "渐变黄色立体描边花字"
+  },
+  {
+   "index": 18,
+   "effect_id": "7546806821701504281",
+   "is_vip": true,
+   "name": "金箔纹理字"
+  },
+  {
+   "index": 19,
+   "effect_id": "7406646972330953994",
+   "is_vip": true,
+   "name": "蓝色质感渐变立体"
+  },
+  {
+   "index": 20,
+   "effect_id": "7431415454515612963",
+   "is_vip": true,
+   "name": "蓝字黄背景字"
+  },
+  {
+   "index": 21,
+   "effect_id": "7403728277036125449",
+   "is_vip": true,
+   "name": "白色蓝边立体花字"
+  },
+  {
+   "index": 22,
+   "effect_id": "7404668885196131603",
+   "is_vip": true,
+   "name": "黄色渐变描边花字"
+  },
+  {
+   "index": 23,
+   "effect_id": "7430781079058976026",
+   "is_vip": true,
+   "name": "黄色花字"
+  },
+  {
+   "index": 24,
+   "effect_id": "7405520166701813018",
+   "is_vip": true,
+   "name": "白色纹理花字"
+  },
+  {
+   "index": 25,
+   "effect_id": "7371423297289866505",
+   "is_vip": true,
+   "name": "蓝色冰块立体花字"
+  },
+  {
+   "index": 26,
+   "effect_id": "7477792820707757336",
+   "is_vip": true,
+   "name": "黄红色渐变立体花字"
+  },
+  {
+   "index": 27,
+   "effect_id": "7533685266033347902",
+   "is_vip": true,
+   "name": "黄橙渐变立体秋日花字"
+  },
+  {
+   "index": 28,
+   "effect_id": "7548286146946616600",
+   "is_vip": true,
+   "name": "红金立体发光花字"
+  },
+  {
+   "index": 29,
+   "effect_id": "7406860981114015014",
+   "is_vip": true,
+   "name": "蓝色渐变花光字"
+  },
+  {
+   "index": 30,
+   "effect_id": "7405788077832080659",
+   "is_vip": true,
+   "name": "黄色立体字（秋天）"
+  },
+  {
+   "index": 31,
+   "effect_id": "7450158325188070668",
+   "is_vip": true,
+   "name": "裂缝纹理投影"
+  },
+  {
+   "index": 32,
+   "effect_id": "7441868112556739849",
+   "is_vip": true,
+   "name": "元旦新年氛围金色闪粉发光花字"
+  },
+  {
+   "index": 33,
+   "effect_id": "7479056232117062937",
+   "is_vip": true,
+   "name": "红黄描边立体"
+  },
+  {
+   "index": 34,
+   "effect_id": "7406015916380605733",
+   "is_vip": true,
+   "name": "金色发光镂空花字"
+  },
+  {
+   "index": 35,
+   "effect_id": "7311259516392197439",
+   "is_vip": true,
+   "name": "运动教程-花字"
+  },
+  {
+   "index": 36,
+   "effect_id": "7478970969026022680",
+   "is_vip": true,
+   "name": "综艺风红色渐变纹理立体花字"
+  },
+  {
+   "index": 37,
+   "effect_id": "7406221865171111208",
+   "is_vip": true,
+   "name": "蓝色立体描边文字"
+  },
+  {
+   "index": 38,
+   "effect_id": "7447932873845247286",
+   "is_vip": true,
+   "name": "25元旦-晕染红描边"
+  },
+  {
+   "index": 39,
+   "effect_id": "7404700591949204799",
+   "is_vip": true,
+   "name": "蓝色蜡笔纹理立体花字"
+  },
+  {
+   "index": 40,
+   "effect_id": "7403915995569474870",
+   "is_vip": true,
+   "name": "粉笔拼贴花字（教师节）"
+  },
+  {
+   "index": 41,
+   "effect_id": "7523881114054970648",
+   "is_vip": true,
+   "name": "黄色渐变粉蓝描边立体花字"
+  },
+  {
+   "index": 42,
+   "effect_id": "7264536942832848165",
+   "is_vip": true,
+   "name": "蓝色花字"
+  },
+  {
+   "index": 43,
+   "effect_id": "7350889130865265970",
+   "is_vip": true,
+   "name": "轻复古"
+  },
+  {
+   "index": 44,
+   "effect_id": "7127681027346058503",
+   "is_vip": true,
+   "name": "综艺 红色渐变"
+  },
+  {
+   "index": 45,
+   "effect_id": "7404140347892305202",
+   "is_vip": true,
+   "name": "蓝白霓虹灯镂空效果发光花字"
+  },
+  {
+   "index": 46,
+   "effect_id": "7404837954532789523",
+   "is_vip": true,
+   "name": "黄色立体描边多彩花字"
+  },
+  {
+   "index": 47,
+   "effect_id": "7406655431940033792",
+   "is_vip": true,
+   "name": "黄字彩色多层投影文字"
+  },
+  {
+   "index": 48,
+   "effect_id": "7506824081531243801",
+   "is_vip": true,
+   "name": "红色紫色渐变立体描边花字"
+  },
+  {
+   "index": 49,
+   "effect_id": "7313119295792352539",
+   "is_vip": true,
+   "name": "黄色渐变立体花字"
+  },
+  {
+   "index": 50,
+   "effect_id": "7212896770370571557",
+   "is_vip": true,
+   "name": "美食-发光白"
+  },
+  {
+   "index": 51,
+   "effect_id": "7400711954731371786",
+   "is_vip": true,
+   "name": "复古橙黄渐变醒目"
+  },
+  {
+   "index": 52,
+   "effect_id": "7430861390933413130",
+   "is_vip": true,
+   "name": "冬至立体"
+  },
+  {
+   "index": 53,
+   "effect_id": "7278242937488690493",
+   "is_vip": true,
+   "name": "黑底白色立体花字"
+  },
+  {
+   "index": 54,
+   "effect_id": "7405521516131093795",
+   "is_vip": true,
+   "name": "金边浮雕文字"
+  },
+  {
+   "index": 55,
+   "effect_id": "7467426470714051902",
+   "is_vip": true,
+   "name": "橘黄色渐变温柔发光花字"
+  },
+  {
+   "index": 56,
+   "effect_id": "7496504150797274393",
+   "is_vip": true,
+   "name": "蓝色闪粉星光闪闪发光划走"
+  },
+  {
+   "index": 57,
+   "effect_id": "7368866329337580851",
+   "is_vip": true,
+   "name": "上下错落发光花字"
+  },
+  {
+   "index": 58,
+   "effect_id": "7362931435809901859",
+   "is_vip": true,
+   "name": "蓝色立体"
+  },
+  {
+   "index": 59,
+   "effect_id": "7231501825311116577",
+   "is_vip": true,
+   "name": "蓝字白边蓝光花字"
+  },
+  {
+   "index": 60,
+   "effect_id": "7477883005953051928",
+   "is_vip": true,
+   "name": "岩石花字"
+  },
+  {
+   "index": 61,
+   "effect_id": "7375227839542480191",
+   "is_vip": true,
+   "name": "618-红紫渐变"
+  },
+  {
+   "index": 62,
+   "effect_id": "7494576393569733913",
+   "is_vip": true,
+   "name": "简约黄蓝方块综艺花字"
+  },
+  {
+   "index": 63,
+   "effect_id": "7389185223600114995",
+   "is_vip": true,
+   "name": "红色"
+  },
+  {
+   "index": 64,
+   "effect_id": "7404134454844788018",
+   "is_vip": true,
+   "name": "3D蓝字黄边立体综艺花字"
+  },
+  {
+   "index": 65,
+   "effect_id": "7485579082764225817",
+   "is_vip": true,
+   "name": "黄色渐变纹理粉蓝立体花字"
+  },
+  {
+   "index": 66,
+   "effect_id": "7303813440127126836",
+   "is_vip": true,
+   "name": "JP冬日-结霜字"
+  },
+  {
+   "index": 67,
+   "effect_id": "7405872381320842515",
+   "is_vip": true,
+   "name": "红粉渐变花字"
+  },
+  {
+   "index": 68,
+   "effect_id": "7406170424935058726",
+   "is_vip": true,
+   "name": "紫色阴森情绪发光花字"
+  },
+  {
+   "index": 69,
+   "effect_id": "7343614179732966691",
+   "is_vip": true,
+   "name": "黄底字"
+  },
+  {
+   "index": 70,
+   "effect_id": "7404440675225292083",
+   "is_vip": true,
+   "name": "红黄渐变背景花字"
+  },
+  {
+   "index": 71,
+   "effect_id": "7404352881861659931",
+   "is_vip": true,
+   "name": "渐变黄字红边星光立体花字"
+  },
+  {
+   "index": 72,
+   "effect_id": "7405221368561700148",
+   "is_vip": true,
+   "name": "黄紫撞色复古立体字"
+  },
+  {
+   "index": 73,
+   "effect_id": "7330423055900069155",
+   "is_vip": true,
+   "name": "霓虹灯花字"
+  },
+  {
+   "index": 74,
+   "effect_id": "7308367002253544741",
+   "is_vip": true,
+   "name": "红色渐变白霜立体花字"
+  },
+  {
+   "index": 75,
+   "effect_id": "7405906746461424930",
+   "is_vip": true,
+   "name": "红色复古投影字"
+  },
+  {
+   "index": 76,
+   "effect_id": "7486311409861528894",
+   "is_vip": true,
+   "name": "像素化花字"
+  },
+  {
+   "index": 77,
+   "effect_id": "7492933140210666776",
+   "is_vip": true,
+   "name": "蓝橙色立体花字"
+  },
+  {
+   "index": 78,
+   "effect_id": "7360526293596671273",
+   "is_vip": true,
+   "name": "拼贴多色"
+  },
+  {
+   "index": 79,
+   "effect_id": "7546405848860511513",
+   "is_vip": true,
+   "name": "黄蓝紫渐变立体花字"
+  },
+  {
+   "index": 80,
+   "effect_id": "7160599091750161671",
+   "is_vip": true,
+   "name": "复古红色发光立体花字"
+  },
+  {
+   "index": 81,
+   "effect_id": "7434585603439742218",
+   "is_vip": true,
+   "name": "综艺红黄立体"
+  },
+  {
+   "index": 82,
+   "effect_id": "7351319129124506930",
+   "is_vip": true,
+   "name": "综艺-巅峰 厉害!!真是太火爆了!!!2"
+  },
+  {
+   "index": 83,
+   "effect_id": "7525867881331215640",
+   "is_vip": true,
+   "name": "黄红蓝边立体花字"
+  },
+  {
+   "index": 84,
+   "effect_id": "7406970077368618274",
+   "is_vip": true,
+   "name": "复古黄色立体"
+  },
+  {
+   "index": 85,
+   "effect_id": "7431490038736702760",
+   "is_vip": true,
+   "name": "黄蓝立体字"
+  },
+  {
+   "index": 86,
+   "effect_id": "7408956728529751333",
+   "is_vip": true,
+   "name": "黄色霓虹灯发光花字"
+  },
+  {
+   "index": 87,
+   "effect_id": "7509743284898794777",
+   "is_vip": true,
+   "name": "黄色马卡龙"
+  },
+  {
+   "index": 88,
+   "effect_id": "7406334288930557218",
+   "is_vip": true,
+   "name": "撞色描边立体字"
+  },
+  {
+   "index": 89,
+   "effect_id": "7405871504769961254",
+   "is_vip": true,
+   "name": "游戏像素文字效果花字"
+  },
+  {
+   "index": 90,
+   "effect_id": "7404321887817452800",
+   "is_vip": true,
+   "name": "粉色立体字"
+  },
+  {
+   "index": 91,
+   "effect_id": "7389147072064179506",
+   "is_vip": true,
+   "name": "黄色红色"
+  },
+  {
+   "index": 92,
+   "effect_id": "7539187400808123672",
+   "is_vip": true,
+   "name": "红樱桃"
+  },
+  {
+   "index": 93,
+   "effect_id": "7474511004676803902",
+   "is_vip": true,
+   "name": "粉紫描边立体"
+  },
+  {
+   "index": 94,
+   "effect_id": "7405070516706381092",
+   "is_vip": true,
+   "name": "渐变黄色中秋圆底花字"
+  },
+  {
+   "index": 95,
+   "effect_id": "7430809868333780259",
+   "is_vip": true,
+   "name": "复古背景字"
+  },
+  {
+   "index": 96,
+   "effect_id": "7259922491185958203",
+   "is_vip": true,
+   "name": "蓝紫色粗体描边花字"
+  },
+  {
+   "index": 97,
+   "effect_id": "7403962881252805903",
+   "is_vip": true,
+   "name": "黄绿发光字"
+  },
+  {
+   "index": 98,
+   "effect_id": "7366060581410901286",
+   "is_vip": true,
+   "name": "粉蓝色渐变立体发光花字"
+  },
+  {
+   "index": 99,
+   "effect_id": "7474605929825193240",
+   "is_vip": true,
+   "name": "粉色描边白色字"
+  },
+  {
+   "index": 100,
+   "effect_id": "7536671491740634392",
+   "is_vip": true,
+   "name": "穿搭立体"
+  },
+  {
+   "index": 101,
+   "effect_id": "7264547410817387795",
+   "is_vip": true,
+   "name": "好物美妆-黄白跳色"
+  },
+  {
+   "index": 102,
+   "effect_id": "7411032759457631515",
+   "is_vip": true,
+   "name": "绿色东南亚"
+  },
+  {
+   "index": 103,
+   "effect_id": "7520663448003415358",
+   "is_vip": true,
+   "name": "蓝色纸纹纹理花字"
+  },
+  {
+   "index": 104,
+   "effect_id": "7406976068789210403",
+   "is_vip": true,
+   "name": "红黄渐变发光字"
+  },
+  {
+   "index": 105,
+   "effect_id": "7396798321739730226",
+   "is_vip": true,
+   "name": "粉色星空花字"
+  },
+  {
+   "index": 106,
+   "effect_id": "7405501393248881960",
+   "is_vip": true,
+   "name": "金属划痕暗黑立体字"
+  },
+  {
+   "index": 107,
+   "effect_id": "7507145578984361241",
+   "is_vip": true,
+   "name": "粉色"
+  },
+  {
+   "index": 108,
+   "effect_id": "7407078807309503744",
+   "is_vip": true,
+   "name": "橘黄色立体字"
+  },
+  {
+   "index": 109,
+   "effect_id": "7362054905256758591",
+   "is_vip": true,
+   "name": "双色爱心花字"
+  },
+  {
+   "index": 110,
+   "effect_id": "7532428202199797016",
+   "is_vip": true,
+   "name": "三花猫配色"
+  },
+  {
+   "index": 111,
+   "effect_id": "7241415162345852194",
+   "is_vip": true,
+   "name": "绿色立体花字"
+  },
+  {
+   "index": 112,
+   "effect_id": "7293329973694172435",
+   "is_vip": true,
+   "name": "高级幻彩花紫字"
+  },
+  {
+   "index": 113,
+   "effect_id": "7406650793631223075",
+   "is_vip": true,
+   "name": "红绿撞色发光字"
+  },
+  {
+   "index": 114,
+   "effect_id": "7265723229216525620",
+   "is_vip": true,
+   "name": "绿色发光花字"
+  },
+  {
+   "index": 115,
+   "effect_id": "7404290078723312931",
+   "is_vip": true,
+   "name": "绿色渐变背景字"
+  },
+  {
+   "index": 116,
+   "effect_id": "7527597707930799422",
+   "is_vip": true,
+   "name": "蓝绿纹理花字"
+  },
+  {
+   "index": 117,
+   "effect_id": "7376607395046231331",
+   "is_vip": true,
+   "name": "粉色立体渐变"
+  },
+  {
+   "index": 118,
+   "effect_id": "7405087980685167922",
+   "is_vip": true,
+   "name": "黄色立体花字"
+  },
+  {
+   "index": 119,
+   "effect_id": "7398456039634406666",
+   "is_vip": true,
+   "name": "#花字招募令 彩虹花字"
+  },
+  {
+   "index": 120,
+   "effect_id": "7404459246961577257",
+   "is_vip": true,
+   "name": "少女粉星星花字"
+  },
+  {
+   "index": 121,
+   "effect_id": "7404471553607421222",
+   "is_vip": true,
+   "name": "未来科技感发光花字"
+  },
+  {
+   "index": 122,
+   "effect_id": "7241759007952735491",
+   "is_vip": true,
+   "name": "潮流紫色荧光花字"
+  },
+  {
+   "index": 123,
+   "effect_id": "7404263174230297882",
+   "is_vip": true,
+   "name": "橙色渐变花字"
+  },
+  {
+   "index": 124,
+   "effect_id": "7430667612146666764",
+   "is_vip": true,
+   "name": "可爱花字"
+  },
+  {
+   "index": 125,
+   "effect_id": "7539752808367574297",
+   "is_vip": true,
+   "name": "渐变综艺发光花字"
+  },
+  {
+   "index": 126,
+   "effect_id": "7293140122332122368",
+   "is_vip": true,
+   "name": "橙色万圣花字"
+  },
+  {
+   "index": 127,
+   "effect_id": "7406388990837886234",
+   "is_vip": true,
+   "name": "棕色立体粗描边"
+  },
+  {
+   "index": 128,
+   "effect_id": "7260043007997562149",
+   "is_vip": true,
+   "name": "立体字"
+  },
+  {
+   "index": 129,
+   "effect_id": "7481664682638560537",
+   "is_vip": true,
+   "name": "酸性质感花字"
+  },
+  {
+   "index": 130,
+   "effect_id": "7492430244570303806",
+   "is_vip": true,
+   "name": "绿色渐变立体花字"
+  },
+  {
+   "index": 131,
+   "effect_id": "7404304312135896360",
+   "is_vip": true,
+   "name": "赛博朋克风故障字"
+  },
+  {
+   "index": 132,
+   "effect_id": "7298637894481169701",
+   "is_vip": true,
+   "name": "粉色立体花字"
+  },
+  {
+   "index": 133,
+   "effect_id": "7475398432807521561",
+   "is_vip": true,
+   "name": "粉橙立体花字"
+  },
+  {
+   "index": 134,
+   "effect_id": "7362833837627378944",
+   "is_vip": true,
+   "name": "复古牛皮纸花字"
+  },
+  {
+   "index": 135,
+   "effect_id": "7306894668795612442",
+   "is_vip": true,
+   "name": "黑色纹理立体花字"
+  },
+  {
+   "index": 136,
+   "effect_id": "7349078136480386345",
+   "is_vip": true,
+   "name": "圆环花字"
+  },
+  {
+   "index": 137,
+   "effect_id": "7509044952912055614",
+   "is_vip": true,
+   "name": "薰衣草"
+  },
+  {
+   "index": 138,
+   "effect_id": "7404757226583362854",
+   "is_vip": true,
+   "name": "清新条纹投影纹理花字"
+  },
+  {
+   "index": 139,
+   "effect_id": "7406238235141213440",
+   "is_vip": true,
+   "name": "马卡龙色渐变文字"
+  },
+  {
+   "index": 140,
+   "effect_id": "7351431205692181786",
+   "is_vip": true,
+   "name": "白字红光花字"
+  },
+  {
+   "index": 141,
+   "effect_id": "7339054041458036006",
+   "is_vip": true,
+   "name": "纹理花字"
+  },
+  {
+   "index": 142,
+   "effect_id": "7405049138867424523",
+   "is_vip": true,
+   "name": "描边橙色黄色双色立体花字"
+  },
+  {
+   "index": 143,
+   "effect_id": "7475023258228788505",
+   "is_vip": true,
+   "name": "粉色渐变"
+  },
+  {
+   "index": 144,
+   "effect_id": "7371110382393494793",
+   "is_vip": true,
+   "name": "黄粉色立体渐变花字"
+  },
+  {
+   "index": 145,
+   "effect_id": "7388017781117160745",
+   "is_vip": true,
+   "name": "低饱和紫色渐变综艺花字"
+  },
+  {
+   "index": 146,
+   "effect_id": "7404083693003853096",
+   "is_vip": true,
+   "name": "莫兰迪清新蓝色描边花字"
+  },
+  {
+   "index": 147,
+   "effect_id": "7405888865132711220",
+   "is_vip": true,
+   "name": "节日花字"
+  },
+  {
+   "index": 148,
+   "effect_id": "7174401031399312670",
+   "is_vip": true,
+   "name": "3D多层渐变红"
+  },
+  {
+   "index": 149,
+   "effect_id": "7405867875317173516",
+   "is_vip": true,
+   "name": "多色渐变花字"
+  },
+  {
+   "index": 150,
+   "effect_id": "7173927171881323789",
+   "is_vip": true,
+   "name": "3D腮绿"
+  },
+  {
+   "index": 151,
+   "effect_id": "7431429108791266611",
+   "is_vip": true,
+   "name": "黄色渐变纹理花字"
+  },
+  {
+   "index": 152,
+   "effect_id": "7404772432323546422",
+   "is_vip": true,
+   "name": "黄绿色立体纹理花字"
+  },
+  {
+   "index": 153,
+   "effect_id": "7371117571757641011",
+   "is_vip": true,
+   "name": "白字橘色描边立体花字"
+  },
+  {
+   "index": 154,
+   "effect_id": "7378313478852906280",
+   "is_vip": true,
+   "name": "蓝色纹理白描边花字"
+  },
+  {
+   "index": 155,
+   "effect_id": "7388024664980770060",
+   "is_vip": true,
+   "name": "桃红色渐变立体花字"
+  },
+  {
+   "index": 156,
+   "effect_id": "7404058441481866511",
+   "is_vip": true,
+   "name": "潮酷粉黄撞色立体花字"
+  },
+  {
+   "index": 157,
+   "effect_id": "7345391635267603753",
+   "is_vip": true,
+   "name": "复古镂空花字"
+  },
+  {
+   "index": 158,
+   "effect_id": "7405944611430092066",
+   "is_vip": true,
+   "name": "粉黄渐变立体字"
+  },
+  {
+   "index": 159,
+   "effect_id": "7392196588426382629",
+   "is_vip": true,
+   "name": "绿橙花字"
+  },
+  {
+   "index": 160,
+   "effect_id": "7406225575712443663",
+   "is_vip": true,
+   "name": "中式背景框文字"
+  },
+  {
+   "index": 161,
+   "effect_id": "7366911458824752410",
+   "is_vip": true,
+   "name": "彩色花边花字"
+  },
+  {
+   "index": 162,
+   "effect_id": "7539491294188440857",
+   "is_vip": true,
+   "name": "节日粉色渐变立体描边花字"
+  },
+  {
+   "index": 163,
+   "effect_id": "7476505479364201753",
+   "is_vip": true,
+   "name": "黄绿综艺花字"
+  },
+  {
+   "index": 164,
+   "effect_id": "7405039371037986089",
+   "is_vip": true,
+   "name": "抹茶绿多层描边立体花字"
+  },
+  {
+   "index": 165,
+   "effect_id": "7407013513979251978",
+   "is_vip": true,
+   "name": "粉紫色渐变立体发光花字"
+  },
+  {
+   "index": 166,
+   "effect_id": "7475276656626863385",
+   "is_vip": true,
+   "name": "红粉色渐变立体发光花字"
+  },
+  {
+   "index": 167,
+   "effect_id": "7265614497119735040",
+   "is_vip": true,
+   "name": "粉色亮晶晶花字"
+  },
+  {
+   "index": 168,
+   "effect_id": "7336859597287804169",
+   "is_vip": true,
+   "name": "樱花粉 粉色花字"
+  },
+  {
+   "index": 169,
+   "effect_id": "7405924713400126747",
+   "is_vip": true,
+   "name": "蓝绿立体花字"
+  },
+  {
+   "index": 170,
+   "effect_id": "7293778917603822848",
+   "is_vip": true,
+   "name": "万圣紫色花字"
+  },
+  {
+   "index": 171,
+   "effect_id": "7350157127207456037",
+   "is_vip": true,
+   "name": "3D粉色立体花字"
+  },
+  {
+   "index": 172,
+   "effect_id": "7542084187285703998",
+   "is_vip": true,
+   "name": "粉蓝色渐变爱心底花字"
+  },
+  {
+   "index": 173,
+   "effect_id": "7493107948286250302",
+   "is_vip": true,
+   "name": "五一立体"
+  },
+  {
+   "index": 174,
+   "effect_id": "7409954407321783586",
+   "is_vip": true,
+   "name": "粉色紫边立体字"
+  },
+  {
+   "index": 175,
+   "effect_id": "7537970908221394238",
+   "is_vip": true,
+   "name": "立体黄蓝纹理花字"
+  },
+  {
+   "index": 176,
+   "effect_id": "7403948957547760906",
+   "is_vip": true,
+   "name": "3D粉色渐变立体花字"
+  },
+  {
+   "index": 177,
+   "effect_id": "7312845270671232294",
+   "is_vip": true,
+   "name": "浅蓝黄渐变立体花字"
+  },
+  {
+   "index": 178,
+   "effect_id": "7435884430620691739",
+   "is_vip": true,
+   "name": "复古红色立体花字"
+  },
+  {
+   "index": 179,
+   "effect_id": "7351303614104636699",
+   "is_vip": true,
+   "name": "绿色花字"
+  },
+  {
+   "index": 180,
+   "effect_id": "7411406288350874917",
+   "is_vip": true,
+   "name": "美妆纹理"
+  },
+  {
+   "index": 181,
+   "effect_id": "7404294636656774451",
+   "is_vip": true,
+   "name": "黄绿花字"
+  },
+  {
+   "index": 182,
+   "effect_id": "7404705863442713910",
+   "is_vip": true,
+   "name": "糖果色彩色渐变描边花字"
+  },
+  {
+   "index": 183,
+   "effect_id": "7285696655989411133",
+   "is_vip": true,
+   "name": "蓝色渐变花字"
+  },
+  {
+   "index": 184,
+   "effect_id": "7404307108625206563",
+   "is_vip": true,
+   "name": "纹理复古深色字"
+  },
+  {
+   "index": 185,
+   "effect_id": "7404774919315197195",
+   "is_vip": true,
+   "name": "红色描边黄色花字"
+  },
+  {
+   "index": 186,
+   "effect_id": "7404884426150235418",
+   "is_vip": true,
+   "name": "白字黑边裂痕综艺花字"
+  },
+  {
+   "index": 187,
+   "effect_id": "7404394775664708901",
+   "is_vip": true,
+   "name": "黄字红边立体粗描边花字"
+  },
+  {
+   "index": 188,
+   "effect_id": "7405990788053683482",
+   "is_vip": true,
+   "name": "国风水墨"
+  },
+  {
+   "index": 189,
+   "effect_id": "7407352720815836443",
+   "is_vip": true,
+   "name": "火焰立体"
+  },
+  {
+   "index": 190,
+   "effect_id": "7405218557342059816",
+   "is_vip": true,
+   "name": "红色描边纹理立体字"
+  },
+  {
+   "index": 191,
+   "effect_id": "7495216846946274584",
+   "is_vip": true,
+   "name": "蓝色渐变阴影立体花字"
+  },
+  {
+   "index": 192,
+   "effect_id": "7405838293843070234",
+   "is_vip": true,
+   "name": "红色立体纹理花字"
+  },
+  {
+   "index": 193,
+   "effect_id": "7270718850256211259",
+   "is_vip": true,
+   "name": "渐变花字"
+  },
+  {
+   "index": 194,
+   "effect_id": "7360556929959087397",
+   "is_vip": true,
+   "name": "纸质"
+  },
+  {
+   "index": 195,
+   "effect_id": "7404520330502458674",
+   "is_vip": true,
+   "name": "蓝白色渐变立体花字"
+  },
+  {
+   "index": 196,
+   "effect_id": "7481665617796369689",
+   "is_vip": true,
+   "name": "蓝色"
+  },
+  {
+   "index": 197,
+   "effect_id": "7404819849140063551",
+   "is_vip": true,
+   "name": "黑白线条花字"
+  },
+  {
+   "index": 198,
+   "effect_id": "7482688482754694462",
+   "is_vip": true,
+   "name": "愚人节立体"
+  },
+  {
+   "index": 199,
+   "effect_id": "7406740764207713577",
+   "is_vip": true,
+   "name": "中秋桂花花字"
+  },
+  {
+   "index": 200,
+   "effect_id": "7430822256806284594",
+   "is_vip": true,
+   "name": "双十一红黄立体"
+  },
+  {
+   "index": 201,
+   "effect_id": "7459686003079630104",
+   "is_vip": true,
+   "name": "金色渐变立体红边发光花字"
+  },
+  {
+   "index": 202,
+   "effect_id": "7405031205877419305",
+   "is_vip": true,
+   "name": "银色渐变描边发光花字"
+  },
+  {
+   "index": 203,
+   "effect_id": "7474543369054702910",
+   "is_vip": true,
+   "name": "白色立体花字"
+  },
+  {
+   "index": 204,
+   "effect_id": "7405927551417306378",
+   "is_vip": true,
+   "name": "蓝色渐变镂空描边花字"
+  },
+  {
+   "index": 205,
+   "effect_id": "7405716848106310931",
+   "is_vip": true,
+   "name": "蓝白立体花字"
+  },
+  {
+   "index": 206,
+   "effect_id": "7371368226606943514",
+   "is_vip": true,
+   "name": "白色发光花字"
+  },
+  {
+   "index": 207,
+   "effect_id": "7404877070158908698",
+   "is_vip": true,
+   "name": "金红纸纹理发光字"
+  },
+  {
+   "index": 208,
+   "effect_id": "7241953374780804410",
+   "is_vip": true,
+   "name": "橙白渐变花字 黑白描边花字"
+  },
+  {
+   "index": 209,
+   "effect_id": "7405518341814668544",
+   "is_vip": true,
+   "name": "云纹金箔字"
+  },
+  {
+   "index": 210,
+   "effect_id": "7478934394141527358",
+   "is_vip": true,
+   "name": "综艺风黄色渐变纹理立体花字"
+  },
+  {
+   "index": 211,
+   "effect_id": "7371410942061546803",
+   "is_vip": true,
+   "name": "蓝红色立体综艺花字"
+  },
+  {
+   "index": 212,
+   "effect_id": "7507132514088062233",
+   "is_vip": true,
+   "name": "红金国风花字"
+  },
+  {
+   "index": 213,
+   "effect_id": "7383803879730842931",
+   "is_vip": true,
+   "name": "黄色渐变描边立体花字"
+  },
+  {
+   "index": 214,
+   "effect_id": "7509041829556522265",
+   "is_vip": true,
+   "name": "白纸纹理蓝阴影花字"
+  },
+  {
+   "index": 215,
+   "effect_id": "7406643758231571766",
+   "is_vip": true,
+   "name": "国风花字"
+  },
+  {
+   "index": 216,
+   "effect_id": "7405933257776172314",
+   "is_vip": true,
+   "name": "黑色拼贴方底花字"
+  },
+  {
+   "index": 217,
+   "effect_id": "7360986749046213928",
+   "is_vip": true,
+   "name": "描边字"
+  },
+  {
+   "index": 218,
+   "effect_id": "7406200724171787574",
+   "is_vip": true,
+   "name": "点金花字"
+  },
+  {
+   "index": 219,
+   "effect_id": "7406693646592003366",
+   "is_vip": true,
+   "name": "白字内发光蓝边字"
+  },
+  {
+   "index": 220,
+   "effect_id": "7371351770045484338",
+   "is_vip": true,
+   "name": "米白厚底立体花字"
+  },
+  {
+   "index": 221,
+   "effect_id": "7405529606859607347",
+   "is_vip": true,
+   "name": "水墨红底白色花字"
+  },
+  {
+   "index": 222,
+   "effect_id": "7404709465209064745",
+   "is_vip": true,
+   "name": "条纹纹理黄色立体花字"
+  },
+  {
+   "index": 223,
+   "effect_id": "7404872280662166834",
+   "is_vip": true,
+   "name": "红色恐怖氛围纹理花字"
+  },
+  {
+   "index": 224,
+   "effect_id": "7459675119116373272",
+   "is_vip": true,
+   "name": "蓝色折纸"
+  },
+  {
+   "index": 225,
+   "effect_id": "7434560086166490418",
+   "is_vip": true,
+   "name": "港风立体"
+  },
+  {
+   "index": 226,
+   "effect_id": "7128327279804976397",
+   "is_vip": true,
+   "name": "红色发光花字"
+  },
+  {
+   "index": 227,
+   "effect_id": "7404696990510042402",
+   "is_vip": true,
+   "name": "黄色渐变立体字"
+  },
+  {
+   "index": 228,
+   "effect_id": "7507101495339568446",
+   "is_vip": true,
+   "name": "蓝莓奶酪"
+  },
+  {
+   "index": 229,
+   "effect_id": "7451570972550991166",
+   "is_vip": true,
+   "name": "新年立体花字"
+  },
+  {
+   "index": 230,
+   "effect_id": "7447831886874938678",
+   "is_vip": true,
+   "name": "25元旦-红花背景花字"
+  },
+  {
+   "index": 231,
+   "effect_id": "7404523157400472869",
+   "is_vip": true,
+   "name": "黑色金箔描边立体花字"
+  },
+  {
+   "index": 232,
+   "effect_id": "7405537335850306853",
+   "is_vip": true,
+   "name": "灰白水墨国风花字"
+  },
+  {
+   "index": 233,
+   "effect_id": "7405801186286259466",
+   "is_vip": true,
+   "name": "科技感朋克发光立体标题花字"
+  },
+  {
+   "index": 234,
+   "effect_id": "7405067510053211446",
+   "is_vip": true,
+   "name": "田字格图案蜡笔纹理花字"
+  },
+  {
+   "index": 235,
+   "effect_id": "7406637506977877299",
+   "is_vip": true,
+   "name": "黄红撞色立体"
+  },
+  {
+   "index": 236,
+   "effect_id": "7405203982286720256",
+   "is_vip": true,
+   "name": "中式背景文字"
+  },
+  {
+   "index": 237,
+   "effect_id": "7472013339640614206",
+   "is_vip": true,
+   "name": "日综蓝白方框字"
+  },
+  {
+   "index": 238,
+   "effect_id": "7436409520848522546",
+   "is_vip": true,
+   "name": "综艺蓝黄立体"
+  },
+  {
+   "index": 239,
+   "effect_id": "7405514240779357449",
+   "is_vip": true,
+   "name": "水墨风白字黑边红墨点花字"
+  },
+  {
+   "index": 240,
+   "effect_id": "7507075178447359282",
+   "is_vip": true,
+   "name": "创意立体黄色花字高级感主题文字封面标题字"
+  },
+  {
+   "index": 241,
+   "effect_id": "7509055757908806937",
+   "is_vip": true,
+   "name": "白色"
+  },
+  {
+   "index": 242,
+   "effect_id": "7406683118108806437",
+   "is_vip": true,
+   "name": "黄字黑边"
+  },
+  {
+   "index": 243,
+   "effect_id": "7411036229677878554",
+   "is_vip": true,
+   "name": "大理石花纹字"
+  },
+  {
+   "index": 244,
+   "effect_id": "7404409329991879988",
+   "is_vip": true,
+   "name": "中秋黄色字"
+  },
+  {
+   "index": 245,
+   "effect_id": "7481983816001834265",
+   "is_vip": true,
+   "name": "综艺感黄色立体描边花字"
+  },
+  {
+   "index": 246,
+   "effect_id": "7548895672402185497",
+   "is_vip": true,
+   "name": "月饼花字"
+  },
+  {
+   "index": 247,
+   "effect_id": "7406980293233560859",
+   "is_vip": true,
+   "name": "蓝色渐变微立体花字"
+  },
+  {
+   "index": 248,
+   "effect_id": "7371372494336396570",
+   "is_vip": true,
+   "name": "白字橘色发光花字"
+  },
+  {
+   "index": 249,
+   "effect_id": "7404700217553063209",
+   "is_vip": true,
+   "name": "几何纹理黑色阴影花字"
+  },
+  {
+   "index": 250,
+   "effect_id": "7411046109285485861",
+   "is_vip": true,
+   "name": "悬疑剧字幕"
+  },
+  {
+   "index": 251,
+   "effect_id": "7405902936175381787",
+   "is_vip": true,
+   "name": "蓝色纹理花字"
+  },
+  {
+   "index": 252,
+   "effect_id": "7369127125569342731",
+   "is_vip": true,
+   "name": "划重点花字"
+  },
+  {
+   "index": 253,
+   "effect_id": "7533453859830713662",
+   "is_vip": true,
+   "name": "橙色底纹花字"
+  },
+  {
+   "index": 254,
+   "effect_id": "7405034038135655719",
+   "is_vip": true,
+   "name": "雪花图案渐变蓝色立体花字"
+  },
+  {
+   "index": 255,
+   "effect_id": "7455983000291937586",
+   "is_vip": true,
+   "name": "蓝色渐变描边简约风格花字"
+  },
+  {
+   "index": 256,
+   "effect_id": "7495033287438781758",
+   "is_vip": true,
+   "name": "黄色渐变橘色阴影立体花字"
+  },
+  {
+   "index": 257,
+   "effect_id": "7296357486490144036",
+   "is_vip": true,
+   "name": "双十一-立体紫色"
+  },
+  {
+   "index": 258,
+   "effect_id": "7533293069123390744",
+   "is_vip": true,
+   "name": "黄色贴纸描边字效"
+  },
+  {
+   "index": 259,
+   "effect_id": "7283715592316554555",
+   "is_vip": true,
+   "name": "渐变蓝色阴影"
+  },
+  {
+   "index": 260,
+   "effect_id": "7405498270568418611",
+   "is_vip": true,
+   "name": "黑白水墨花字"
+  },
+  {
+   "index": 261,
+   "effect_id": "7405517504128273676",
+   "is_vip": true,
+   "name": "复古黄沙水彩纹理花字"
+  },
+  {
+   "index": 262,
+   "effect_id": "7461550488073538841",
+   "is_vip": true,
+   "name": "红色渐变"
+  },
+  {
+   "index": 263,
+   "effect_id": "7431460080228257039",
+   "is_vip": true,
+   "name": "潮酷背景字"
+  },
+  {
+   "index": 264,
+   "effect_id": "7404391553164135715",
+   "is_vip": true,
+   "name": "撞色描边字"
+  },
+  {
+   "index": 265,
+   "effect_id": "7399918916232826123",
+   "is_vip": true,
+   "name": "紫色立体花字"
+  },
+  {
+   "index": 266,
+   "effect_id": "7431012567369125161",
+   "is_vip": true,
+   "name": "冬季渐变蓝色立体花字"
+  },
+  {
+   "index": 267,
+   "effect_id": "7405414031072169250",
+   "is_vip": true,
+   "name": "红黄复古浮雕纹理字"
+  },
+  {
+   "index": 268,
+   "effect_id": "7404702615671508263",
+   "is_vip": true,
+   "name": "3D渐变橘红色立体花字"
+  },
+  {
+   "index": 269,
+   "effect_id": "7404522414941424923",
+   "is_vip": true,
+   "name": "粉蓝渐变花字"
+  },
+  {
+   "index": 270,
+   "effect_id": "7405795232748490025",
+   "is_vip": true,
+   "name": "黑紫星空花字"
+  },
+  {
+   "index": 271,
+   "effect_id": "7430642926293732658",
+   "is_vip": true,
+   "name": "冷色调简单花字"
+  },
+  {
+   "index": 272,
+   "effect_id": "7506868020917226777",
+   "is_vip": true,
+   "name": "金色渐变立体花字"
+  },
+  {
+   "index": 273,
+   "effect_id": "7404507481205984539",
+   "is_vip": true,
+   "name": "红色金箔纹理立体花字"
+  },
+  {
+   "index": 274,
+   "effect_id": "7405570848041487666",
+   "is_vip": true,
+   "name": "黄蓝撞色纹理立体花字"
+  },
+  {
+   "index": 275,
+   "effect_id": "7406353145938382130",
+   "is_vip": true,
+   "name": "渐变圆底花字"
+  },
+  {
+   "index": 276,
+   "effect_id": "7444510136296541465",
+   "is_vip": true,
+   "name": "白字蓝粉相间底色花字"
+  },
+  {
+   "index": 277,
+   "effect_id": "7505458612001852697",
+   "is_vip": true,
+   "name": "综艺风黄色立体描边花字"
+  },
+  {
+   "index": 278,
+   "effect_id": "7430855417703435529",
+   "is_vip": true,
+   "name": "蓝色纸张质感立体花字"
+  },
+  {
+   "index": 279,
+   "effect_id": "7407037141584203059",
+   "is_vip": true,
+   "name": "彩色带图案花字"
+  },
+  {
+   "index": 280,
+   "effect_id": "7481302843849329982",
+   "is_vip": true,
+   "name": "红蓝橙描边立体花字"
+  },
+  {
+   "index": 281,
+   "effect_id": "7407464175347272998",
+   "is_vip": true,
+   "name": "红色印章花字"
+  },
+  {
+   "index": 282,
+   "effect_id": "7371414308770647346",
+   "is_vip": true,
+   "name": "淡黄色渐变发光花字"
+  },
+  {
+   "index": 283,
+   "effect_id": "7405931282632412442",
+   "is_vip": true,
+   "name": "白色方底拼贴花字"
+  },
+  {
+   "index": 284,
+   "effect_id": "7548337425781935422",
+   "is_vip": true,
+   "name": "红金立体国风花字"
+  },
+  {
+   "index": 285,
+   "effect_id": "7405492993878281510",
+   "is_vip": true,
+   "name": "暗黑金泼墨风花字"
+  },
+  {
+   "index": 286,
+   "effect_id": "7442261279013604644",
+   "is_vip": true,
+   "name": "红色描边花字"
+  },
+  {
+   "index": 287,
+   "effect_id": "7405152529522101531",
+   "is_vip": true,
+   "name": "橙色立体花字"
+  },
+  {
+   "index": 288,
+   "effect_id": "7412523765768178944",
+   "is_vip": true,
+   "name": "红色锈迹文字"
+  },
+  {
+   "index": 289,
+   "effect_id": "7398455661513674035",
+   "is_vip": true,
+   "name": "紫色渐变"
+  },
+  {
+   "index": 290,
+   "effect_id": "7398454655505763593",
+   "is_vip": true,
+   "name": "黄色"
+  },
+  {
+   "index": 291,
+   "effect_id": "7406687421921791282",
+   "is_vip": true,
+   "name": "黑色渐变白蓝描边"
+  },
+  {
+   "index": 292,
+   "effect_id": "7506872589642665240",
+   "is_vip": true,
+   "name": "端午61立体字效"
+  },
+  {
+   "index": 293,
+   "effect_id": "7405120470477065507",
+   "is_vip": true,
+   "name": "黄色立体文字"
+  },
+  {
+   "index": 294,
+   "effect_id": "7236984607575461154",
+   "is_vip": true,
+   "name": "炫彩模糊花字"
+  },
+  {
+   "index": 295,
+   "effect_id": "7494656119529393470",
+   "is_vip": true,
+   "name": "五四青年立体"
+  },
+  {
+   "index": 296,
+   "effect_id": "7406389812925680933",
+   "is_vip": true,
+   "name": "复古方底立体"
+  },
+  {
+   "index": 297,
+   "effect_id": "7467033569848839486",
+   "is_vip": true,
+   "name": "喜庆花字"
+  },
+  {
+   "index": 298,
+   "effect_id": "7546585357555649816",
+   "is_vip": true,
+   "name": "中秋黄白立体字效"
+  },
+  {
+   "index": 299,
+   "effect_id": "7403927160563551528",
+   "is_vip": true,
+   "name": "黄蓝色立体综艺描边花字"
+  },
+  {
+   "index": 300,
+   "effect_id": "7405229843220106534",
+   "is_vip": true,
+   "name": "白紫色立体花字"
+  },
+  {
+   "index": 301,
+   "effect_id": "7459717947620363582",
+   "is_vip": true,
+   "name": "金色渐变立体发光花字"
+  },
+  {
+   "index": 302,
+   "effect_id": "7471910410766109977",
+   "is_vip": true,
+   "name": "蓝色描边立体花字"
+  },
+  {
+   "index": 303,
+   "effect_id": "7505771535878098200",
+   "is_vip": true,
+   "name": "黄色白色"
+  },
+  {
+   "index": 304,
+   "effect_id": "7406364344176414003",
+   "is_vip": true,
+   "name": "渐变色白边立体花字"
+  },
+  {
+   "index": 305,
+   "effect_id": "7403728040653573387",
+   "is_vip": true,
+   "name": "橘猫花字"
+  },
+  {
+   "index": 306,
+   "effect_id": "7409333268195101979",
+   "is_vip": true,
+   "name": "综艺字立体"
+  },
+  {
+   "index": 307,
+   "effect_id": "7455529495043525950",
+   "is_vip": true,
+   "name": "红橘新年花字"
+  },
+  {
+   "index": 308,
+   "effect_id": "7449034603760749839",
+   "is_vip": true,
+   "name": "红包花字"
+  },
+  {
+   "index": 309,
+   "effect_id": "7231489008126266679",
+   "is_vip": true,
+   "name": "花字 经典黄色加深蓝经典配色凸显文字"
+  },
+  {
+   "index": 310,
+   "effect_id": "7519880279205448984",
+   "is_vip": true,
+   "name": "橙色花字"
+  },
+  {
+   "index": 311,
+   "effect_id": "7371415414817000754",
+   "is_vip": true,
+   "name": "淡蓝色渐变发光花字"
+  },
+  {
+   "index": 312,
+   "effect_id": "7406385391265156362",
+   "is_vip": true,
+   "name": "紫色双层描边花字"
+  },
+  {
+   "index": 313,
+   "effect_id": "7455254263888104766",
+   "is_vip": true,
+   "name": "新年红金花字"
+  },
+  {
+   "index": 314,
+   "effect_id": "7357027100324367627",
+   "is_vip": true,
+   "name": "晕染蓝"
+  },
+  {
+   "index": 315,
+   "effect_id": "7431440010152316169",
+   "is_vip": true,
+   "name": "黑色渐变立体花字"
+  },
+  {
+   "index": 316,
+   "effect_id": "7360540744035142953",
+   "is_vip": true,
+   "name": "拼贴绿"
+  },
+  {
+   "index": 317,
+   "effect_id": "7404370982238014747",
+   "is_vip": true,
+   "name": "橘黄色波点渐变发光花字"
+  },
+  {
+   "index": 318,
+   "effect_id": "7403764204420730122",
+   "is_vip": true,
+   "name": "红黄白多层渐变立体花字"
+  },
+  {
+   "index": 319,
+   "effect_id": "7385227292521418018",
+   "is_vip": true,
+   "name": "蓝色渐变"
+  },
+  {
+   "index": 320,
+   "effect_id": "7404415905066782004",
+   "is_vip": true,
+   "name": "黄绿高饱和多重描边字"
+  },
+  {
+   "index": 321,
+   "effect_id": "7274771737999379749",
+   "is_vip": true,
+   "name": "粉色发光花字"
+  },
+  {
+   "index": 322,
+   "effect_id": "7430397468082228543",
+   "is_vip": true,
+   "name": "简约雪纹理立体花字"
+  },
+  {
+   "index": 323,
+   "effect_id": "7450496790354234674",
+   "is_vip": true,
+   "name": "白字红边重影风格花字"
+  },
+  {
+   "index": 324,
+   "effect_id": "7405831511003417871",
+   "is_vip": true,
+   "name": "黄色奶酪字"
+  },
+  {
+   "index": 325,
+   "effect_id": "7406673678412418354",
+   "is_vip": true,
+   "name": "彩虹色描边白字"
+  },
+  {
+   "index": 326,
+   "effect_id": "7406360821216988416",
+   "is_vip": true,
+   "name": "橙黄色渐变立体花字"
+  },
+  {
+   "index": 327,
+   "effect_id": "7430856547934211379",
+   "is_vip": true,
+   "name": "蓝色纸张质感黄底花字"
+  },
+  {
+   "index": 328,
+   "effect_id": "7474476846223101209",
+   "is_vip": true,
+   "name": "粉色爱心立体字"
+  },
+  {
+   "index": 329,
+   "effect_id": "7406335734044577035",
+   "is_vip": true,
+   "name": "蓝色纹理立体描边花字"
+  },
+  {
+   "index": 330,
+   "effect_id": "7360960769703398695",
+   "is_vip": true,
+   "name": "拼贴浅红"
+  },
+  {
+   "index": 331,
+   "effect_id": "7359358208286215464",
+   "is_vip": true,
+   "name": "红色花字"
+  },
+  {
+   "index": 332,
+   "effect_id": "7347989608908606783",
+   "is_vip": true,
+   "name": "故障字"
+  },
+  {
+   "index": 333,
+   "effect_id": "7538998611628084542",
+   "is_vip": true,
+   "name": "橙色秋叶立体花字"
+  },
+  {
+   "index": 334,
+   "effect_id": "7546423084874599705",
+   "is_vip": true,
+   "name": "国庆黄红立体字效"
+  },
+  {
+   "index": 335,
+   "effect_id": "7548711671317974334",
+   "is_vip": true,
+   "name": "黄红渐变纹理花字"
+  },
+  {
+   "index": 336,
+   "effect_id": "7538711238725946649",
+   "is_vip": true,
+   "name": "黄橙玻璃质感秋日花字"
+  },
+  {
+   "index": 337,
+   "effect_id": "7406380674057358642",
+   "is_vip": true,
+   "name": "复古黄色方底背景"
+  },
+  {
+   "index": 338,
+   "effect_id": "7546349045032439102",
+   "is_vip": true,
+   "name": "立体桔黄"
+  },
+  {
+   "index": 339,
+   "effect_id": "7509793945480613144",
+   "is_vip": true,
+   "name": "618黑边"
+  },
+  {
+   "index": 340,
+   "effect_id": "7508042807811280190",
+   "is_vip": true,
+   "name": "综艺风红色立体描边花字"
+  },
+  {
+   "index": 341,
+   "effect_id": "7509930498681163032",
+   "is_vip": true,
+   "name": "高考立体"
+  },
+  {
+   "index": 342,
+   "effect_id": "7546032665510841662",
+   "is_vip": true,
+   "name": "糖炒栗子"
+  },
+  {
+   "index": 343,
+   "effect_id": "7546131418620071192",
+   "is_vip": true,
+   "name": "斜纹花字"
+  },
+  {
+   "index": 344,
+   "effect_id": "7507853100984667416",
+   "is_vip": true,
+   "name": "黄色渐变蓝色描边立体花字"
+  },
+  {
+   "index": 345,
+   "effect_id": "7527398816782454040",
+   "is_vip": true,
+   "name": "三原色"
+  },
+  {
+   "index": 346,
+   "effect_id": "7511339634761420057",
+   "is_vip": true,
+   "name": "黄色纹理蓝棕色阴影描边立体花字"
+  },
+  {
+   "index": 347,
+   "effect_id": "7533092158820142360",
+   "is_vip": true,
+   "name": "橙色渐变立体花字"
+  },
+  {
+   "index": 348,
+   "effect_id": "7532701961364278553",
+   "is_vip": true,
+   "name": "立体花字"
+  },
+  {
+   "index": 349,
+   "effect_id": "7535694140227456280",
+   "is_vip": true,
+   "name": "毛绒字"
+  },
+  {
+   "index": 350,
+   "effect_id": "7506898516468370750",
+   "is_vip": true,
+   "name": "我的潮流指南"
+  },
+  {
+   "index": 351,
+   "effect_id": "7495656020006669592",
+   "is_vip": true,
+   "name": "综艺风蓝色立体描边花字"
+  },
+  {
+   "index": 352,
+   "effect_id": "7477620313522703678",
+   "is_vip": true,
+   "name": "彩铅渐变黄色花字"
+  },
+  {
+   "index": 353,
+   "effect_id": "7369459252290718986",
+   "is_vip": true,
+   "name": "彩色"
+  },
+  {
+   "index": 354,
+   "effect_id": "7480097920361073945",
+   "is_vip": true,
+   "name": "膨胀感字"
+  },
+  {
+   "index": 355,
+   "effect_id": "7236599551984028939",
+   "is_vip": true,
+   "name": "蓝紫色混合花字"
+  },
+  {
+   "index": 356,
+   "effect_id": "7477756249665342744",
+   "is_vip": true,
+   "name": "彩铅渐变粉色花字"
+  },
+  {
+   "index": 357,
+   "effect_id": "7506874577159572755",
+   "is_vip": true,
+   "name": "绿色花字发光"
+  },
+  {
+   "index": 358,
+   "effect_id": "7350563191123938611",
+   "is_vip": true,
+   "name": "可爱彩色涂鸦花字"
+  },
+  {
+   "index": 359,
+   "effect_id": "7507082793592032536",
+   "is_vip": true,
+   "name": "粉色闪闪芭比花字"
+  },
+  {
+   "index": 360,
+   "effect_id": "7509757725908225304",
+   "is_vip": true,
+   "name": "马卡龙"
+  },
+  {
+   "index": 361,
+   "effect_id": "7348369625215749388",
+   "is_vip": true,
+   "name": "发光字"
+  },
+  {
+   "index": 362,
+   "effect_id": "7403964791372533027",
+   "is_vip": true,
+   "name": "粉笔字"
+  },
+  {
+   "index": 363,
+   "effect_id": "7508363172798270744",
+   "is_vip": true,
+   "name": "蓝白"
+  },
+  {
+   "index": 364,
+   "effect_id": "7477149973520583961",
+   "is_vip": true,
+   "name": "黄绿渐变立体字"
+  },
+  {
+   "index": 365,
+   "effect_id": "7494493486155042110",
+   "is_vip": true,
+   "name": "多层描边彩色多巴胺花字"
+  },
+  {
+   "index": 366,
+   "effect_id": "7492310644704841022",
+   "is_vip": true,
+   "name": "蓝粉"
+  },
+  {
+   "index": 367,
+   "effect_id": "7507164704448679193",
+   "is_vip": true,
+   "name": "节日绿色立体描边花字"
+  },
+  {
+   "index": 368,
+   "effect_id": "7347171058488823066",
+   "is_vip": true,
+   "name": "蓝绿色花字"
+  },
+  {
+   "index": 369,
+   "effect_id": "7405934415567736074",
+   "is_vip": true,
+   "name": "粉色立体拼贴花字"
+  },
+  {
+   "index": 370,
+   "effect_id": "7492411773329476889",
+   "is_vip": true,
+   "name": "彩色描边立体可爱花字"
+  },
+  {
+   "index": 371,
+   "effect_id": "7492716248091004222",
+   "is_vip": true,
+   "name": "绿色立体"
+  },
+  {
+   "index": 372,
+   "effect_id": "7479683834464898329",
+   "is_vip": true,
+   "name": "春日综艺感渐变纹理花字"
+  },
+  {
+   "index": 373,
+   "effect_id": "7478608447794187582",
+   "is_vip": true,
+   "name": "绿紫黄紫立体字"
+  },
+  {
+   "index": 374,
+   "effect_id": "7403676308145802522",
+   "is_vip": false,
+   "name": "立体综艺花字"
+  },
+  {
+   "index": 375,
+   "effect_id": "7405202500493610275",
+   "is_vip": false,
+   "name": "白色纹理描边花字"
+  },
+  {
+   "index": 376,
+   "effect_id": "7441152469352090889",
+   "is_vip": false,
+   "name": "复古淡黄花字"
+  },
+  {
+   "index": 377,
+   "effect_id": "7405564299122429219",
+   "is_vip": false,
+   "name": "白色发光字"
+  },
+  {
+   "index": 378,
+   "effect_id": "7403679510702378278",
+   "is_vip": false,
+   "name": "黄色渐变立体白描边花字"
+  },
+  {
+   "index": 379,
+   "effect_id": "7403960732490157364",
+   "is_vip": false,
+   "name": "白字红边立体字"
+  },
+  {
+   "index": 380,
+   "effect_id": "7405107629137186082",
+   "is_vip": false,
+   "name": "蓝色立体字"
+  },
+  {
+   "index": 381,
+   "effect_id": "7410649194110733602",
+   "is_vip": false,
+   "name": "美拉德立体文字"
+  },
+  {
+   "index": 382,
+   "effect_id": "7404477237837270299",
+   "is_vip": false,
+   "name": "绿色立体通用花字"
+  },
+  {
+   "index": 383,
+   "effect_id": "7405105991651544360",
+   "is_vip": false,
+   "name": "绿色镂空透明文字"
+  },
+  {
+   "index": 384,
+   "effect_id": "7405410790867586344",
+   "is_vip": false,
+   "name": "绿色描边投影字"
+  },
+  {
+   "index": 385,
+   "effect_id": "7405203773066415360",
+   "is_vip": false,
+   "name": "绿色透明纹理花字"
+  },
+  {
+   "index": 386,
+   "effect_id": "7543157780769803582",
+   "is_vip": true,
+   "name": "综艺火焰"
+  },
+  {
+   "index": 387,
+   "effect_id": "7347967906669415716",
+   "is_vip": true,
+   "name": "系统故障字"
+  },
+  {
+   "index": 388,
+   "effect_id": "7532041202787487038",
+   "is_vip": true,
+   "name": "蓝色黄色渐变立体描边花字"
+  },
+  {
+   "index": 389,
+   "effect_id": "7127670164996328740",
+   "is_vip": true,
+   "name": "综艺 黄色"
+  },
+  {
+   "index": 390,
+   "effect_id": "7260340249581128996",
+   "is_vip": true,
+   "name": "黑白黄色花字"
+  },
+  {
+   "index": 391,
+   "effect_id": "7405896759987227931",
+   "is_vip": true,
+   "name": "红色火焰燃烧花字"
+  },
+  {
+   "index": 392,
+   "effect_id": "7160595602236116232",
+   "is_vip": true,
+   "name": "复古紫光蓝色渐变立体花字"
+  },
+  {
+   "index": 393,
+   "effect_id": "7494932494253608216",
+   "is_vip": true,
+   "name": "综艺风蓝色描边立体花字"
+  },
+  {
+   "index": 394,
+   "effect_id": "7411046111760125211",
+   "is_vip": true,
+   "name": "喷溅红立体"
+  },
+  {
+   "index": 395,
+   "effect_id": "7313160248175398154",
+   "is_vip": true,
+   "name": "红黄渐变纹理立体花字"
+  },
+  {
+   "index": 396,
+   "effect_id": "7403899942944705819",
+   "is_vip": true,
+   "name": "白字蓝框综艺花字"
+  },
+  {
+   "index": 397,
+   "effect_id": "7205144150390443301",
+   "is_vip": true,
+   "name": "美食-金色渐变"
+  },
+  {
+   "index": 398,
+   "effect_id": "7406328633205312820",
+   "is_vip": true,
+   "name": "红色火焰字"
+  },
+  {
+   "index": 399,
+   "effect_id": "7404690754590821632",
+   "is_vip": true,
+   "name": "镂空发光字"
+  },
+  {
+   "index": 400,
+   "effect_id": "7310113812168871177",
+   "is_vip": true,
+   "name": "白色质感纹理立体花字"
+  },
+  {
+   "index": 401,
+   "effect_id": "7448962185159609625",
+   "is_vip": true,
+   "name": "综艺立体"
+  },
+  {
+   "index": 402,
+   "effect_id": "7494493305716378905",
+   "is_vip": true,
+   "name": "五一复古立体"
+  },
+  {
+   "index": 403,
+   "effect_id": "7264501278175202572",
+   "is_vip": true,
+   "name": "好物美妆-双层投影"
+  },
+  {
+   "index": 404,
+   "effect_id": "7350578203905232166",
+   "is_vip": true,
+   "name": "白字绿底花字"
+  },
+  {
+   "index": 405,
+   "effect_id": "7406249723423640871",
+   "is_vip": true,
+   "name": "渐变错位花字"
+  },
+  {
+   "index": 406,
+   "effect_id": "7406866881144966409",
+   "is_vip": true,
+   "name": "像素格背景字"
+  },
+  {
+   "index": 407,
+   "effect_id": "7404777689518738728",
+   "is_vip": true,
+   "name": "橙黄渐变花字"
+  },
+  {
+   "index": 408,
+   "effect_id": "7342020000812731658",
+   "is_vip": true,
+   "name": "彩色手绘线条花字"
+  },
+  {
+   "index": 409,
+   "effect_id": "7262979013637967119",
+   "is_vip": true,
+   "name": "立体麻布花纹字体"
+  },
+  {
+   "index": 410,
+   "effect_id": "7406013385969569062",
+   "is_vip": true,
+   "name": "红色渐变波点底纹立体花字"
+  },
+  {
+   "index": 411,
+   "effect_id": "7478945314318241086",
+   "is_vip": true,
+   "name": "综艺风蓝色渐变纹理立体花字"
+  },
+  {
+   "index": 412,
+   "effect_id": "7404293089377930536",
+   "is_vip": true,
+   "name": "高饱和彩虹字"
+  },
+  {
+   "index": 413,
+   "effect_id": "7404132140365008179",
+   "is_vip": true,
+   "name": "3D蓝红色立体综艺花字"
+  },
+  {
+   "index": 414,
+   "effect_id": "7272729157895769355",
+   "is_vip": true,
+   "name": "音乐节-杂点黄字"
+  },
+  {
+   "index": 415,
+   "effect_id": "7343806780583038247",
+   "is_vip": true,
+   "name": "拼贴位移字"
+  },
+  {
+   "index": 416,
+   "effect_id": "7347548073897364746",
+   "is_vip": true,
+   "name": "彩色立体底框花字"
+  },
+  {
+   "index": 417,
+   "effect_id": "7230694221513035020",
+   "is_vip": true,
+   "name": "黑字底红光"
+  },
+  {
+   "index": 418,
+   "effect_id": "7405947244395924770",
+   "is_vip": true,
+   "name": "海浪卡通立体字"
+  },
+  {
+   "index": 419,
+   "effect_id": "7261598257762045219",
+   "is_vip": true,
+   "name": "浪花紫"
+  },
+  {
+   "index": 420,
+   "effect_id": "7405953030996184335",
+   "is_vip": true,
+   "name": "裂纹立体文字"
+  },
+  {
+   "index": 421,
+   "effect_id": "7406307881865301258",
+   "is_vip": true,
+   "name": "漫画层叠花字"
+  },
+  {
+   "index": 422,
+   "effect_id": "7403686755486010634",
+   "is_vip": true,
+   "name": "节点营销直播主题立体字蓝色"
+  },
+  {
+   "index": 423,
+   "effect_id": "7251715329162841347",
+   "is_vip": true,
+   "name": "黑色立体投影紫色发光镭射纹理花字  艺术字体"
+  },
+  {
+   "index": 424,
+   "effect_id": "7405563025169632562",
+   "is_vip": true,
+   "name": "复古白蓝色立体花字"
+  },
+  {
+   "index": 425,
+   "effect_id": "7430816571443940659",
+   "is_vip": true,
+   "name": "爆款热卖"
+  },
+  {
+   "index": 426,
+   "effect_id": "7403937403397885184",
+   "is_vip": true,
+   "name": "蓝紫渐变多重投影字"
+  },
+  {
+   "index": 427,
+   "effect_id": "7404868077101255988",
+   "is_vip": true,
+   "name": "综艺白色立体描边纹理花字"
+  },
+  {
+   "index": 428,
+   "effect_id": "7547984081930161470",
+   "is_vip": true,
+   "name": "红金渐变国风立体花字"
+  },
+  {
+   "index": 429,
+   "effect_id": "7409964157296020751",
+   "is_vip": true,
+   "name": "立体字粉色背景"
+  },
+  {
+   "index": 430,
+   "effect_id": "7324255228310654235",
+   "is_vip": true,
+   "name": "金色渐变红底立体花字"
+  },
+  {
+   "index": 431,
+   "effect_id": "7431487397017226507",
+   "is_vip": true,
+   "name": "热销字体"
+  },
+  {
+   "index": 432,
+   "effect_id": "7343541738537061651",
+   "is_vip": true,
+   "name": "位移字"
+  },
+  {
+   "index": 433,
+   "effect_id": "7205148909730024762",
+   "is_vip": true,
+   "name": "美食-立体描边"
+  },
+  {
+   "index": 434,
+   "effect_id": "7404037981952068879",
+   "is_vip": true,
+   "name": "格子背景双色字"
+  },
+  {
+   "index": 435,
+   "effect_id": "7174051263578000678",
+   "is_vip": true,
+   "name": "落日鸡尾酒"
+  },
+  {
+   "index": 436,
+   "effect_id": "7187622568717749565",
+   "is_vip": true,
+   "name": "春节-半透明"
+  },
+  {
+   "index": 437,
+   "effect_id": "7241429233287925044",
+   "is_vip": true,
+   "name": "黑色综艺花字"
+  },
+  {
+   "index": 438,
+   "effect_id": "7405060175322795276",
+   "is_vip": true,
+   "name": "白/黄方块图案质感花字"
+  },
+  {
+   "index": 439,
+   "effect_id": "7284906593399950647",
+   "is_vip": true,
+   "name": "时尚黑蓝粉"
+  },
+  {
+   "index": 440,
+   "effect_id": "7403911656587234597",
+   "is_vip": true,
+   "name": "3D蓝色渐变综艺花字"
+  },
+  {
+   "index": 441,
+   "effect_id": "7241398402125253903",
+   "is_vip": true,
+   "name": "白色蓝色描边红色荧光花字"
+  },
+  {
+   "index": 442,
+   "effect_id": "7371129776494365990",
+   "is_vip": true,
+   "name": "白色仿3D立体花字"
+  },
+  {
+   "index": 443,
+   "effect_id": "7406357450166635776",
+   "is_vip": true,
+   "name": "蓝色立体描边花字"
+  },
+  {
+   "index": 444,
+   "effect_id": "7404701167156088116",
+   "is_vip": true,
+   "name": "破碎裂开文字"
+  },
+  {
+   "index": 445,
+   "effect_id": "7270881305070423356",
+   "is_vip": true,
+   "name": "黄边黑字立体花字"
+  },
+  {
+   "index": 446,
+   "effect_id": "7405886722011172150",
+   "is_vip": true,
+   "name": "立体星星花字"
+  },
+  {
+   "index": 447,
+   "effect_id": "7406589254157061439",
+   "is_vip": true,
+   "name": "多色花字"
+  },
+  {
+   "index": 448,
+   "effect_id": "7481488244421741848",
+   "is_vip": true,
+   "name": "立体方块花字"
+  },
+  {
+   "index": 449,
+   "effect_id": "7252151198805986572",
+   "is_vip": true,
+   "name": "水墨纹花字"
+  },
+  {
+   "index": 450,
+   "effect_id": "7368858909295136010",
+   "is_vip": true,
+   "name": "白字蓝底花字"
+  },
+  {
+   "index": 451,
+   "effect_id": "7430724518248729919",
+   "is_vip": true,
+   "name": "橙色纹理立体发光花字"
+  },
+  {
+   "index": 452,
+   "effect_id": "7407014154613116210",
+   "is_vip": true,
+   "name": "红黄绿复古花字"
+  },
+  {
+   "index": 453,
+   "effect_id": "7404037530980453647",
+   "is_vip": true,
+   "name": "橙黄色渐变立体描边花字"
+  },
+  {
+   "index": 454,
+   "effect_id": "7404380953893735714",
+   "is_vip": true,
+   "name": "潮酷薄膜纹理字"
+  },
+  {
+   "index": 455,
+   "effect_id": "7265614510084443444",
+   "is_vip": true,
+   "name": "粉色贝壳光泽花字"
+  },
+  {
+   "index": 456,
+   "effect_id": "7348679900477279507",
+   "is_vip": true,
+   "name": "四色蜡笔花字"
+  },
+  {
+   "index": 457,
+   "effect_id": "7404828145255288075",
+   "is_vip": true,
+   "name": "蓝色立体描边发光花字"
+  },
+  {
+   "index": 458,
+   "effect_id": "7510183639066627352",
+   "is_vip": true,
+   "name": "限时抢购"
+  },
+  {
+   "index": 459,
+   "effect_id": "7404883759012597030",
+   "is_vip": true,
+   "name": "游戏综艺风蓝色波点渐变花字"
+  },
+  {
+   "index": 460,
+   "effect_id": "7334687695660272947",
+   "is_vip": true,
+   "name": "紫色梦幻   白字紫底红醒目花字"
+  },
+  {
+   "index": 461,
+   "effect_id": "7435551949266701580",
+   "is_vip": true,
+   "name": "蓝色渐变综艺"
+  },
+  {
+   "index": 462,
+   "effect_id": "7289732660077874491",
+   "is_vip": true,
+   "name": "黑色粉色阴影花字"
+  },
+  {
+   "index": 463,
+   "effect_id": "7259399609452088637",
+   "is_vip": true,
+   "name": "黑体蓝紫边发光花字"
+  },
+  {
+   "index": 464,
+   "effect_id": "7405546666498985227",
+   "is_vip": true,
+   "name": "粉笔涂鸦花字（教师节）"
+  },
+  {
+   "index": 465,
+   "effect_id": "7431814893415812362",
+   "is_vip": true,
+   "name": "黑粉甜酷拼贴文字"
+  },
+  {
+   "index": 466,
+   "effect_id": "7506818824885390616",
+   "is_vip": true,
+   "name": "彩色立体"
+  },
+  {
+   "index": 467,
+   "effect_id": "7328771445960592640",
+   "is_vip": true,
+   "name": "浅棕色描边花字"
+  },
+  {
+   "index": 468,
+   "effect_id": "7543482227871599896",
+   "is_vip": true,
+   "name": "蓝红蜡笔质感纹理花字"
+  },
+  {
+   "index": 469,
+   "effect_id": "7410369831503006988",
+   "is_vip": true,
+   "name": "黄色渐变"
+  },
+  {
+   "index": 470,
+   "effect_id": "7404072480870026534",
+   "is_vip": true,
+   "name": "综艺风方块背景立体花字"
+  },
+  {
+   "index": 471,
+   "effect_id": "7430759634757061926",
+   "is_vip": true,
+   "name": "彩色花字"
+  },
+  {
+   "index": 472,
+   "effect_id": "7482027387266469145",
+   "is_vip": true,
+   "name": "综艺感蓝色立体描边花字"
+  },
+  {
+   "index": 473,
+   "effect_id": "7406321401969364264",
+   "is_vip": true,
+   "name": "彩色透明花字"
+  },
+  {
+   "index": 474,
+   "effect_id": "7369415539795529012",
+   "is_vip": true,
+   "name": "橙色蓝色花字"
+  },
+  {
+   "index": 475,
+   "effect_id": "7406010573961317670",
+   "is_vip": true,
+   "name": "黑字黄绿拼贴花字"
+  },
+  {
+   "index": 476,
+   "effect_id": "7504864758944927001",
+   "is_vip": true,
+   "name": "蓝橙白立体花字"
+  },
+  {
+   "index": 477,
+   "effect_id": "7435272797611429172",
+   "is_vip": true,
+   "name": "黄蓝撞色描边字"
+  },
+  {
+   "index": 478,
+   "effect_id": "7407015583444782375",
+   "is_vip": true,
+   "name": "玫粉黑花字"
+  },
+  {
+   "index": 479,
+   "effect_id": "7405183112906378522",
+   "is_vip": true,
+   "name": "芭比粉背景白字"
+  },
+  {
+   "index": 480,
+   "effect_id": "7407047445240139071",
+   "is_vip": true,
+   "name": "万圣节多色花字"
+  },
+  {
+   "index": 481,
+   "effect_id": "7406318872862674185",
+   "is_vip": true,
+   "name": "复古风花字"
+  },
+  {
+   "index": 482,
+   "effect_id": "7231502419723603239",
+   "is_vip": true,
+   "name": "深红白边黄影立体花字"
+  },
+  {
+   "index": 483,
+   "effect_id": "7431429796434890021",
+   "is_vip": true,
+   "name": "APT花字"
+  },
+  {
+   "index": 484,
+   "effect_id": "7270171712136776997",
+   "is_vip": true,
+   "name": "粉底黄边黑色立体花字"
+  },
+  {
+   "index": 485,
+   "effect_id": "7405789476561095986",
+   "is_vip": true,
+   "name": "未来科技感立体厚重标题花字"
+  },
+  {
+   "index": 486,
+   "effect_id": "7405944078992559411",
+   "is_vip": true,
+   "name": "白字带描边花字"
+  },
+  {
+   "index": 487,
+   "effect_id": "7411583332707863835",
+   "is_vip": true,
+   "name": "美妆方底"
+  },
+  {
+   "index": 488,
+   "effect_id": "7337839774079798566",
+   "is_vip": true,
+   "name": "酒红风格   黄字酒红底色花字"
+  },
+  {
+   "index": 489,
+   "effect_id": "7405065396648283455",
+   "is_vip": true,
+   "name": "黄绿撕纸拼贴质感花字"
+  },
+  {
+   "index": 490,
+   "effect_id": "7405186414284999971",
+   "is_vip": true,
+   "name": "橙黄色立体霓虹花字"
+  },
+  {
+   "index": 491,
+   "effect_id": "7544660134732057881",
+   "is_vip": true,
+   "name": "黄色渐变粉色花朵底纹立体花字"
+  },
+  {
+   "index": 492,
+   "effect_id": "7348639844198878515",
+   "is_vip": true,
+   "name": "青团底纹花字"
+  },
+  {
+   "index": 493,
+   "effect_id": "7382058294157774107",
+   "is_vip": true,
+   "name": "黄蓝渐变立体字"
+  },
+  {
+   "index": 494,
+   "effect_id": "7252346023656394042",
+   "is_vip": true,
+   "name": "紫色描边发光小字体"
+  },
+  {
+   "index": 495,
+   "effect_id": "7404290790391860530",
+   "is_vip": true,
+   "name": "粉蓝色渐变黑边立体花字"
+  },
+  {
+   "index": 496,
+   "effect_id": "7406979682911931657",
+   "is_vip": true,
+   "name": "红色渐变黄绿描边"
+  },
+  {
+   "index": 497,
+   "effect_id": "7411563961381817610",
+   "is_vip": true,
+   "name": "美妆拼贴"
+  },
+  {
+   "index": 498,
+   "effect_id": "7404883418774818086",
+   "is_vip": true,
+   "name": "游戏综艺风黄红紫渐变花字"
+  },
+  {
+   "index": 499,
+   "effect_id": "7543299507744967960",
+   "is_vip": true,
+   "name": "蓝橙波点纹理玻璃质感立体花字"
+  },
+  {
+   "index": 500,
+   "effect_id": "7406011366865161481",
+   "is_vip": true,
+   "name": "蓝色纹理立体花字"
+  },
+  {
+   "index": 501,
+   "effect_id": "7404009350399937792",
+   "is_vip": true,
+   "name": "放射背景字"
+  },
+  {
+   "index": 502,
+   "effect_id": "7406011150829194546",
+   "is_vip": true,
+   "name": "白字黄绿拼贴花字"
+  },
+  {
+   "index": 503,
+   "effect_id": "7548102481977593113",
+   "is_vip": true,
+   "name": "夏日蓝描边立体"
+  },
+  {
+   "index": 504,
+   "effect_id": "7405537186436648201",
+   "is_vip": true,
+   "name": "白色国风水墨花字"
+  },
+  {
+   "index": 505,
+   "effect_id": "7405530102324415807",
+   "is_vip": true,
+   "name": "金箔纹理阴影花字"
+  },
+  {
+   "index": 506,
+   "effect_id": "7405519026367122727",
+   "is_vip": true,
+   "name": "书法墨迹白色花字"
+  },
+  {
+   "index": 507,
+   "effect_id": "7405512855434382611",
+   "is_vip": true,
+   "name": "泼墨书法纹理花字"
+  },
+  {
+   "index": 508,
+   "effect_id": "7475566213477977368",
+   "is_vip": true,
+   "name": "红色斑驳"
+  },
+  {
+   "index": 509,
+   "effect_id": "7546579616576720152",
+   "is_vip": true,
+   "name": "红色立体"
+  },
+  {
+   "index": 510,
+   "effect_id": "7405499580399357210",
+   "is_vip": true,
+   "name": "金色质感立体花字"
+  },
+  {
+   "index": 511,
+   "effect_id": "7405516433863511348",
+   "is_vip": true,
+   "name": "黑白水墨字"
+  },
+  {
+   "index": 512,
+   "effect_id": "7405497799036407090",
+   "is_vip": true,
+   "name": "水墨风晕染花字"
+  },
+  {
+   "index": 513,
+   "effect_id": "7405510219633036555",
+   "is_vip": true,
+   "name": "白金花字"
+  },
+  {
+   "index": 514,
+   "effect_id": "7483351934074817817",
+   "is_vip": true,
+   "name": "古风质感花字"
+  },
+  {
+   "index": 515,
+   "effect_id": "7405504415408409865",
+   "is_vip": true,
+   "name": "暗黑系红色火焰纹理花字"
+  },
+  {
+   "index": 516,
+   "effect_id": "7405517111231073575",
+   "is_vip": true,
+   "name": "点墨金银花字"
+  },
+  {
+   "index": 517,
+   "effect_id": "7404078955344448777",
+   "is_vip": true,
+   "name": "春节新年福字背景花字"
+  },
+  {
+   "index": 518,
+   "effect_id": "7405512551879970067",
+   "is_vip": true,
+   "name": "银色花字"
+  },
+  {
+   "index": 519,
+   "effect_id": "7405501851887586611",
+   "is_vip": true,
+   "name": "红色暗黑花字"
+  },
+  {
+   "index": 520,
+   "effect_id": "7405506413524569363",
+   "is_vip": true,
+   "name": "黑红渐变立体描边花字"
+  },
+  {
+   "index": 521,
+   "effect_id": "7405527291209469196",
+   "is_vip": true,
+   "name": "书法水痕阴影花字"
+  },
+  {
+   "index": 522,
+   "effect_id": "7405534702221790515",
+   "is_vip": true,
+   "name": "水墨背景白色花字"
+  },
+  {
+   "index": 523,
+   "effect_id": "7405499186109533494",
+   "is_vip": true,
+   "name": "国风金红花字"
+  },
+  {
+   "index": 524,
+   "effect_id": "7405503477444644106",
+   "is_vip": true,
+   "name": "暗黑红色立体花字"
+  },
+  {
+   "index": 525,
+   "effect_id": "7405513478645091636",
+   "is_vip": true,
+   "name": "暗黑墨迹字"
+  },
+  {
+   "index": 526,
+   "effect_id": "7405879747340700937",
+   "is_vip": true,
+   "name": "青绿色水墨风古典边框花字"
+  },
+  {
+   "index": 527,
+   "effect_id": "7405514792724745484",
+   "is_vip": true,
+   "name": "水墨书法纹理花字"
+  },
+  {
+   "index": 528,
+   "effect_id": "7405500890620120358",
+   "is_vip": true,
+   "name": "黑灰色质感立体花字"
+  },
+  {
+   "index": 529,
+   "effect_id": "7405494488019275059",
+   "is_vip": true,
+   "name": "暗黑火焰红边花字"
+  },
+  {
+   "index": 530,
+   "effect_id": "7405528972135583030",
+   "is_vip": true,
+   "name": "暗红色墨痕书法花字"
+  },
+  {
+   "index": 531,
+   "effect_id": "7405504097429867815",
+   "is_vip": true,
+   "name": "银色国风花字"
+  },
+  {
+   "index": 532,
+   "effect_id": "7405524745959034124",
+   "is_vip": false,
+   "name": "书法墨环图案花字"
+  },
+  {
+   "index": 533,
+   "effect_id": "7405523665145613631",
+   "is_vip": false,
+   "name": "金箔描边书法水墨花字"
+  },
+  {
+   "index": 534,
+   "effect_id": "7127823728267791647",
+   "is_vip": true,
+   "name": "综艺金色花字"
+  },
+  {
+   "index": 535,
+   "effect_id": "7160596855456320776",
+   "is_vip": true,
+   "name": "潮酷发光立体花字"
+  },
+  {
+   "index": 536,
+   "effect_id": "7160595759375666446",
+   "is_vip": true,
+   "name": "潮酷金色发光花字"
+  },
+  {
+   "index": 537,
+   "effect_id": "7269602984844102947",
+   "is_vip": true,
+   "name": "光芒万丈"
+  },
+  {
+   "index": 538,
+   "effect_id": "7160601969629891847",
+   "is_vip": true,
+   "name": "综艺立体花字"
+  },
+  {
+   "index": 539,
+   "effect_id": "7205150731035266341",
+   "is_vip": true,
+   "name": "美食-渐变小字"
+  },
+  {
+   "index": 540,
+   "effect_id": "7127839722893774087",
+   "is_vip": true,
+   "name": "粉色花字"
+  },
+  {
+   "index": 541,
+   "effect_id": "7403924857282432271",
+   "is_vip": true,
+   "name": "粉色发光字"
+  },
+  {
+   "index": 542,
+   "effect_id": "7346895765458947366",
+   "is_vip": true,
+   "name": "蓝色发光"
+  },
+  {
+   "index": 543,
+   "effect_id": "7179606734166592825",
+   "is_vip": true,
+   "name": "元旦透明燥点花字-2022元旦"
+  },
+  {
+   "index": 544,
+   "effect_id": "7406005354070379802",
+   "is_vip": true,
+   "name": "红色渐变黄色发光花字"
+  },
+  {
+   "index": 545,
+   "effect_id": "7408957503892884774",
+   "is_vip": true,
+   "name": "蓝色霓虹灯发光花字"
+  },
+  {
+   "index": 546,
+   "effect_id": "7404896582182767908",
+   "is_vip": true,
+   "name": "黄色发光花字"
+  },
+  {
+   "index": 547,
+   "effect_id": "7404751791503576339",
+   "is_vip": true,
+   "name": "蓝色发光花字"
+  },
+  {
+   "index": 548,
+   "effect_id": "7174330567222185253",
+   "is_vip": true,
+   "name": "圣诞红白条"
+  },
+  {
+   "index": 549,
+   "effect_id": "7160597532043644174",
+   "is_vip": true,
+   "name": "潮酷白色发光立体花字"
+  },
+  {
+   "index": 550,
+   "effect_id": "7160596088011951373",
+   "is_vip": true,
+   "name": "综艺立体渐变"
+  },
+  {
+   "index": 551,
+   "effect_id": "7439987370033728807",
+   "is_vip": true,
+   "name": "黄色渐变花字"
+  },
+  {
+   "index": 552,
+   "effect_id": "7346916622247955763",
+   "is_vip": true,
+   "name": "发光"
+  },
+  {
+   "index": 553,
+   "effect_id": "7179634097906519356",
+   "is_vip": true,
+   "name": "闪光的新年花字-2022元旦"
+  },
+  {
+   "index": 554,
+   "effect_id": "7265622933702184232",
+   "is_vip": true,
+   "name": "红色渐变描边花字"
+  },
+  {
+   "index": 555,
+   "effect_id": "7361004787967495462",
+   "is_vip": true,
+   "name": "粉色发光"
+  },
+  {
+   "index": 556,
+   "effect_id": "7322482076958149914",
+   "is_vip": true,
+   "name": "霓虹灯黄红发光花字"
+  },
+  {
+   "index": 557,
+   "effect_id": "7179628047832730941",
+   "is_vip": true,
+   "name": "洒金粉花字-2022元旦"
+  },
+  {
+   "index": 558,
+   "effect_id": "7179616970399124795",
+   "is_vip": true,
+   "name": "元旦透明飘雪花字-2022元旦"
+  },
+  {
+   "index": 559,
+   "effect_id": "7281951975275597114",
+   "is_vip": true,
+   "name": "浅蓝色发光花字"
+  },
+  {
+   "index": 560,
+   "effect_id": "7405197593808096527",
+   "is_vip": true,
+   "name": "红色内发光文字"
+  },
+  {
+   "index": 561,
+   "effect_id": "7240995033393007931",
+   "is_vip": true,
+   "name": "克莱因蓝发光字体"
+  },
+  {
+   "index": 562,
+   "effect_id": "7403941808302066979",
+   "is_vip": true,
+   "name": "红黄配色花字"
+  },
+  {
+   "index": 563,
+   "effect_id": "7241397134128352551",
+   "is_vip": true,
+   "name": "黄色橙色描边花字"
+  },
+  {
+   "index": 564,
+   "effect_id": "7404014524900199706",
+   "is_vip": true,
+   "name": "霓虹灯发光红黄花字"
+  },
+  {
+   "index": 565,
+   "effect_id": "7312709252928277812",
+   "is_vip": true,
+   "name": "薄荷冰花字"
+  },
+  {
+   "index": 566,
+   "effect_id": "7241480073759575357",
+   "is_vip": true,
+   "name": "荧光绿炫酷字体"
+  },
+  {
+   "index": 567,
+   "effect_id": "7245610210386136357",
+   "is_vip": true,
+   "name": "烟雾纹理花字"
+  },
+  {
+   "index": 568,
+   "effect_id": "7243255465822506255",
+   "is_vip": true,
+   "name": "红配蓝发光炫酷字体"
+  },
+  {
+   "index": 569,
+   "effect_id": "7406289529096719625",
+   "is_vip": true,
+   "name": "电商节日直播贴片标题立体字"
+  },
+  {
+   "index": 570,
+   "effect_id": "7336848964819504434",
+   "is_vip": true,
+   "name": "渐变 蓝紫色花字"
+  },
+  {
+   "index": 571,
+   "effect_id": "7241389070943866164",
+   "is_vip": true,
+   "name": "黄色字荧光描边花字"
+  },
+  {
+   "index": 572,
+   "effect_id": "7265621281838533923",
+   "is_vip": true,
+   "name": "粉色渐变描边花字"
+  },
+  {
+   "index": 573,
+   "effect_id": "7322679348106906918",
+   "is_vip": true,
+   "name": "圆环发光花字"
+  },
+  {
+   "index": 574,
+   "effect_id": "7265622422022262051",
+   "is_vip": true,
+   "name": "绿色渐变描边花字"
+  },
+  {
+   "index": 575,
+   "effect_id": "7390410514976804122",
+   "is_vip": true,
+   "name": "白紫立体发光"
+  },
+  {
+   "index": 576,
+   "effect_id": "7266447274115419449",
+   "is_vip": true,
+   "name": "甜粉"
+  },
+  {
+   "index": 577,
+   "effect_id": "7408956912089206067",
+   "is_vip": true,
+   "name": "红色霓虹灯发光花字"
+  },
+  {
+   "index": 578,
+   "effect_id": "7266696486363106616",
+   "is_vip": true,
+   "name": "金色花字"
+  },
+  {
+   "index": 579,
+   "effect_id": "7404503527617301770",
+   "is_vip": true,
+   "name": "空心白色描边发光花字"
+  },
+  {
+   "index": 580,
+   "effect_id": "7351422706086169866",
+   "is_vip": true,
+   "name": "白字蓝光花字"
+  },
+  {
+   "index": 581,
+   "effect_id": "7404047060221037851",
+   "is_vip": true,
+   "name": "亮黄字橙色描边发光花字"
+  },
+  {
+   "index": 582,
+   "effect_id": "7434806614781168947",
+   "is_vip": true,
+   "name": "冬季发光"
+  },
+  {
+   "index": 583,
+   "effect_id": "7231824394559982886",
+   "is_vip": true,
+   "name": "黄的红边花字重叠"
+  },
+  {
+   "index": 584,
+   "effect_id": "7405056348200684827",
+   "is_vip": true,
+   "name": "渐变彩虹色发光花字"
+  },
+  {
+   "index": 585,
+   "effect_id": "7322380988430994715",
+   "is_vip": true,
+   "name": "霓虹灯发光花字"
+  },
+  {
+   "index": 586,
+   "effect_id": "7391283375606156585",
+   "is_vip": true,
+   "name": "绿色纹理立体花字"
+  },
+  {
+   "index": 587,
+   "effect_id": "7322678574719339802",
+   "is_vip": true,
+   "name": "红色霓虹灯发光字"
+  },
+  {
+   "index": 588,
+   "effect_id": "7266724384205786427",
+   "is_vip": true,
+   "name": "星空"
+  },
+  {
+   "index": 589,
+   "effect_id": "7212896736849841467",
+   "is_vip": true,
+   "name": "美食-中间渐变"
+  },
+  {
+   "index": 590,
+   "effect_id": "7259709733790125366",
+   "is_vip": true,
+   "name": "夏日的亮丽"
+  },
+  {
+   "index": 591,
+   "effect_id": "7274035971207744824",
+   "is_vip": true,
+   "name": "纯黑底色，荧光绿和黑色描边 立体 发光 花字"
+  },
+  {
+   "index": 592,
+   "effect_id": "7241392284686683395",
+   "is_vip": true,
+   "name": "黄色蓝色发发光花字"
+  },
+  {
+   "index": 593,
+   "effect_id": "7241477841567649080",
+   "is_vip": true,
+   "name": "梦幻蓝紫色简约渐变花字"
+  },
+  {
+   "index": 594,
+   "effect_id": "7241410291521670400",
+   "is_vip": true,
+   "name": "红色荧光花字"
+  },
+  {
+   "index": 595,
+   "effect_id": "7390315130128452890",
+   "is_vip": true,
+   "name": "彩色发光立体"
+  },
+  {
+   "index": 596,
+   "effect_id": "7404001083665812771",
+   "is_vip": true,
+   "name": "黄色渐变发光字"
+  },
+  {
+   "index": 597,
+   "effect_id": "6926827744189779207",
+   "is_vip": true,
+   "name": "发光灯箱感红色花字"
+  },
+  {
+   "index": 598,
+   "effect_id": "7231468045976292645",
+   "is_vip": true,
+   "name": "黑色红边柔光花字"
+  },
+  {
+   "index": 599,
+   "effect_id": "7404385123975613706",
+   "is_vip": true,
+   "name": "粉色渐变温柔发光花字"
+  },
+  {
+   "index": 600,
+   "effect_id": "7241393396575735040",
+   "is_vip": true,
+   "name": "渐变紫色花字"
+  },
+  {
+   "index": 601,
+   "effect_id": "7243262147210267944",
+   "is_vip": true,
+   "name": "红配绿发光拼色字体"
+  },
+  {
+   "index": 602,
+   "effect_id": "7273831317136035133",
+   "is_vip": true,
+   "name": "黑底荧光绿描边 发光 花字"
+  },
+  {
+   "index": 603,
+   "effect_id": "7403932533995425039",
+   "is_vip": true,
+   "name": "绿字蓝白描边荧光字"
+  },
+  {
+   "index": 604,
+   "effect_id": "7494822504427539737",
+   "is_vip": true,
+   "name": "粉色渐变双层立体发光花字"
+  },
+  {
+   "index": 605,
+   "effect_id": "7411034104415685939",
+   "is_vip": true,
+   "name": "东南亚渐变"
+  },
+  {
+   "index": 606,
+   "effect_id": "7404089520070593843",
+   "is_vip": true,
+   "name": "黄红色霓虹灯镂空发光花字"
+  },
+  {
+   "index": 607,
+   "effect_id": "7403922592194710834",
+   "is_vip": true,
+   "name": "粉色渐变圆圈"
+  },
+  {
+   "index": 608,
+   "effect_id": "7248870704752397579",
+   "is_vip": true,
+   "name": "紫色发光花字"
+  },
+  {
+   "index": 609,
+   "effect_id": "7260373127249595687",
+   "is_vip": true,
+   "name": "纯色黄色字体"
+  },
+  {
+   "index": 610,
+   "effect_id": "7406201706456960256",
+   "is_vip": true,
+   "name": "紫色发光字"
+  },
+  {
+   "index": 611,
+   "effect_id": "7496497861224516926",
+   "is_vip": true,
+   "name": "粉色闪粉星光闪闪发光划走"
+  },
+  {
+   "index": 612,
+   "effect_id": "7270129109974469945",
+   "is_vip": true,
+   "name": "绿底黑边黄色立体花字"
+  },
+  {
+   "index": 613,
+   "effect_id": "7264481843301354813",
+   "is_vip": true,
+   "name": "简约蓝"
+  },
+  {
+   "index": 614,
+   "effect_id": "7241230847741791521",
+   "is_vip": true,
+   "name": "花粉绿"
+  },
+  {
+   "index": 615,
+   "effect_id": "7404070348263607603",
+   "is_vip": true,
+   "name": "粉色发光立体花字"
+  },
+  {
+   "index": 616,
+   "effect_id": "7406241968847670569",
+   "is_vip": true,
+   "name": "绿色渐变立体描边花字"
+  },
+  {
+   "index": 617,
+   "effect_id": "7291429737774255412",
+   "is_vip": true,
+   "name": "粉色糖果风格花字"
+  },
+  {
+   "index": 618,
+   "effect_id": "7355608527144062217",
+   "is_vip": true,
+   "name": "紫色花字"
+  },
+  {
+   "index": 619,
+   "effect_id": "7238624559178485031",
+   "is_vip": true,
+   "name": "渐变发光花字"
+  },
+  {
+   "index": 620,
+   "effect_id": "7405916937353465128",
+   "is_vip": true,
+   "name": "荧光绿线条发光字"
+  },
+  {
+   "index": 621,
+   "effect_id": "7404388775264030003",
+   "is_vip": true,
+   "name": "粉色闪粉白色描边发光花字"
+  },
+  {
+   "index": 622,
+   "effect_id": "7405417769446968610",
+   "is_vip": true,
+   "name": "紫红发光字"
+  },
+  {
+   "index": 623,
+   "effect_id": "7405953290271198491",
+   "is_vip": true,
+   "name": "彩色渐变花字"
+  },
+  {
+   "index": 624,
+   "effect_id": "7275250557386788156",
+   "is_vip": true,
+   "name": "条纹黄色综艺发光花字"
+  },
+  {
+   "index": 625,
+   "effect_id": "7404321217110396187",
+   "is_vip": true,
+   "name": "梦幻紫星光双层立体花字"
+  },
+  {
+   "index": 626,
+   "effect_id": "7529808923725925657",
+   "is_vip": true,
+   "name": "粉色闪闪"
+  },
+  {
+   "index": 627,
+   "effect_id": "7405939554047233295",
+   "is_vip": true,
+   "name": "荧光线条发光字"
+  },
+  {
+   "index": 628,
+   "effect_id": "7327845943305358646",
+   "is_vip": true,
+   "name": "机械装甲绿色科技感文字标题"
+  },
+  {
+   "index": 629,
+   "effect_id": "7404100687820229922",
+   "is_vip": true,
+   "name": "发光灯箱感绿色描边立体花字"
+  },
+  {
+   "index": 630,
+   "effect_id": "7259233733964811572",
+   "is_vip": true,
+   "name": "白花纹发光花字"
+  },
+  {
+   "index": 631,
+   "effect_id": "7334225752663149850",
+   "is_vip": true,
+   "name": "清新绿色 绿色花字"
+  },
+  {
+   "index": 632,
+   "effect_id": "7334229773402606886",
+   "is_vip": true,
+   "name": "浅绿色 绿色花字底发光"
+  },
+  {
+   "index": 633,
+   "effect_id": "7249749880611015988",
+   "is_vip": true,
+   "name": "夏日青春派对"
+  },
+  {
+   "index": 634,
+   "effect_id": "7404708538926353700",
+   "is_vip": true,
+   "name": "白色描边芭比粉发光花字"
+  },
+  {
+   "index": 635,
+   "effect_id": "7232089500518862140",
+   "is_vip": true,
+   "name": "花字-雪花彩粉渐变立体字"
+  },
+  {
+   "index": 636,
+   "effect_id": "7405875861712342307",
+   "is_vip": true,
+   "name": "赛博朋克纹理发光字"
+  },
+  {
+   "index": 637,
+   "effect_id": "7281283804235402533",
+   "is_vip": true,
+   "name": "浅梦幻少女色"
+  },
+  {
+   "index": 638,
+   "effect_id": "7404330497574309129",
+   "is_vip": true,
+   "name": "彩色镭射渐变花字"
+  },
+  {
+   "index": 639,
+   "effect_id": "7245923862574009635",
+   "is_vip": true,
+   "name": "紫色发光立体花字"
+  },
+  {
+   "index": 640,
+   "effect_id": "7404021791427005723",
+   "is_vip": true,
+   "name": "薄荷绿花字"
+  },
+  {
+   "index": 641,
+   "effect_id": "7241393660334574848",
+   "is_vip": true,
+   "name": "青色 红色 荧光花字"
+  },
+  {
+   "index": 642,
+   "effect_id": "7241904291722693944",
+   "is_vip": true,
+   "name": "紫宝石"
+  },
+  {
+   "index": 643,
+   "effect_id": "7241388504381541666",
+   "is_vip": true,
+   "name": "粉橙色花字"
+  },
+  {
+   "index": 644,
+   "effect_id": "7260122300564000012",
+   "is_vip": true,
+   "name": "格子纹理花字"
+  },
+  {
+   "index": 645,
+   "effect_id": "7297906734755073319",
+   "is_vip": true,
+   "name": "复古格子清新蓝花字"
+  },
+  {
+   "index": 646,
+   "effect_id": "7231501962041117955",
+   "is_vip": true,
+   "name": "深绿色黑边紫光花字"
+  },
+  {
+   "index": 647,
+   "effect_id": "7291157036098735401",
+   "is_vip": true,
+   "name": "紫色粉边花字"
+  },
+  {
+   "index": 648,
+   "effect_id": "6896138122774514951",
+   "is_vip": false,
+   "name": "清新蓝色发光花字"
+  },
+  {
+   "index": 649,
+   "effect_id": "7127615338035924238",
+   "is_vip": false,
+   "name": "潮酷 白色橙边"
+  },
+  {
+   "index": 650,
+   "effect_id": "7166445713029729568",
+   "is_vip": false,
+   "name": "简约白色发光立体花字"
+  },
+  {
+   "index": 651,
+   "effect_id": "6896141886055107854",
+   "is_vip": false,
+   "name": "超酷发光镂空花字、潮人必备"
+  },
+  {
+   "index": 652,
+   "effect_id": "6896141886055091470",
+   "is_vip": false,
+   "name": "潮酷蓝色发光镂空花字"
+  },
+  {
+   "index": 653,
+   "effect_id": "7127654126997048607",
+   "is_vip": false,
+   "name": "综艺 橙色"
+  },
+  {
+   "index": 654,
+   "effect_id": "6896138122774531335",
+   "is_vip": false,
+   "name": "清新粉色发光灯箱感花字"
+  },
+  {
+   "index": 655,
+   "effect_id": "6896141886055058702",
+   "is_vip": false,
+   "name": "炫彩发光跳色花字，"
+  },
+  {
+   "index": 656,
+   "effect_id": "7127817897061125413",
+   "is_vip": false,
+   "name": "潮酷 橙色"
+  },
+  {
+   "index": 657,
+   "effect_id": "6926796566346960141",
+   "is_vip": false,
+   "name": "潮酷黄色霓虹灯花字"
+  },
+  {
+   "index": 658,
+   "effect_id": "6926825801258126599",
+   "is_vip": false,
+   "name": "红色镂空发光花字"
+  },
+  {
+   "index": 659,
+   "effect_id": "6926827744189795591",
+   "is_vip": false,
+   "name": "潮酷蓝色霓虹灯发光花字"
+  },
+  {
+   "index": 660,
+   "effect_id": "7187616139642522936",
+   "is_vip": false,
+   "name": "潮酷黄底白色发光立体花字"
+  },
+  {
+   "index": 661,
+   "effect_id": "6927159112887176459",
+   "is_vip": false,
+   "name": "蓝色镂空发光花字"
+  },
+  {
+   "index": 662,
+   "effect_id": "7127819154018602277",
+   "is_vip": false,
+   "name": "潮酷 白色粉边"
+  },
+  {
+   "index": 663,
+   "effect_id": "6926825801258159367",
+   "is_vip": false,
+   "name": "暗黑潮酷黑色花字"
+  },
+  {
+   "index": 664,
+   "effect_id": "6896143968241798408",
+   "is_vip": false,
+   "name": "超酷黄色发光花字"
+  },
+  {
+   "index": 665,
+   "effect_id": "7127680616283295006",
+   "is_vip": false,
+   "name": "小清新 白色"
+  },
+  {
+   "index": 666,
+   "effect_id": "7405565480678739200",
+   "is_vip": false,
+   "name": "黄色发光字"
+  },
+  {
+   "index": 667,
+   "effect_id": "6896141886055075086",
+   "is_vip": false,
+   "name": "炫彩发光花字，跳字变色"
+  },
+  {
+   "index": 668,
+   "effect_id": "6896144021568179469",
+   "is_vip": false,
+   "name": "发光灯箱感绿色花字"
+  },
+  {
+   "index": 669,
+   "effect_id": "6926825801384021256",
+   "is_vip": false,
+   "name": "潮酷黄色发光花字"
+  },
+  {
+   "index": 670,
+   "effect_id": "7127827287826779428",
+   "is_vip": false,
+   "name": "复古 红色"
+  },
+  {
+   "index": 671,
+   "effect_id": "7404088879780826406",
+   "is_vip": false,
+   "name": "赛博朋克未来科技感立体发光花字"
+  },
+  {
+   "index": 672,
+   "effect_id": "6927160254996253967",
+   "is_vip": false,
+   "name": "红色潮酷外发光花字"
+  },
+  {
+   "index": 673,
+   "effect_id": "6927160144421866752",
+   "is_vip": false,
+   "name": "红色朦胧港风复古花字"
+  },
+  {
+   "index": 674,
+   "effect_id": "7127675252410289445",
+   "is_vip": false,
+   "name": "Y2k粉色立体灯箱发光花字"
+  },
+  {
+   "index": 675,
+   "effect_id": "6896143968241782024",
+   "is_vip": false,
+   "name": "潮酷粉色发光镂空花字"
+  },
+  {
+   "index": 676,
+   "effect_id": "7197333872466611513",
+   "is_vip": false,
+   "name": "梦幻粉色发光立体花字"
+  },
+  {
+   "index": 677,
+   "effect_id": "7127669605199351048",
+   "is_vip": false,
+   "name": "潮酷发光青色"
+  },
+  {
+   "index": 678,
+   "effect_id": "7403926640260123944",
+   "is_vip": true,
+   "name": "黄橙渐变黑红描边立体字"
+  },
+  {
+   "index": 679,
+   "effect_id": "7430703360409554212",
+   "is_vip": true,
+   "name": "蓝色纹理立体发光花字"
+  },
+  {
+   "index": 680,
+   "effect_id": "7407014765907774747",
+   "is_vip": true,
+   "name": "黄色渐变红边发光花字"
+  },
+  {
+   "index": 681,
+   "effect_id": "7317088712154696969",
+   "is_vip": true,
+   "name": "立体金属字"
+  },
+  {
+   "index": 682,
+   "effect_id": "7244940532298829090",
+   "is_vip": true,
+   "name": "黑金色立体花字"
+  },
+  {
+   "index": 683,
+   "effect_id": "7281947750139219257",
+   "is_vip": true,
+   "name": "黑灰色花字【严肃】"
+  },
+  {
+   "index": 684,
+   "effect_id": "7212896770370587941",
+   "is_vip": true,
+   "name": "美食-黄网格"
+  },
+  {
+   "index": 685,
+   "effect_id": "7388020661312146751",
+   "is_vip": true,
+   "name": "金属灰渐变立体白边花字"
+  },
+  {
+   "index": 686,
+   "effect_id": "7260358084772547903",
+   "is_vip": true,
+   "name": "一窝时光标题花字字体设计美食海报大气简约醒目小龙虾"
+  },
+  {
+   "index": 687,
+   "effect_id": "7405125461438762267",
+   "is_vip": true,
+   "name": "蓝色渐变3D立体花字"
+  },
+  {
+   "index": 688,
+   "effect_id": "7274581371975142710",
+   "is_vip": true,
+   "name": "立体效果"
+  },
+  {
+   "index": 689,
+   "effect_id": "7212897121249283383",
+   "is_vip": true,
+   "name": "美食-金色网格"
+  },
+  {
+   "index": 690,
+   "effect_id": "7160599091750145287",
+   "is_vip": true,
+   "name": "土酷蓝色渐变立体花字"
+  },
+  {
+   "index": 691,
+   "effect_id": "7369091570345282866",
+   "is_vip": true,
+   "name": "黄白涂鸦花字"
+  },
+  {
+   "index": 692,
+   "effect_id": "7224762483448237345",
+   "is_vip": true,
+   "name": "黑灰渐变"
+  },
+  {
+   "index": 693,
+   "effect_id": "7369985913310448911",
+   "is_vip": true,
+   "name": "彩色渐变描边"
+  },
+  {
+   "index": 694,
+   "effect_id": "7405889740081237285",
+   "is_vip": true,
+   "name": "橘黄色渐变波点底纹立体花字"
+  },
+  {
+   "index": 695,
+   "effect_id": "7431533312738348314",
+   "is_vip": true,
+   "name": "大雪渐变"
+  },
+  {
+   "index": 696,
+   "effect_id": "7268912246900772135",
+   "is_vip": true,
+   "name": "黑白配"
+  },
+  {
+   "index": 697,
+   "effect_id": "7252679635027168567",
+   "is_vip": true,
+   "name": "美食-黄白跳色"
+  },
+  {
+   "index": 698,
+   "effect_id": "7405919974411242791",
+   "is_vip": true,
+   "name": "蓝色渐变立体描边花字"
+  },
+  {
+   "index": 699,
+   "effect_id": "7212885712495070519",
+   "is_vip": true,
+   "name": "美食-弹幕"
+  },
+  {
+   "index": 700,
+   "effect_id": "7265622781008629032",
+   "is_vip": true,
+   "name": "橘色渐变描边花字"
+  },
+  {
+   "index": 701,
+   "effect_id": "7405056217225104681",
+   "is_vip": true,
+   "name": "黄橙色渐变描边立体花字"
+  },
+  {
+   "index": 702,
+   "effect_id": "7328610126296796468",
+   "is_vip": true,
+   "name": "金色渐变 金灿灿花字 富贵"
+  },
+  {
+   "index": 703,
+   "effect_id": "7205151372805754167",
+   "is_vip": true,
+   "name": "暗黑红黑渐立体花字"
+  },
+  {
+   "index": 704,
+   "effect_id": "7404684532756073791",
+   "is_vip": true,
+   "name": "粉色渐变红色底花字"
+  },
+  {
+   "index": 705,
+   "effect_id": "7233363221497842977",
+   "is_vip": true,
+   "name": "扁平化请新白蓝"
+  },
+  {
+   "index": 706,
+   "effect_id": "7187770975822433594",
+   "is_vip": true,
+   "name": "春节-兔彩头-银色立体"
+  },
+  {
+   "index": 707,
+   "effect_id": "7265298421341277452",
+   "is_vip": true,
+   "name": "七夕-粉白渐变"
+  },
+  {
+   "index": 708,
+   "effect_id": "7324218891222240522",
+   "is_vip": true,
+   "name": "金色红底春节喜庆花字"
+  },
+  {
+   "index": 709,
+   "effect_id": "7431549062475762959",
+   "is_vip": true,
+   "name": "黄红渐变黑边立体花字"
+  },
+  {
+   "index": 710,
+   "effect_id": "7205154202757172541",
+   "is_vip": true,
+   "name": "美食-红黄渐变"
+  },
+  {
+   "index": 711,
+   "effect_id": "7212896808798801213",
+   "is_vip": true,
+   "name": "美食-划痕渐变"
+  },
+  {
+   "index": 712,
+   "effect_id": "7330967545240964404",
+   "is_vip": true,
+   "name": "蓝色渐变白色描边花字"
+  },
+  {
+   "index": 713,
+   "effect_id": "7384325883584056617",
+   "is_vip": true,
+   "name": "渐变蓝色花字"
+  },
+  {
+   "index": 714,
+   "effect_id": "7391023993802804521",
+   "is_vip": true,
+   "name": "红色描边双色渐变立体花字"
+  },
+  {
+   "index": 715,
+   "effect_id": "7404880919582018854",
+   "is_vip": true,
+   "name": "橙色渐变波点双层立体花字"
+  },
+  {
+   "index": 716,
+   "effect_id": "7312840128949505307",
+   "is_vip": true,
+   "name": "浅蓝粉渐变立体花字"
+  },
+  {
+   "index": 717,
+   "effect_id": "7248118492111703357",
+   "is_vip": true,
+   "name": "简约蓝色渐变立体花字"
+  },
+  {
+   "index": 718,
+   "effect_id": "7405583007098195237",
+   "is_vip": true,
+   "name": "黄蓝撞色渐变立体花字"
+  },
+  {
+   "index": 719,
+   "effect_id": "7369988046277594383",
+   "is_vip": true,
+   "name": "彩色渐变"
+  },
+  {
+   "index": 720,
+   "effect_id": "7410717398510128424",
+   "is_vip": true,
+   "name": "黄橘渐变"
+  },
+  {
+   "index": 721,
+   "effect_id": "7405253473299696931",
+   "is_vip": true,
+   "name": "红色渐变透明花字"
+  },
+  {
+   "index": 722,
+   "effect_id": "7298358091664362793",
+   "is_vip": true,
+   "name": "雪花字"
+  },
+  {
+   "index": 723,
+   "effect_id": "7205147811573271864",
+   "is_vip": true,
+   "name": "美食-辣"
+  },
+  {
+   "index": 724,
+   "effect_id": "7493079330654899480",
+   "is_vip": true,
+   "name": "黄白色渐变立体花字"
+  },
+  {
+   "index": 725,
+   "effect_id": "7406294702212877619",
+   "is_vip": true,
+   "name": "白字霓虹灯渐变花字"
+  },
+  {
+   "index": 726,
+   "effect_id": "7263267444020596005",
+   "is_vip": true,
+   "name": "冬日寒冷发光花字"
+  },
+  {
+   "index": 727,
+   "effect_id": "7406253347746876706",
+   "is_vip": true,
+   "name": "黄绿渐变发光字"
+  },
+  {
+   "index": 728,
+   "effect_id": "7236638821901733175",
+   "is_vip": true,
+   "name": "简约渐变花字"
+  },
+  {
+   "index": 729,
+   "effect_id": "7505100141288901950",
+   "is_vip": true,
+   "name": "黄色渐变橙蓝色描边立体花字"
+  },
+  {
+   "index": 730,
+   "effect_id": "7127664822887402759",
+   "is_vip": true,
+   "name": "白绿紫渐变"
+  },
+  {
+   "index": 731,
+   "effect_id": "7391445684953681192",
+   "is_vip": true,
+   "name": "蓝绿渐变花字"
+  },
+  {
+   "index": 732,
+   "effect_id": "7376115629230673204",
+   "is_vip": true,
+   "name": "紫色立体渐变"
+  },
+  {
+   "index": 733,
+   "effect_id": "7430709931411623204",
+   "is_vip": true,
+   "name": "蓝色纹理发光立体花字"
+  },
+  {
+   "index": 734,
+   "effect_id": "7265636111211449634",
+   "is_vip": true,
+   "name": "黄色渐变双色描边花字"
+  },
+  {
+   "index": 735,
+   "effect_id": "7404026606869613864",
+   "is_vip": true,
+   "name": "黄绿花纹立体字"
+  },
+  {
+   "index": 736,
+   "effect_id": "7404369195875487016",
+   "is_vip": true,
+   "name": "星空梦幻炫彩立体花字"
+  },
+  {
+   "index": 737,
+   "effect_id": "7527575726220987672",
+   "is_vip": true,
+   "name": "紫色 立体 渐变 花字"
+  },
+  {
+   "index": 738,
+   "effect_id": "7404026005389708595",
+   "is_vip": true,
+   "name": "蓝字彩虹渐变描边花字"
+  },
+  {
+   "index": 739,
+   "effect_id": "7406640534036532490",
+   "is_vip": true,
+   "name": "国风粉色渐变"
+  },
+  {
+   "index": 740,
+   "effect_id": "7371124565839301925",
+   "is_vip": true,
+   "name": "蓝色渐变立体花字"
+  },
+  {
+   "index": 741,
+   "effect_id": "7405949704904658203",
+   "is_vip": true,
+   "name": "渐变白色描边花字"
+  },
+  {
+   "index": 742,
+   "effect_id": "7366899343451852058",
+   "is_vip": true,
+   "name": "黄色手绘蜡笔质感花字"
+  },
+  {
+   "index": 743,
+   "effect_id": "7404710833344892196",
+   "is_vip": true,
+   "name": "3D渐变绿色立体花字"
+  },
+  {
+   "index": 744,
+   "effect_id": "7497111940762995993",
+   "is_vip": true,
+   "name": "简约双层描边蓝色渐变花字"
+  },
+  {
+   "index": 745,
+   "effect_id": "7430992115376704819",
+   "is_vip": true,
+   "name": "五色花字"
+  },
+  {
+   "index": 746,
+   "effect_id": "6896143862222327047",
+   "is_vip": true,
+   "name": "炫彩星空花字"
+  },
+  {
+   "index": 747,
+   "effect_id": "7482318463755734334",
+   "is_vip": true,
+   "name": "美妆立体"
+  },
+  {
+   "index": 748,
+   "effect_id": "7481306716752219417",
+   "is_vip": true,
+   "name": "忧郁蓝"
+  },
+  {
+   "index": 749,
+   "effect_id": "7407010177842482459",
+   "is_vip": true,
+   "name": "黑底纹粉渐变描边发光花字"
+  },
+  {
+   "index": 750,
+   "effect_id": "7406359623545933093",
+   "is_vip": true,
+   "name": "粉色渐变镂空描边"
+  },
+  {
+   "index": 751,
+   "effect_id": "7391015553818692927",
+   "is_vip": true,
+   "name": "金色渐变描边花字"
+  },
+  {
+   "index": 752,
+   "effect_id": "7404038278057332005",
+   "is_vip": true,
+   "name": "白字花字"
+  },
+  {
+   "index": 753,
+   "effect_id": "7249649958297783589",
+   "is_vip": true,
+   "name": "暗色花字"
+  },
+  {
+   "index": 754,
+   "effect_id": "7296106361153293618",
+   "is_vip": true,
+   "name": "双十一-彩色立体字"
+  },
+  {
+   "index": 755,
+   "effect_id": "7241433473796394255",
+   "is_vip": true,
+   "name": "天蓝色渐变花字"
+  },
+  {
+   "index": 756,
+   "effect_id": "7406232498734157090",
+   "is_vip": true,
+   "name": "红色渐变立体文字"
+  },
+  {
+   "index": 757,
+   "effect_id": "7404129182244031782",
+   "is_vip": true,
+   "name": "粉色梦幻立体"
+  },
+  {
+   "index": 758,
+   "effect_id": "7405578926489160998",
+   "is_vip": true,
+   "name": "粉色渐变发光花字"
+  },
+  {
+   "index": 759,
+   "effect_id": "7495776303799618878",
+   "is_vip": true,
+   "name": "黄色渐变粉色阴影立体花字"
+  },
+  {
+   "index": 760,
+   "effect_id": "7388019320686693686",
+   "is_vip": true,
+   "name": "低饱和蓝色渐变立体白边花字"
+  },
+  {
+   "index": 761,
+   "effect_id": "7315437477425155368",
+   "is_vip": true,
+   "name": "绿色渐变蓝紫色描边花字"
+  },
+  {
+   "index": 762,
+   "effect_id": "7405837403782384906",
+   "is_vip": true,
+   "name": "红色燃烧花字"
+  },
+  {
+   "index": 763,
+   "effect_id": "7460547039252909337",
+   "is_vip": true,
+   "name": "春节喜庆金字红边立体花字"
+  },
+  {
+   "index": 764,
+   "effect_id": "7405244303586397476",
+   "is_vip": true,
+   "name": "斜线纹理黑白漫画感花字"
+  },
+  {
+   "index": 765,
+   "effect_id": "7509039282737302808",
+   "is_vip": true,
+   "name": "白纸纹理蓝边拼贴花字"
+  },
+  {
+   "index": 766,
+   "effect_id": "7538694611150130457",
+   "is_vip": true,
+   "name": "粉笔质感纸张花字"
+  },
+  {
+   "index": 767,
+   "effect_id": "7405846768010661157",
+   "is_vip": true,
+   "name": "黄色立体纹理花字"
+  },
+  {
+   "index": 768,
+   "effect_id": "7406014922078965001",
+   "is_vip": true,
+   "name": "白色纸质纹理立体"
+  },
+  {
+   "index": 769,
+   "effect_id": "7492626374239243545",
+   "is_vip": true,
+   "name": "黄红立体字"
+  },
+  {
+   "index": 770,
+   "effect_id": "7405140394662530354",
+   "is_vip": true,
+   "name": "金属质感硬朗立体花字"
+  },
+  {
+   "index": 771,
+   "effect_id": "7407272554445999411",
+   "is_vip": true,
+   "name": "冰雪大世界立体雪花字"
+  },
+  {
+   "index": 772,
+   "effect_id": "7449585330547625228",
+   "is_vip": true,
+   "name": "不织布新年红"
+  },
+  {
+   "index": 773,
+   "effect_id": "7404377624690101544",
+   "is_vip": true,
+   "name": "复古纸张纹理字"
+  },
+  {
+   "index": 774,
+   "effect_id": "7482761022504275262",
+   "is_vip": true,
+   "name": "像素化游戏花字"
+  },
+  {
+   "index": 775,
+   "effect_id": "7405126783332404517",
+   "is_vip": true,
+   "name": "未来科技感赛博斜体字"
+  },
+  {
+   "index": 776,
+   "effect_id": "7406192655488519433",
+   "is_vip": true,
+   "name": "复古格纹立体花字"
+  },
+  {
+   "index": 777,
+   "effect_id": "7405853759911333172",
+   "is_vip": true,
+   "name": "清爽冰块纹理字"
+  },
+  {
+   "index": 778,
+   "effect_id": "7435107467366878503",
+   "is_vip": true,
+   "name": "绿叶绿色纹理花字"
+  },
+  {
+   "index": 779,
+   "effect_id": "7451442109753675070",
+   "is_vip": true,
+   "name": "港风图案纹理花字"
+  },
+  {
+   "index": 780,
+   "effect_id": "7405824092479196431",
+   "is_vip": true,
+   "name": "冰块立体字"
+  },
+  {
+   "index": 781,
+   "effect_id": "7405857800208928037",
+   "is_vip": true,
+   "name": "蓝色星空花字"
+  },
+  {
+   "index": 782,
+   "effect_id": "7405855842072808755",
+   "is_vip": true,
+   "name": "红色纹理立体花字"
+  },
+  {
+   "index": 783,
+   "effect_id": "7483893116274117950",
+   "is_vip": true,
+   "name": "复古红轴"
+  },
+  {
+   "index": 784,
+   "effect_id": "7481535145284160792",
+   "is_vip": true,
+   "name": "红黄质感立体花字"
+  },
+  {
+   "index": 785,
+   "effect_id": "7405843250960993586",
+   "is_vip": true,
+   "name": "蓝紫色发光纹理花字"
+  },
+  {
+   "index": 786,
+   "effect_id": "7532883438072778008",
+   "is_vip": true,
+   "name": "牛奶花字"
+  },
+  {
+   "index": 787,
+   "effect_id": "7405870250916384015",
+   "is_vip": true,
+   "name": "木纹雕刻立体字"
+  },
+  {
+   "index": 788,
+   "effect_id": "7405550386234281235",
+   "is_vip": true,
+   "name": "粉笔黑板花字（教师节）"
+  },
+  {
+   "index": 789,
+   "effect_id": "7330983004631878964",
+   "is_vip": true,
+   "name": "梦幻爱心纹理底花字"
+  },
+  {
+   "index": 790,
+   "effect_id": "7405693659536051492",
+   "is_vip": true,
+   "name": "流光立体花字"
+  },
+  {
+   "index": 791,
+   "effect_id": "7371332005948083494",
+   "is_vip": true,
+   "name": "蓝色渐变DIY纹理立体花字"
+  },
+  {
+   "index": 792,
+   "effect_id": "7407265065272937778",
+   "is_vip": true,
+   "name": "冬日冰花"
+  },
+  {
+   "index": 793,
+   "effect_id": "7406984542742924582",
+   "is_vip": true,
+   "name": "红色黑条纹字"
+  },
+  {
+   "index": 794,
+   "effect_id": "7406190866626366770",
+   "is_vip": true,
+   "name": "蓝色天空纹理立体花字"
+  },
+  {
+   "index": 795,
+   "effect_id": "7404383053906267392",
+   "is_vip": true,
+   "name": "荧光紫渐变字"
+  },
+  {
+   "index": 796,
+   "effect_id": "7405523650423639308",
+   "is_vip": true,
+   "name": "红色洒墨花字（书法古风）"
+  },
+  {
+   "index": 797,
+   "effect_id": "7306473747953863975",
+   "is_vip": true,
+   "name": "圣诞-四色纹理"
+  },
+  {
+   "index": 798,
+   "effect_id": "7506817303296675123",
+   "is_vip": true,
+   "name": "渐变纹理花字"
+  },
+  {
+   "index": 799,
+   "effect_id": "7486231125992623385",
+   "is_vip": true,
+   "name": "游戏像素化花字"
+  },
+  {
+   "index": 800,
+   "effect_id": "7471979945447836952",
+   "is_vip": true,
+   "name": "花石榴"
+  },
+  {
+   "index": 801,
+   "effect_id": "7405866412570348836",
+   "is_vip": true,
+   "name": "紫色纹理描边立体花字"
+  },
+  {
+   "index": 802,
+   "effect_id": "7404145370399329587",
+   "is_vip": true,
+   "name": "蓝色毛毡绒毛立体花字"
+  },
+  {
+   "index": 803,
+   "effect_id": "7430717597039054143",
+   "is_vip": true,
+   "name": "紫色纹理立体发光花字"
+  },
+  {
+   "index": 804,
+   "effect_id": "7405201103903624463",
+   "is_vip": true,
+   "name": "粉笔蓝白色立体花字"
+  },
+  {
+   "index": 805,
+   "effect_id": "7546407203654159678",
+   "is_vip": true,
+   "name": "绿粉圈圈纹理综艺花字"
+  },
+  {
+   "index": 806,
+   "effect_id": "7405573811107663155",
+   "is_vip": true,
+   "name": "红色棋盘格纹理立体花字"
+  },
+  {
+   "index": 807,
+   "effect_id": "7477911542575516952",
+   "is_vip": true,
+   "name": "方块游戏花字"
+  },
+  {
+   "index": 808,
+   "effect_id": "7406205168200568115",
+   "is_vip": true,
+   "name": "彩色纹理花字"
+  },
+  {
+   "index": 809,
+   "effect_id": "7405201692775451904",
+   "is_vip": true,
+   "name": "绿色粉笔描边花字"
+  },
+  {
+   "index": 810,
+   "effect_id": "7406173713428745509",
+   "is_vip": true,
+   "name": "3D蓝粉色渐变立体花字"
+  },
+  {
+   "index": 811,
+   "effect_id": "7405864219809287433",
+   "is_vip": true,
+   "name": "红砖纹理立体花字"
+  },
+  {
+   "index": 812,
+   "effect_id": "7405917544126647602",
+   "is_vip": true,
+   "name": "蓝黄拼色立体花字"
+  },
+  {
+   "index": 813,
+   "effect_id": "7481938079507418430",
+   "is_vip": true,
+   "name": "红色花字"
+  }
+ ]
+}

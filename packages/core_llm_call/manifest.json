@@ -1,0 +1,206 @@
+{
+  "schema_version": 2,
+  "engine_api": "1.0",
+  "type_id": "core/llm_call",
+  "title": "统一 LLM 调用",
+  "category": "语义",
+  "description": "prompt+model→响应；统一超时/退避[2,5,10]/fallback_models/JSON mode/schema 校验；OpenAI/Gemini 双协议",
+  "version": "1.1.0",
+  "kind": "python",
+  "runtime": "python",
+  "entrypoint": "node.py",
+  "class_name": "LLMCallNode",
+  "inputs": [
+    {
+      "name": "prompt",
+      "type": "STRING",
+      "label": "提示词",
+      "required": false,
+      "default": null,
+      "widget": "text",
+      "options": [],
+      "description": "用户提示词（追加为 user 消息）"
+    },
+    {
+      "name": "messages",
+      "type": "JSON",
+      "label": "完整消息列表",
+      "required": false,
+      "default": null,
+      "widget": "text",
+      "options": [],
+      "description": "[{role, content}] 直接作为消息体"
+    },
+    {
+      "name": "system",
+      "type": "STRING",
+      "label": "系统提示",
+      "required": false,
+      "default": null,
+      "widget": "text",
+      "options": [],
+      "description": "系统消息（可选）"
+    }
+  ],
+  "outputs": [
+    {
+      "name": "text",
+      "type": "STRING",
+      "label": "响应文本",
+      "required": true,
+      "default": null,
+      "widget": "text",
+      "options": [],
+      "description": "模型返回文本"
+    },
+    {
+      "name": "response",
+      "type": "JSON",
+      "label": "结构化响应",
+      "required": false,
+      "default": null,
+      "widget": "text",
+      "options": [],
+      "description": "text/parsed/model_used/attempts/backoffs/usage"
+    },
+    {
+      "name": "report",
+      "type": "JSON",
+      "label": "调用报告",
+      "required": false,
+      "default": null,
+      "widget": "text",
+      "options": [],
+      "description": "重试/回退/schema/usage 审计"
+    }
+  ],
+  "params": [
+    {
+      "name": "provider",
+      "type": "STRING",
+      "label": "Provider",
+      "required": true,
+      "default": "auto",
+      "widget": "select",
+      "options": [
+        "auto",
+        "openai",
+        "gemini"
+      ],
+      "description": "auto=按 base_url 识别（generativelanguage→gemini）"
+    },
+    {
+      "name": "api_key",
+      "type": "STRING",
+      "label": "API Key",
+      "required": false,
+      "default": "",
+      "widget": "password",
+      "options": [],
+      "description": "支持 @secret:名称 引用保险箱"
+    },
+    {
+      "name": "base_url",
+      "type": "STRING",
+      "label": "API 地址",
+      "required": false,
+      "default": "",
+      "widget": "text",
+      "options": [],
+      "description": "留空按 provider 默认（OpenAI/Gemini）"
+    },
+    {
+      "name": "model",
+      "type": "STRING",
+      "label": "模型",
+      "required": true,
+      "default": "",
+      "widget": "text",
+      "options": [],
+      "description": ""
+    },
+    {
+      "name": "fallback_models",
+      "type": "STRING",
+      "label": "备用模型(JSON 数组)",
+      "required": false,
+      "default": "",
+      "widget": "text",
+      "options": [],
+      "description": "主模型重试耗尽后按序回退，例 [\"\"]"
+    },
+    {
+      "name": "temperature",
+      "type": "FLOAT",
+      "label": "温度",
+      "required": true,
+      "default": 0.4,
+      "widget": "number",
+      "options": [],
+      "description": ""
+    },
+    {
+      "name": "max_tokens",
+      "type": "INT",
+      "label": "最大输出 Token",
+      "required": true,
+      "default": 4096,
+      "widget": "number",
+      "options": [],
+      "description": ""
+    },
+    {
+      "name": "json_mode",
+      "type": "BOOL",
+      "label": "JSON 输出",
+      "required": true,
+      "default": false,
+      "widget": "toggle",
+      "options": [],
+      "description": "openai response_format / gemini responseMimeType"
+    },
+    {
+      "name": "schema",
+      "type": "STRING",
+      "label": "输出 Schema(JSON)",
+      "required": false,
+      "default": "",
+      "widget": "text",
+      "options": [],
+      "description": "JSON Schema 子集校验；失败重试→回退"
+    },
+    {
+      "name": "timeout",
+      "type": "INT",
+      "label": "单次超时(秒)",
+      "required": true,
+      "default": 120,
+      "widget": "number",
+      "options": [],
+      "description": ""
+    },
+    {
+      "name": "backoff",
+      "type": "STRING",
+      "label": "退避序列(秒)",
+      "required": false,
+      "default": "[2,5,10]",
+      "widget": "text",
+      "options": [],
+      "description": "JSON 数组；S1 §9 统一退避 [2,5,10]"
+    }
+  ],
+  "permission": {
+    "secret": {
+      "refs": [
+        "*"
+      ]
+    }
+  },
+  "signature": {
+    "alg": "ed25519",
+    "key_id": "a8998646b062c170",
+    "value": "hZtzTA/3qDIwhKmuTFvYCI4xTnlhG1+cOl35fO6Hw/AOR0z6FIVZeLKOJouud5j1FHBJGPlty5L7U7Zh3mzLAQ==",
+    "over": "manifest"
+  }
+}

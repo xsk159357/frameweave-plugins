@@ -1,0 +1,56 @@
+/* S1-T7 示例插件 web 目录样式（EXTENSION_WEB_DIRS 等价，R-平台-7）。
+   由平台静态服务 /extensions/<pkg>/... 下发，本文件演示多文件资源。 */
+.fw-ext-slot {
+  pointer-events: none;
+}
+
+.fw-ext-panel {
+  pointer-events: auto;
+  width: 216px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: rgba(16, 20, 36, 0.86);
+  border: 1px solid rgba(124, 140, 248, 0.35);
+  box-shadow: 0 6px 22px rgba(0, 0, 0, 0.35);
+  backdrop-filter: blur(10px);
+  color: #e8ecff;
+  font-size: 12px;
+  font-family: system-ui, "PingFang SC", "Microsoft YaHei", sans-serif;
+  user-select: none;
+}
+
+.fw-ext-panel .fw-ext-demo-title {
+  font-weight: 700;
+  font-size: 12.5px;
+  margin-bottom: 3px;
+}
+
+.fw-ext-panel .fw-ext-demo-sub {
+  font-size: 10.5px;
+  color: #9aa4d8;
+  margin-bottom: 8px;
+}
+
+.fw-ext-panel .fw-ext-demo-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.fw-ext-panel .fw-ext-demo-btn {
+  pointer-events: auto;
+  cursor: pointer;
+  border: none;
+  border-radius: 8px;
+  padding: 4px 10px;
+  font-size: 11.5px;
+  font-weight: 600;
+  color: #fff;
+  background: linear-gradient(135deg, #6c8cff, #8f6cff);
+}
+
+.fw-ext-panel .fw-ext-demo-count {
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+  color: #fbbf24;
+}

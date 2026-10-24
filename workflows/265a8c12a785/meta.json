@@ -1,0 +1,10 @@
+{
+  "id": "265a8c12a785",
+  "name": "离线最小链 · 基础节点演示",
+  "version": "1.0.0",
+  "kind": "workflow",
+  "source": "backend-data-workflow(cleaned)",
+  "updated_at": 1792262478.2186859,
+  "aligned_to": "t3 优化节点口径（packages 70 包 + dev user_nodes 33 包，2026-10-17）",
+  "workflow_sha256": "3b70933a8df0c46c7506b79c3c6b0b4e3eff01cc203f70565db8dca72d237f53"
+}

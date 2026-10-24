@@ -1,0 +1,189 @@
+{
+  "schema_version": 2,
+  "engine_api": "1.0",
+  "type_id": "core/premiere_export",
+  "title": "Premiere XML/SRT 导出",
+  "category": "输出",
+  "description": "导出 Premiere Pro 工程（xmeml v4，源分辨率序列 + 文件去重）与配套 SRT 字幕。",
+  "version": "1.0.0",
+  "kind": "python",
+  "runtime": "python",
+  "entrypoint": "node.py",
+  "class_name": "PremiereExportNode",
+  "inputs": [
+    {
+      "name": "video",
+      "type": "VIDEO",
+      "label": "视频",
+      "required": true,
+      "default": null,
+      "widget": "text",
+      "options": [],
+      "description": "源视频资产"
+    },
+    {
+      "name": "segments",
+      "type": "SEGMENTS",
+      "label": "片段列表",
+      "required": true,
+      "default": null,
+      "widget": "text",
+      "options": [],
+      "description": "split_cam 风格片段列表"
+    },
+    {
+      "name": "styled_subtitle",
+      "type": "SUBTITLE",
+      "label": "样式字幕",
+      "required": false,
+      "default": null,
+      "widget": "text",
+      "options": [],
+      "description": "合成样式字幕（subtitle_compose 输出）"
+    },
+    {
+      "name": "subtitles",
+      "type": "SUBTITLE",
+      "label": "原始字幕",
+      "required": false,
+      "default": null,
+      "widget": "text",
+      "options": [],
+      "description": "原始字幕列表（ASR 输出）；缺省时按解说段自动拆句"
+    },
+    {
+      "name": "audio",
+      "type": "AUDIO",
+      "label": "配音音频",
+      "required": false,
+      "default": null,
+      "widget": "text",
+      "options": [],
+      "description": "配音音频（写入 audio 轨）"
+    },
+    {
+      "name": "timeline",
+      "type": "TIMELINE",
+      "label": "时间线",
+      "required": false,
+      "default": null,
+      "widget": "text",
+      "options": [],
+      "description": "时间线资产：{segments, voice_items:[{segment_index,path,duration}]}"
+    }
+  ],
+  "outputs": [
+    {
+      "name": "xml",
+      "type": "STRING",
+      "label": "Pr XML",
+      "required": true,
+      "default": null,
+      "widget": "text",
+      "options": [],
+      "description": "xmeml v4 XML 文本"
+    },
+    {
+      "name": "srt",
+      "type": "STRING",
+      "label": "SRT",
+      "required": false,
+      "default": null,
+      "widget": "text",
+      "options": [],
+      "description": "SRT 字幕文本"
+    },
+    {
+      "name": "report",
+      "type": "JSON",
+      "label": "导出报告",
+      "required": false,
+      "default": null,
+      "widget": "text",
+      "options": [],
+      "description": "导出报告（路径/统计）"
+    }
+  ],
+  "params": [
+    {
+      "name": "fps",
+      "type": "INT",
+      "label": "帧率",
+      "required": true,
+      "default": 30,
+      "widget": "number",
+      "options": [],
+      "description": "帧换算帧率"
+    },
+    {
+      "name": "sequence_width",
+      "type": "INT",
+      "label": "序列宽度",
+      "required": true,
+      "default": 0,
+      "widget": "number",
+      "options": [],
+      "description": "0=跟随源视频分辨率"
+    },
+    {
+      "name": "sequence_height",
+      "type": "INT",
+      "label": "序列高度",
+      "required": true,
+      "default": 0,
+      "widget": "number",
+      "options": [],
+      "description": "0=跟随源视频分辨率"
+    },
+    {
+      "name": "enable_subtitle",
+      "type": "BOOL",
+      "label": "生成 SRT 字幕",
+      "required": true,
+      "default": true,
+      "widget": "toggle",
+      "options": [],
+      "description": "是否生成字幕 SRT"
+    },
+    {
+      "name": "file_base",
+      "type": "STRING",
+      "label": "输出文件名",
+      "required": true,
+      "default": "output",
+      "widget": "text",
+      "options": [],
+      "description": "输出文件基名（.xmeml.xml / _subtitles.srt）"
+    },
+    {
+      "name": "output_dir",
+      "type": "STRING",
+      "label": "输出目录",
+      "required": true,
+      "default": "",
+      "widget": "text",
+      "options": [],
+      "description": "留空输出到资产目录"
+    }
+  ],
+  "permission": {
+    "subprocess": {
+      "enabled": true,
+      "argv_allowlist": [
+        "ffprobe"
+      ]
+    },
+    "fs": {
+      "write": [
+        "premiere/**",
+        "assets/**"
+      ]
+    }
+  },
+  "signature": {
+    "alg": "ed25519",
+    "key_id": "a8998646b062c170",
+    "value": "hheXOI6NI1NHxTEYR2JmJ9gfCTo6kkacmbrkOuQfcOLaUY7Xoc/DldEliP1t9QZuk8g1sgTFIOllnoaZy3CyCg==",
+    "over": "manifest"
+  }
+}

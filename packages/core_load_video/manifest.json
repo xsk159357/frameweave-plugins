@@ -1,0 +1,141 @@
+{
+  "schema_version": 2,
+  "engine_api": "1.0",
+  "type_id": "core/load_video",
+  "title": "导入视频",
+  "category": "输入",
+  "description": "导入本地视频并解析完整元数据；paths 支持 JSON/换行/通配符批量导入为批次信封；trim_start/trim_end 记录有效裁剪范围供下游跳过片头片尾",
+  "version": "2.1.0",
+  "kind": "python",
+  "runtime": "python",
+  "entrypoint": "node.py",
+  "class_name": "LoadVideoNode",
+  "inputs": [],
+  "outputs": [
+    {
+      "name": "video",
+      "type": "VIDEO",
+      "label": "视频",
+      "required": false,
+      "default": null,
+      "widget": "text",
+      "options": [],
+      "description": "单文件模式导入的视频资产"
+    },
+    {
+      "name": "meta",
+      "type": "JSON",
+      "label": "元数据",
+      "required": false,
+      "default": null,
+      "widget": "text",
+      "options": [],
+      "description": "ffprobe 解析的完整媒体元数据"
+    },
+    {
+      "name": "batch",
+      "type": "JSON",
+      "label": "批次信封",
+      "required": false,
+      "default": null,
+      "widget": "text",
+      "options": [],
+      "description": "批量模式（paths 非空）输出的标准批次信封"
+    },
+    {
+      "name": "report",
+      "type": "JSON",
+      "label": "导入报告",
+      "required": false,
+      "default": null,
+      "widget": "text",
+      "options": [],
+      "description": "导入汇总报告（单文件或批量）"
+    }
+  ],
+  "params": [
+    {
+      "name": "path",
+      "type": "STRING",
+      "label": "视频路径",
+      "required": false,
+      "default": null,
+      "widget": "file",
+      "options": [],
+      "description": "单文件模式：本地视频文件路径"
+    },
+    {
+      "name": "paths",
+      "type": "STRING",
+      "label": "批量路径/通配符",
+      "required": false,
+      "default": "",
+      "widget": "text",
+      "options": [],
+      "description": "批量模式：JSON 数组 / 换行或分号分隔 / glob 通配符；启用后输出 batch/report"
+    },
+    {
+      "name": "copy_into_store",
+      "type": "BOOL",
+      "label": "复制到素材库",
+      "required": false,
+      "default": true,
+      "widget": "toggle",
+      "options": [],
+      "description": "是否将源文件复制进平台素材库（不覆盖源文件）"
+    },
+    {
+      "name": "probe_timeout",
+      "type": "INT",
+      "label": "探测超时(秒)",
+      "required": false,
+      "default": 30,
+      "widget": "number",
+      "options": [],
+      "description": "ffprobe 探测超时上限"
+    },
+    {
+      "name": "trim_start",
+      "type": "FLOAT",
+      "label": "裁剪起点(秒)",
+      "required": false,
+      "default": 0.0,
+      "widget": "number",
+      "options": [],
+      "description": ">0 时仅在 meta/report 记录有效裁剪范围，供下游 scene_detect/分析跳过片头"
+    },
+    {
+      "name": "trim_end",
+      "type": "FLOAT",
+      "label": "裁剪终点(秒)",
+      "required": false,
+      "default": 0.0,
+      "widget": "number",
+      "options": [],
+      "description": ">0 时记录裁剪终点（<=起点或0=不裁剪），下游据此跳过片尾"
+    }
+  ],
+  "permission": {
+    "subprocess": {
+      "enabled": true,
+      "argv_allowlist": [
+        "ffmpeg",
+        "ffmpeg.exe",
+        "ffprobe",
+        "ffprobe.exe"
+      ]
+    },
+    "env": {
+      "vars": [
+        "FRAMEWEAVE_FFPROBE",
+        "FFPROBE_BIN"
+      ]
+    }
+  },
+  "signature": {
+    "alg": "ed25519",
+    "key_id": "a8998646b062c170",
+    "value": "oJQkdG4jRYa0YlTjdkm48dM0m5JCo1DtsOQ0JN6ukg16ndMfjTsLip7KGCwaZtTYofrWmHONGGfr/oFAoHZlDQ==",
+    "over": "manifest"
+  }
+}

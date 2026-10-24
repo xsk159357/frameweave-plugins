@@ -1,0 +1,112 @@
+{
+  "tpl_id": "fw_batch_mixcut",
+  "name": "批量精彩混剪",
+  "description": "多视频批量编排 + AI 高光挑选 + 混剪出片：batch_pipeline→highlight_mixcut→video_render",
+  "version": "1.0.0",
+  "kind": "workflow",
+  "tags": [
+    "批量",
+    "混剪",
+    "高光"
+  ],
+  "nodes": [
+    {
+      "id": "n0",
+      "type": "core/load_video",
+      "x": 40,
+      "y": 180,
+      "params": {
+        "path": "",
+        "paths": "",
+        "copy_into_store": true,
+        "probe_timeout": 30,
+        "trim_start": 0.0,
+        "trim_end": 0.0
+      },
+      "status": "pending",
+      "inputs": {}
+    },
+    {
+      "id": "n1",
+      "type": "user/jsm_batch_pipeline",
+      "x": 40,
+      "y": 320,
+      "params": {
+        "scene_strategy": "auto",
+        "asr_mode": "auto",
+        "asr_language": "zh"
+      },
+      "status": "pending",
+      "inputs": {
+        "items": "n0"
+      },
+      "input_slots": {
+        "items": 2
+      }
+    },
+    {
+      "id": "n2",
+      "type": "user/jsm_highlight_mixcut",
+      "x": 300,
+      "y": 320,
+      "params": {
+        "target_seconds": 60,
+        "min_clip": 2,
+        "max_clip": 8,
+        "hook_enabled": true,
+        "scoring": "ai"
+      },
+      "status": "pending",
+      "inputs": {
+        "items": "n1"
+      },
+      "input_slots": {
+        "items": 0
+      }
+    },
+    {
+      "id": "n3",
+      "type": "core/video_render",
+      "x": 560,
+      "y": 320,
+      "params": {
+        "aspect": "16:9",
+        "resolution": "1080p",
+        "fps": 30,
+        "transition": "fade",
+        "output_name": "精彩混剪"
+      },
+      "status": "pending",
+      "inputs": {
+        "video": "n0",
+        "segments": "n2"
+      }
+    }
+  ],
+  "edges": [
+    {
+      "source": "n1",
+      "target": "n2",
+      "sourceHandle": "results",
+      "targetHandle": "items"
+    },
+    {
+      "source": "n2",
+      "target": "n3",
+      "sourceHandle": "segments",
+      "targetHandle": "segments"
+    },
+    {
+      "source": "n0",
+      "target": "n1",
+      "sourceHandle": "batch",
+      "targetHandle": "items"
+    },
+    {
+      "source": "n0",
+      "target": "n3",
+      "sourceHandle": "video",
+      "targetHandle": "video"
+    }
+  ]
+}

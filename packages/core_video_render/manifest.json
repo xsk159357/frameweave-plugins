@@ -1,0 +1,312 @@
+{
+  "schema_version": 2,
+  "engine_api": "1.0",
+  "type_id": "core/video_render",
+  "title": "MP4 渲染",
+  "category": "输出",
+  "description": "自动混剪出片：片段拼接 + 转场 + 配音/原声/背景乐混音 + 字幕烧录 + 可选覆盖视频轨 + 音画对齐 + 调色；带进度与成品 ffprobe 验证。",
+  "version": "1.2.0",
+  "kind": "python",
+  "runtime": "python",
+  "entrypoint": "node.py",
+  "class_name": "VideoRenderNode",
+  "inputs": [
+    {
+      "name": "video",
+      "type": "VIDEO",
+      "label": "源视频",
+      "required": true,
+      "default": null,
+      "widget": "text",
+      "options": [],
+      "description": "源视频资产"
+    },
+    {
+      "name": "segments",
+      "type": "SEGMENTS",
+      "label": "片段列表",
+      "required": true,
+      "default": null,
+      "widget": "text",
+      "options": [],
+      "description": "剪辑片段列表（start/end 秒）"
+    },
+    {
+      "name": "audio",
+      "type": "AUDIO",
+      "label": "配音音频",
+      "required": false,
+      "default": null,
+      "widget": "text",
+      "options": [],
+      "description": "解说/配音音频"
+    },
+    {
+      "name": "styled_subtitle",
+      "type": "SUBTITLE",
+      "label": "样式字幕",
+      "required": false,
+      "default": null,
+      "widget": "text",
+      "options": [],
+      "description": "字幕列表（含 style）"
+    },
+    {
+      "name": "overlay",
+      "type": "VIDEO",
+      "label": "覆盖视频轨",
+      "required": false,
+      "default": null,
+      "widget": "text",
+      "options": [],
+      "description": "整段覆盖在成片上的第二视频轨"
+    },
+    {
+      "name": "bgm",
+      "type": "AUDIO",
+      "label": "背景音乐",
+      "required": false,
+      "default": null,
+      "widget": "text",
+      "options": [],
+      "description": "背景音乐音频"
+    }
+  ],
+  "outputs": [
+    {
+      "name": "rendered",
+      "type": "VIDEO",
+      "label": "成品 MP4",
+      "required": true,
+      "default": null,
+      "widget": "text",
+      "options": [],
+      "description": "渲染完成的视频资产"
+    },
+    {
+      "name": "report",
+      "type": "JSON",
+      "label": "渲染报告",
+      "required": false,
+      "default": null,
+      "widget": "text",
+      "options": [],
+      "description": "渲染报告（含成品 ffprobe 验证）"
+    }
+  ],
+  "params": [
+    {
+      "name": "aspect",
+      "type": "STRING",
+      "label": "画幅",
+      "required": true,
+      "default": "16:9",
+      "widget": "select",
+      "options": [
+        "16:9",
+        "9:16",
+        "1:1",
+        "original"
+      ],
+      "description": "画幅比例"
+    },
+    {
+      "name": "resolution",
+      "type": "STRING",
+      "label": "分辨率",
+      "required": true,
+      "default": "1080p",
+      "widget": "select",
+      "options": [
+        "1080p",
+        "720p",
+        "4k",
+        "source"
+      ],
+      "description": "输出分辨率"
+    },
+    {
+      "name": "fps",
+      "type": "INT",
+      "label": "帧率",
+      "required": true,
+      "default": 30,
+      "widget": "number",
+      "options": [],
+      "description": "输出帧率"
+    },
+    {
+      "name": "burn_subtitle",
+      "type": "BOOL",
+      "label": "烧录字幕",
+      "required": true,
+      "default": true,
+      "widget": "toggle",
+      "options": [],
+      "description": "是否把字幕烧录进画面"
+    },
+    {
+      "name": "transition",
+      "type": "STRING",
+      "label": "转场",
+      "required": true,
+      "default": "fade",
+      "widget": "select",
+      "options": [
+        "cut",
+        "fade",
+        "fadeblack",
+        "dissolve",
+        "slideleft",
+        "slideup",
+        "wiperight",
+        "zoomin",
+        "smoothleft",
+        "circleopen",
+        "pixelize"
+      ],
+      "description": "片段间转场"
+    },
+    {
+      "name": "transition_duration",
+      "type": "FLOAT",
+      "label": "转场时长(秒)",
+      "required": true,
+      "default": 0.5,
+      "widget": "number",
+      "options": [],
+      "description": "转场持续时间"
+    },
+    {
+      "name": "scale_mode",
+      "type": "STRING",
+      "label": "缩放模式",
+      "required": true,
+      "default": "contain",
+      "widget": "select",
+      "options": [
+        "contain",
+        "fill"
+      ],
+      "description": "contain 完整显示+黑边；fill 铺满裁剪"
+    },
+    {
+      "name": "audio_mix",
+      "type": "STRING",
+      "label": "混音模式",
+      "required": true,
+      "default": "narration_only",
+      "widget": "select",
+      "options": [
+        "narration_only",
+        "original_only",
+        "mix"
+      ],
+      "description": "narration_only 仅解说；original_only 仅原声；mix 解说+原声+背景乐"
+    },
+    {
+      "name": "narration_volume",
+      "type": "FLOAT",
+      "label": "解说音量",
+      "required": true,
+      "default": 1.0,
+      "widget": "number",
+      "options": [],
+      "description": "解说音量 0-2"
+    },
+    {
+      "name": "original_volume",
+      "type": "FLOAT",
+      "label": "原声音量",
+      "required": true,
+      "default": 0.35,
+      "widget": "number",
+      "options": [],
+      "description": "原声音量 0-2"
+    },
+    {
+      "name": "bgm_volume",
+      "type": "FLOAT",
+      "label": "背景乐音量",
+      "required": true,
+      "default": 0.3,
+      "widget": "number",
+      "options": [],
+      "description": "背景乐音量 0-2"
+    },
+    {
+      "name": "overlay_alpha",
+      "type": "FLOAT",
+      "label": "覆盖轨不透明度",
+      "required": true,
+      "default": 0.8,
+      "widget": "number",
+      "options": [],
+      "description": "覆盖轨不透明度 0-1"
+    },
+    {
+      "name": "align_mode",
+      "type": "STRING",
+      "label": "音画对齐",
+      "required": true,
+      "default": "none",
+      "widget": "select",
+      "options": [
+        "none",
+        "audio_to_video",
+        "video_to_audio",
+        "bidirectional"
+      ],
+      "description": "音画双向微调：配音略长/短于画面时自动压缩/拉伸对齐（G4）"
+    },
+    {
+      "name": "color_grade",
+      "type": "STRING",
+      "label": "调色",
+      "required": true,
+      "default": "none",
+      "widget": "select",
+      "options": [
+        "none",
+        "warm",
+        "cool",
+        "vintage",
+        "cinematic",
+        "high_contrast",
+        "bright"
+      ],
+      "description": "一键调色预设：warm/cool/vintage/cinematic/high_contrast/bright（G25）"
+    },
+    {
+      "name": "output_name",
+      "type": "STRING",
+      "label": "输出文件名",
+      "required": true,
+      "default": "chengpian",
+      "widget": "text",
+      "options": [],
+      "description": "输出文件名（不含扩展名）"
+    }
+  ],
+  "permission": {
+    "subprocess": {
+      "enabled": true,
+      "argv_allowlist": [
+        "ffmpeg",
+        "ffprobe"
+      ]
+    },
+    "fs": {
+      "write": [
+        "render_outputs/**",
+        "assets/**"
+      ]
+    }
+  },
+  "signature": {
+    "alg": "ed25519",
+    "key_id": "a8998646b062c170",
+    "value": "NNkKaZJSecOmtJSEgtVQRTWbN2EVuDJBeh5jkTx0raxl+Kj9wmPNTU7X4M6huqCxc17Os2SF17dZUPHWeFL4BQ==",
+    "over": "manifest"
+  }
+}

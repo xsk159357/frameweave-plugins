@@ -1,0 +1,45 @@
+{
+  "schema_version": 2,
+  "engine_api": "1.0",
+  "type_id": "core/load_audio",
+  "title": "音频输入",
+  "category": "输入",
+  "description": "基础节点：选择本地音频文件作为 AUDIO 资产输入，离线可用",
+  "version": "1.0.0",
+  "kind": "python",
+  "runtime": "python",
+  "entrypoint": "node.py",
+  "class_name": "LoadAudioNode",
+  "inputs": [],
+  "outputs": [
+    {
+      "name": "audio",
+      "type": "AUDIO",
+      "label": "音频",
+      "required": true,
+      "default": null,
+      "widget": "text",
+      "options": [],
+      "description": "音频资产（路径 + 元数据）"
+    }
+  ],
+  "params": [
+    {
+      "name": "path",
+      "type": "STRING",
+      "label": "音频路径",
+      "required": true,
+      "default": "",
+      "widget": "file",
+      "options": [],
+      "description": "选择本地音频文件（wav/mp3/m4a 等）"
+    }
+  ],
+  "permission": {},
+  "signature": {
+    "alg": "ed25519",
+    "key_id": "a8998646b062c170",
+    "value": "JQoiR9APlC8hM2A246eZFfg6Svqo8LxmKwKXg1o0zdOvYtSI7kSWLaPOe+f41UvCffHYMudwc39+0AuUUpIhCA==",
+    "over": "manifest"
+  }
+}

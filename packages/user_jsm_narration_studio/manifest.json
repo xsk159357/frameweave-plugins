@@ -1,0 +1,103 @@
+{
+  "schema_version": 2,
+  "engine_api": "1.0",
+  "type_id": "user/jsm_narration_studio",
+  "title": "解说工作台",
+  "category": "语义",
+  "description": "9 套 Skill 可切换，支持流式输出、续写、会话持久化与 DURATION 三档。",
+  "version": "1.0.0",
+  "kind": "python",
+  "runtime": "python",
+  "entrypoint": "node.py",
+  "class_name": "NarrationStudioNode",
+  "inputs": [
+    {
+      "name": "draft",
+      "type": "SCRIPT",
+      "label": "草稿",
+      "required": false
+    }
+  ],
+  "outputs": [
+    {
+      "name": "script",
+      "type": "SCRIPT",
+      "label": "解说文本"
+    },
+    {
+      "name": "report",
+      "type": "JSON",
+      "label": "工作台报告"
+    }
+  ],
+  "params": [
+    {
+      "name": "skill",
+      "type": "STRING",
+      "label": "Skill",
+      "default": "default_blank",
+      "widget": "select",
+      "options": [
+        "default_blank",
+        "jingxuan",
+        "social_insight",
+        "xiaoshuai",
+        "street_hype",
+        "horror_comedy",
+        "suspense_proof",
+        "behind_scenes",
+        "character_arc"
+      ]
+    },
+    {
+      "name": "duration",
+      "type": "STRING",
+      "label": "DURATION",
+      "default": "auto",
+      "widget": "select",
+      "options": [
+        "short",
+        "medium",
+        "long",
+        "auto"
+      ]
+    },
+    {
+      "name": "session_id",
+      "type": "STRING",
+      "label": "会话 ID",
+      "default": "default",
+      "widget": "text"
+    },
+    {
+      "name": "continuation",
+      "type": "STRING",
+      "label": "续写",
+      "default": "",
+      "widget": "text"
+    },
+    {
+      "name": "stream",
+      "type": "BOOL",
+      "label": "流式输出",
+      "default": true,
+      "widget": "toggle"
+    }
+  ],
+  "permission": {
+    "fs": {
+      "read": [
+        "data/skills.json"
+      ],
+      "write": [
+        "sessions/**"
+      ]
+    }
+  },
+  "signature": {
+    "alg": "ed25519",
+    "key_id": "a8998646b062c170",
+    "value": "f/mI0mwaTiQ1hVAP2klqWSXctPJxsOda9aKoLFybhdi3Z/vfInFBZzf6ij86ko0WOGtgME6kPg0veufY5jFRBA==",
+    "over": "manifest"
+  }
+}

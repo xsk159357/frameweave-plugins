@@ -1,0 +1,105 @@
+{
+  "schema_version": 2,
+  "engine_api": "1.0",
+  "type_id": "core/timeline_to_segments",
+  "title": "时间线转片段",
+  "category": "剪辑",
+  "description": "把解说时间线翻译成源片取段表（TIMELINE → SEGMENTS），可叠加选材范围过滤；这是渲染只剪选中片段的唯一通路",
+  "version": "1.0.0",
+  "kind": "python",
+  "runtime": "python",
+  "entrypoint": "node.py",
+  "class_name": "TimelineToSegmentsNode",
+  "inputs": [
+    {
+      "name": "timeline",
+      "type": "TIMELINE",
+      "label": "匹配时间线",
+      "required": true,
+      "default": null,
+      "widget": "text",
+      "options": [],
+      "description": "gemini_matcher.timeline / jsm_match_visual.timeline"
+    },
+    {
+      "name": "base",
+      "type": "SEGMENTS",
+      "label": "选材范围(可选)",
+      "required": false,
+      "default": null,
+      "widget": "text",
+      "options": [],
+      "description": "选材片段；接上则只在该范围内剪"
+    }
+  ],
+  "outputs": [
+    {
+      "name": "segments",
+      "type": "SEGMENTS",
+      "label": "剪辑片段表",
+      "required": true,
+      "default": null,
+      "widget": "text",
+      "options": [],
+      "description": "直连 video_render.segments 与 draft_export.segments"
+    },
+    {
+      "name": "report",
+      "type": "JSON",
+      "label": "转换报告",
+      "required": true,
+      "default": null,
+      "widget": "text",
+      "options": [],
+      "description": "段数/总时长/丢弃/合并/裁边计数"
+    }
+  ],
+  "params": [
+    {
+      "name": "min_piece",
+      "type": "FLOAT",
+      "label": "最短片段(秒)",
+      "required": true,
+      "default": 0.8,
+      "widget": "number",
+      "options": [],
+      "description": "短于此的片段丢弃，不拉长（避免超出片尾）"
+    },
+    {
+      "name": "merge_gap",
+      "type": "FLOAT",
+      "label": "合并缝隙(秒)",
+      "required": true,
+      "default": 0.25,
+      "widget": "number",
+      "options": [],
+      "description": "相邻片段间隔小于此值则合并"
+    },
+    {
+      "name": "clamp_to_base",
+      "type": "BOOL",
+      "label": "按选材范围裁边",
+      "required": true,
+      "default": true,
+      "widget": "toggle",
+      "options": [],
+      "description": "接上 base 时，超出范围的片段裁到范围内"
+    },
+    {
+      "name": "drop_outside",
+      "type": "BOOL",
+      "label": "丢弃范围外片段",
+      "required": true,
+      "default": true,
+      "widget": "toggle",
+      "options": [],
+      "description": "关掉则整体忽略 base"
+    }
+  ],
+  "signature": {
+    "alg": "ed25519",
+    "key_id": "a8998646b062c170",
+    "value": "D7ontK4Uv5Nx/snqrceJ3e7NDRTRokDT/RqXj04EtO8BwD+2Bp5mcIx7PU3Fez+GAJiX0dhfifdNiJIduv6MDQ==",
+    "over": "manifest"
+  }
+}

@@ -1,0 +1,10 @@
+{
+  "id": "wf_highlight_mix",
+  "name": "剧情高光混剪",
+  "version": "1.0.0",
+  "kind": "workflow",
+  "source": "server-workflow-local-source",
+  "updated_at": 1792262478.2276607,
+  "aligned_to": "t3 优化节点口径（packages 70 包 + dev user_nodes 33 包，2026-10-17）",
+  "workflow_sha256": "8831b0ed8fd6ae92b073f42f2899ceae374c3760c898a6531efa9952ee722990"
+}

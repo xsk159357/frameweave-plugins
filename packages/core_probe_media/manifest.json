@@ -1,0 +1,37 @@
+{
+  "schema_version": 2,
+  "engine_api": "1.0",
+  "type_id": "core/probe_media",
+  "title": "媒体信息",
+  "category": "分析",
+  "description": "读取媒体路径、扩展名、大小等基础信息，离线可用",
+  "version": "1.0.0",
+  "kind": "python",
+  "runtime": "python",
+  "entrypoint": "node.py",
+  "class_name": "ProbeMediaNode",
+  "inputs": [
+    {
+      "name": "media",
+      "type": "ANY",
+      "label": "媒体",
+      "required": true
+    }
+  ],
+  "outputs": [
+    {
+      "name": "info",
+      "type": "JSON",
+      "label": "媒体信息",
+      "required": true
+    }
+  ],
+  "params": [],
+  "permission": {},
+  "signature": {
+    "alg": "ed25519",
+    "key_id": "a8998646b062c170",
+    "value": "/w21bB21aSjmGd3CPOi2kiyVQRXDKXPbzZBlZHsqQOuBEufeYt3MYbNKEsatHPer14swDJmBK+PMnnuseKzwBg==",
+    "over": "manifest"
+  }
+}

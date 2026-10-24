@@ -1,0 +1,10 @@
+{
+  "id": "wf_batch_narration",
+  "name": "批量影视解说",
+  "version": "1.0.0",
+  "kind": "workflow",
+  "source": "server-workflow-local-source",
+  "updated_at": 1792266701.099749,
+  "aligned_to": "t3 优化节点口径（packages 70 包 + dev user_nodes 33 包，2026-10-17）",
+  "workflow_sha256": "437ebc40234764b06dc8433b42add0b07fb5a56726fc734449498de720de019b"
+}

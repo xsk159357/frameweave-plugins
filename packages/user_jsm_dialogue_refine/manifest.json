@@ -1,0 +1,166 @@
+{
+  "schema_version": 2,
+  "engine_api": "1.0",
+  "type_id": "user/jsm_dialogue_refine",
+  "title": "对白字级细切",
+  "category": "语义",
+  "description": "基于字级时间戳的停顿检测，把长对白切成语义完整的小段（供 TTS/字幕/原声精确对齐）。修复原版缺陷：自适应阈值按真实语速计算（原版恒为 base×1.5）、输入契约严格校验并显式报错（原版静默返回原样）、支持多种输入形态。批量可用。",
+  "version": "1.0.0",
+  "kind": "python",
+  "runtime": "python",
+  "entrypoint": "node.py",
+  "class_name": "DialogueRefineNode",
+  "inputs": [
+    {
+      "name": "word_timestamps",
+      "type": "JSON",
+      "label": "字级时间戳",
+      "required": false,
+      "default": null,
+      "widget": "text",
+      "options": [],
+      "description": "[[start_ms,end_ms,word],...]；或 {word_timestamps:[...], ...}；或 {words:[...]}"
+    },
+    {
+      "name": "dialogues",
+      "type": "JSON",
+      "label": "对话列表",
+      "required": false,
+      "default": null,
+      "widget": "text",
+      "options": [],
+      "description": "可选：对话列表，每项含 id/text/start/end/word_timestamps、keep 等字段；批量按对话逐条细切"
+    },
+    {
+      "name": "items",
+      "type": "JSON",
+      "label": "批量条目",
+      "required": false,
+      "default": null,
+      "widget": "text",
+      "options": [],
+      "description": "标准批次信封；每项 input={word_timestamps:[...]} 或 {dialogues:[...]}"
+    }
+  ],
+  "outputs": [
+    {
+      "name": "refined",
+      "type": "SUBTITLE",
+      "label": "细切字幕",
+      "required": true,
+      "default": null,
+      "widget": "text",
+      "options": [],
+      "description": "细切段列表 [{id,text,start,end,duration,parent_id,segment_index,is_refined,keep}]（秒）"
+    },
+    {
+      "name": "report",
+      "type": "JSON",
+      "label": "细切报告",
+      "required": true,
+      "default": null,
+      "widget": "text",
+      "options": [],
+      "description": "每对话 阈值/语速/段数/停顿分布"
+    },
+    {
+      "name": "results",
+      "type": "JSON",
+      "label": "批量结果",
+      "required": true,
+      "default": null,
+      "widget": "text",
+      "options": [],
+      "description": "标准批次信封（单条=1 项，批量=多项）"
+    }
+  ],
+  "params": [
+    {
+      "name": "pause_threshold",
+      "type": "FLOAT",
+      "label": "基础停顿阈值(秒)",
+      "required": true,
+      "default": 2.0,
+      "widget": "number",
+      "options": [],
+      "description": "相邻字间隔 ≥ 阈值 触发切分（自适应时按语速缩放）"
+    },
+    {
+      "name": "adaptive",
+      "type": "BOOL",
+      "label": "语速自适应阈值",
+      "required": true,
+      "default": true,
+      "widget": "toggle",
+      "options": [],
+      "description": "按字均时长缩放阈值（0.7~1.8 倍），修复原版恒 1.5× 缺陷"
+    },
+    {
+      "name": "trim_start",
+      "type": "FLOAT",
+      "label": "起始裁剪(秒)",
+      "required": true,
+      "default": 0.0,
+      "widget": "number",
+      "options": [],
+      "description": "字级时间戳相对于该偏移（毫秒转秒时统一减去）"
+    },
+    {
+      "name": "min_segment_chars",
+      "type": "INT",
+      "label": "最小段字数",
+      "required": true,
+      "default": 1,
+      "widget": "number",
+      "options": [],
+      "description": "过短残段并入前段（≥2 时启用合并）"
+    },
+    {
+      "name": "max_segment_chars",
+      "type": "INT",
+      "label": "最大段字数",
+      "required": true,
+      "default": 60,
+      "widget": "number",
+      "options": [],
+      "description": "无停顿长段按字数硬切上限"
+    },
+    {
+      "name": "max_concurrent",
+      "type": "INT",
+      "label": "批量并发",
+      "required": true,
+      "default": 2,
+      "widget": "number",
+      "options": [],
+      "description": "批量条目并发上限"
+    },
+    {
+      "name": "retries",
+      "type": "INT",
+      "label": "重试次数",
+      "required": true,
+      "default": 1,
+      "widget": "number",
+      "options": [],
+      "description": "可重试错误重试次数"
+    },
+    {
+      "name": "resume",
+      "type": "BOOL",
+      "label": "断点续跑",
+      "required": true,
+      "default": true,
+      "widget": "toggle",
+      "options": [],
+      "description": "同一 batch_id 恢复已成功条目"
+    }
+  ],
+  "permission": {},
+  "signature": {
+    "alg": "ed25519",
+    "key_id": "a8998646b062c170",
+    "value": "fW+GVUvfsbDdBaKs78u9wTkXKmKG3A6FIBwzkrrUd0fFMiBJJ0RhTTW0AnRXRigoRbFVog0DP7878ykJut+SCA==",
+    "over": "manifest"
+  }
+}

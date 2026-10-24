@@ -1,0 +1,486 @@
+{
+  "schema_version": 2,
+  "engine_api": "1.0",
+  "type_id": "user/jsm_tk_dubbing",
+  "title": "TK 出海配音流水线",
+  "category": "用户节点",
+  "description": "一键链：ASR→洗稿/翻译→间隙合并→OST 穿插→TTS→剪映草稿（离线 Whisper+edge TTS 可用）；支持说话人区分与遮盖原字幕（G10）",
+  "version": "1.1.0",
+  "kind": "python",
+  "runtime": "python",
+  "entrypoint": "node.py",
+  "class_name": "JsmTkDubbingNode",
+  "inputs": [
+    {
+      "name": "video",
+      "type": "VIDEO",
+      "label": "视频",
+      "required": true,
+      "default": null,
+      "widget": "text",
+      "options": [],
+      "description": "中文源视频"
+    },
+    {
+      "name": "subtitles_in",
+      "type": "SUBTITLE",
+      "label": "已有字幕(可跳过ASR)",
+      "required": false,
+      "default": null,
+      "widget": "text",
+      "options": [],
+      "description": "连接后跳过 ASR 步骤，直接进入文本处理"
+    }
+  ],
+  "outputs": [
+    {
+      "name": "subtitles",
+      "type": "SUBTITLE",
+      "label": "TK 字幕",
+      "required": false,
+      "default": null,
+      "widget": "text",
+      "options": [],
+      "description": "处理后字幕（含 lang/status）"
+    },
+    {
+      "name": "segments",
+      "type": "SEGMENTS",
+      "label": "时间线条目",
+      "required": false,
+      "default": null,
+      "widget": "text",
+      "options": [],
+      "description": "合并/OST 后的时间线条目"
+    },
+    {
+      "name": "audio",
+      "type": "AUDIO",
+      "label": "配音音频",
+      "required": false,
+      "default": null,
+      "widget": "text",
+      "options": [],
+      "description": "TTS 合成音频（合并）"
+    },
+    {
+      "name": "marks",
+      "type": "JSON",
+      "label": "TTS 标记",
+      "required": false,
+      "default": null,
+      "widget": "text",
+      "options": [],
+      "description": "逐段时间戳/路径/时长"
+    },
+    {
+      "name": "draft",
+      "type": "JSON",
+      "label": "剪映草稿",
+      "required": false,
+      "default": null,
+      "widget": "text",
+      "options": [],
+      "description": "草稿目录信息"
+    },
+    {
+      "name": "report",
+      "type": "JSON",
+      "label": "流水线报告",
+      "required": true,
+      "default": null,
+      "widget": "text",
+      "options": [],
+      "description": "分阶段结果 + GAP/OST 审计 + prompt 资源"
+    }
+  ],
+  "params": [
+    {
+      "name": "asr_engine",
+      "type": "STRING",
+      "label": "ASR 引擎",
+      "required": true,
+      "default": "auto",
+      "widget": "select",
+      "options": [
+        "auto",
+        "local",
+        "remote"
+      ],
+      "description": "auto=本地 faster-whisper 优先，失败降级远程"
+    },
+    {
+      "name": "asr_model",
+      "type": "STRING",
+      "label": "本地 ASR 模型",
+      "required": true,
+      "default": "small",
+      "widget": "select",
+      "options": [
+        "tiny",
+        "base",
+        "small",
+        "medium",
+        "large-v3"
+      ],
+      "description": "large-v3 精度最高；small/base 离线更快"
+    },
+    {
+      "name": "asr_language",
+      "type": "STRING",
+      "label": "源语言",
+      "required": true,
+      "default": "zh",
+      "widget": "select",
+      "options": [
+        "zh",
+        "en",
+        "ja",
+        "ko",
+        "auto"
+      ],
+      "description": "ASR 识别语言"
+    },
+    {
+      "name": "asr_api_key",
+      "type": "STRING",
+      "label": "ASR API Key(远程)",
+      "required": false,
+      "default": "",
+      "widget": "password",
+      "options": [],
+      "description": "支持 @secret:名称"
+    },
+    {
+      "name": "asr_base_url",
+      "type": "STRING",
+      "label": "ASR 中转地址",
+      "required": false,
+      "default": "https://api.openai.com/v1",
+      "widget": "text",
+      "options": [],
+      "description": ""
+    },
+    {
+      "name": "enable_diarization",
+      "type": "BOOL",
+      "label": "说话人区分",
+      "required": true,
+      "default": false,
+      "widget": "toggle",
+      "options": [],
+      "description": "透传 core/asr：sherpa-onnx 说话人区分（TK 多说话人片源）"
+    },
+    {
+      "name": "diarization_model_dir",
+      "type": "STRING",
+      "label": "Diarization 模型目录",
+      "required": false,
+      "default": "",
+      "widget": "text",
+      "options": [],
+      "description": "sherpa-onnx 说话人区分模型目录；留空自动探测"
+    },
+    {
+      "name": "cover_original_subtitle",
+      "type": "BOOL",
+      "label": "遮盖原字幕",
+      "required": true,
+      "default": false,
+      "widget": "toggle",
+      "options": [],
+      "description": "草稿生成时在原字幕区域叠黑条遮盖（避免与新翻译字幕重叠）"
+    },
+    {
+      "name": "mode",
+      "type": "STRING",
+      "label": "文本模式",
+      "required": true,
+      "default": "translate",
+      "widget": "select",
+      "options": [
+        "translate",
+        "rewrite",
+        "cantonese_to_mandarin"
+      ],
+      "description": "translate=TK 翻译；rewrite=洗稿；cantonese_to_mandarin=粤转普"
+    },
+    {
+      "name": "target_language",
+      "type": "STRING",
+      "label": "目标语言",
+      "required": true,
+      "default": "英语",
+      "widget": "select",
+      "options": [
+        "中文",
+        "英语",
+        "日语",
+        "韩语",
+        "泰语",
+        "印尼语",
+        "越南语",
+        "马来语",
+        "西班牙语",
+        "葡萄牙语",
+        "俄语",
+        "法语",
+        "德语"
+      ],
+      "description": ""
+    },
+    {
+      "name": "llm_api_key",
+      "type": "STRING",
+      "label": "文本 API Key",
+      "required": false,
+      "default": "",
+      "widget": "password",
+      "options": [],
+      "description": "支持 @secret:名称"
+    },
+    {
+      "name": "llm_base_url",
+      "type": "STRING",
+      "label": "文本中转地址",
+      "required": false,
+      "default": "https://ameaaos.com/v1",
+      "widget": "text",
+      "options": [],
+      "description": ""
+    },
+    {
+      "name": "llm_model",
+      "type": "STRING",
+      "label": "文本模型",
+      "required": true,
+      "default": "",
+      "widget": "text",
+      "options": [],
+      "description": ""
+    },
+    {
+      "name": "keep_style",
+      "type": "BOOL",
+      "label": "保留口语风格",
+      "required": true,
+      "default": true,
+      "widget": "toggle",
+      "options": [],
+      "description": ""
+    },
+    {
+      "name": "gap_merge_threshold",
+      "type": "FLOAT",
+      "label": "间隙合并阈值(秒)",
+      "required": true,
+      "default": 1.5,
+      "widget": "number",
+      "options": [],
+      "description": "参考 _GAP_MERGE_THRESHOLD=1.5s，低于此间隙并入前段"
+    },
+    {
+      "name": "ost_gap_seconds",
+      "type": "FLOAT",
+      "label": "OST 插入阈值(秒)",
+      "required": true,
+      "default": 3.0,
+      "widget": "number",
+      "options": [],
+      "description": "合并后空隙≥此值插入原片穿插条目"
+    },
+    {
+      "name": "enable_ost",
+      "type": "BOOL",
+      "label": "大空隙插 OST",
+      "required": true,
+      "default": true,
+      "widget": "toggle",
+      "options": [],
+      "description": ""
+    },
+    {
+      "name": "max_chars_per_line",
+      "type": "INT",
+      "label": "单行最大字数(0=不切)",
+      "required": true,
+      "default": 0,
+      "widget": "number",
+      "options": [],
+      "description": "S8 修复：TK 单行字数参数化"
+    },
+    {
+      "name": "tts_engine",
+      "type": "STRING",
+      "label": "TTS 引擎",
+      "required": true,
+      "default": "edge",
+      "widget": "select",
+      "options": [
+        "edge",
+        "cloud",
+        "indextts",
+        "manual"
+      ],
+      "description": "edge=免费（离线降级首选）；cloud=OpenAI 兼容；indextts=本地克隆"
+    },
+    {
+      "name": "edge_voice",
+      "type": "STRING",
+      "label": "Edge 音色",
+      "required": true,
+      "default": "zh-CN-XiaoxiaoNeural",
+      "widget": "text",
+      "options": [],
+      "description": "默认音色；language_voices 命中时按目标语言覆盖"
+    },
+    {
+      "name": "language_voices",
+      "type": "STRING",
+      "label": "多语音色映射(JSON)",
+      "required": false,
+      "default": "",
+      "widget": "text",
+      "options": [],
+      "description": "例 {\"en\": \"en-US-AriaNeural\"}"
+    },
+    {
+      "name": "tts_api_key",
+      "type": "STRING",
+      "label": "TTS API Key(云端)",
+      "required": false,
+      "default": "",
+      "widget": "password",
+      "options": [],
+      "description": "支持 @secret:名称"
+    },
+    {
+      "name": "tts_base_url",
+      "type": "STRING",
+      "label": "TTS 中转地址",
+      "required": false,
+      "default": "https://ameaaos.com/v1",
+      "widget": "text",
+      "options": [],
+      "description": ""
+    },
+    {
+      "name": "tts_cloud_voice",
+      "type": "STRING",
+      "label": "云端音色",
+      "required": true,
+      "default": "alloy",
+      "widget": "text",
+      "options": [],
+      "description": ""
+    },
+    {
+      "name": "tts_cloud_model",
+      "type": "STRING",
+      "label": "云端模型",
+      "required": true,
+      "default": "tts-1",
+      "widget": "text",
+      "options": [],
+      "description": ""
+    },
+    {
+      "name": "tts_rate",
+      "type": "STRING",
+      "label": "TTS 语速",
+      "required": true,
+      "default": "+0%",
+      "widget": "text",
+      "options": [],
+      "description": ""
+    },
+    {
+      "name": "tts_output_format",
+      "type": "STRING",
+      "label": "TTS 输出格式",
+      "required": true,
+      "default": "mp3",
+      "widget": "select",
+      "options": [
+        "mp3",
+        "wav",
+        "ogg"
+      ],
+      "description": ""
+    },
+    {
+      "name": "draft_name",
+      "type": "STRING",
+      "label": "草稿名",
+      "required": true,
+      "default": "TK多语草稿",
+      "widget": "text",
+      "options": [],
+      "description": ""
+    },
+    {
+      "name": "subtitle_style",
+      "type": "STRING",
+      "label": "字幕样式",
+      "required": true,
+      "default": "经典-白字黑边",
+      "widget": "select",
+      "options": [
+        "经典-白字黑边",
+        "黑底白字",
+        "黄字红边",
+        "默认"
+      ],
+      "description": ""
+    },
+    {
+      "name": "canvas_ratio",
+      "type": "STRING",
+      "label": "画布比例",
+      "required": true,
+      "default": "original",
+      "widget": "select",
+      "options": [
+        "original",
+        "16:9",
+        "9:16",
+        "1:1"
+      ],
+      "description": ""
+    },
+    {
+      "name": "enable_subtitle",
+      "type": "BOOL",
+      "label": "生成字幕",
+      "required": true,
+      "default": true,
+      "widget": "toggle",
+      "options": [],
+      "description": ""
+    }
+  ],
+  "permission": {
+    "subprocess": {
+      "enabled": true,
+      "argv_allowlist": [
+        "ffmpeg",
+        "ffmpeg.exe",
+        "ffprobe",
+        "ffprobe.exe",
+        "ffmpeg-win-*",
+        "ffprobe-win-*"
+      ]
+    },
+    "secret": {
+      "refs": [
+        "*"
+      ]
+    }
+  },
+  "signature": {
+    "alg": "ed25519",
+    "key_id": "a8998646b062c170",
+    "value": "H+3WO8N3JoBK2ql7SJ9kIQwkCZtslz4UmjY2pqGSmXCONnnSdeiHCzypymWET6Ms3VEK2k0Y/2y96xrMsrUHAg==",
+    "over": "manifest"
+  }
+}

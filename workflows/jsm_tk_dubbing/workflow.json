@@ -1,0 +1,260 @@
+{
+  "tpl_id": "jsm_tk_dubbing",
+  "name": "TK 出海配音",
+  "description": "一键仿爆款（TikTok 出海）：ASR识别→字幕洗稿重构→多语翻译（13语）→批量TTS配音→剪映/CapCut草稿导出；支持说话人区分（sherpa-onnx）与遮盖原字幕。快捷变体：单节点 user/jsm_tk_dubbing 一键完成整链。items:JSON 批次信封与直连 video 单条双路。",
+  "version": "1.0.0",
+  "kind": "workflow",
+  "tags": [
+    "解说猫复刻",
+    "TK出海",
+    "配音",
+    "官方"
+  ],
+  "nodes": [
+    {
+      "id": "n0",
+      "type": "core/check_models",
+      "x": 40,
+      "y": 40,
+      "params": {
+        "models": "",
+        "registry_path": "",
+        "with_hash": false
+      },
+      "status": "pending",
+      "inputs": {}
+    },
+    {
+      "id": "n16",
+      "type": "core/text_output",
+      "x": 260,
+      "y": 40,
+      "params": {
+        "note": "模型就绪检查报告"
+      },
+      "status": "pending",
+      "inputs": {
+        "text": "n0"
+      }
+    },
+    {
+      "id": "n1",
+      "type": "core/load_video",
+      "x": 40,
+      "y": 300,
+      "params": {
+        "path": "",
+        "paths": "",
+        "copy_into_store": true,
+        "probe_timeout": 30,
+        "trim_start": 0.0,
+        "trim_end": 0.0
+      },
+      "status": "pending",
+      "inputs": {}
+    },
+    {
+      "id": "n2",
+      "type": "core/asr",
+      "x": 260,
+      "y": 300,
+      "params": {
+        "engine": "auto",
+        "model": "small",
+        "language": "zh",
+        "device": "auto",
+        "compute_type": "int8",
+        "vad": true,
+        "word_timestamps": false,
+        "api_key": "",
+        "base_url": "https://generativelanguage.googleapis.com/v1beta",
+        "remote_model": "whisper-1",
+        "gemini_model": "gemini-1.5-flash",
+        "window_seconds": 60.0,
+        "add_roles": true,
+        "enable_diarization": true,
+        "diarization_model_dir": ""
+      },
+      "status": "pending",
+      "inputs": {
+        "video": "n1"
+      }
+    },
+    {
+      "id": "n3",
+      "type": "user/jsm_subtitle_rewrite",
+      "x": 480,
+      "y": 300,
+      "params": {
+        "api_key": "@secret:llm_api_key",
+        "base_url": "https://api.openai.com/v1",
+        "model": "",
+        "batch_size": 60,
+        "retries": 2,
+        "timeout": 180
+      },
+      "status": "pending",
+      "inputs": {
+        "subtitles": "n2"
+      }
+    },
+    {
+      "id": "n4",
+      "type": "user/jsm_translate_batch",
+      "x": 700,
+      "y": 300,
+      "params": {
+        "target_language": "英语",
+        "api_key": "@secret:llm_api_key",
+        "base_url": "",
+        "model": "",
+        "llm_backend": "internal",
+        "keep_style": true,
+        "length_tolerance": 0.2,
+        "max_concurrent": 2,
+        "retries": 2,
+        "resume": true
+      },
+      "status": "pending",
+      "inputs": {
+        "subtitles": "n3"
+      }
+    },
+    {
+      "id": "n5",
+      "type": "core/json_get",
+      "x": 920,
+      "y": 300,
+      "params": {
+        "path": "",
+        "default": ""
+      },
+      "status": "pending",
+      "inputs": {
+        "json": "n4"
+      }
+    },
+    {
+      "id": "n6",
+      "type": "core/tts",
+      "x": 1100,
+      "y": 300,
+      "params": {
+        "engine": "edge",
+        "voice": "en-US-JennyNeural",
+        "rate": "+0%",
+        "pitch": "+0Hz",
+        "volume": "+0%",
+        "output_format": "mp3",
+        "lang": "EN",
+        "duration_factor": "1.0",
+        "server_url": "http://127.0.0.1:3900",
+        "auto_start_server": true,
+        "api_key": "",
+        "base_url": "https://ameaaos.com/v1",
+        "cloud_model": "tts-1",
+        "cloud_voice": "alloy",
+        "cloud_speed": "1.0",
+        "aliyun_mode": "nls",
+        "chunk_chars": 800,
+        "max_concurrent": 5,
+        "retries": 3,
+        "merge_audio": true,
+        "ffmpeg_path": ""
+      },
+      "status": "pending",
+      "inputs": {
+        "segments": "n5"
+      }
+    },
+    {
+      "id": "n7",
+      "type": "core/draft_export",
+      "x": 1300,
+      "y": 300,
+      "params": {
+        "format": "jianying",
+        "aspect": "16:9",
+        "resolution": "1080p",
+        "canvas_ratio": "original",
+        "draft_name": "TK多语草稿",
+        "export_target": "jianying",
+        "subtitle_style": "经典-白字黑边",
+        "font_size": 0.0,
+        "enable_subtitle": true,
+        "fps": 30,
+        "output_dir": "",
+        "cover_original_subtitle": true
+      },
+      "status": "pending",
+      "inputs": {
+        "video": "n1",
+        "segments": "n5",
+        "audio": "n6",
+        "styled_subtitle": "n4"
+      }
+    }
+  ],
+  "edges": [
+    {
+      "source": "n0",
+      "target": "n16",
+      "sourceHandle": "report",
+      "targetHandle": "text"
+    },
+    {
+      "source": "n1",
+      "target": "n2",
+      "sourceHandle": "video",
+      "targetHandle": "video"
+    },
+    {
+      "source": "n2",
+      "target": "n3",
+      "sourceHandle": "subtitles",
+      "targetHandle": "subtitles"
+    },
+    {
+      "source": "n3",
+      "target": "n4",
+      "sourceHandle": "rewritten",
+      "targetHandle": "subtitles"
+    },
+    {
+      "source": "n4",
+      "target": "n5",
+      "sourceHandle": "translated_subtitles",
+      "targetHandle": "json"
+    },
+    {
+      "source": "n5",
+      "target": "n6",
+      "sourceHandle": "value",
+      "targetHandle": "segments"
+    },
+    {
+      "source": "n1",
+      "target": "n7",
+      "sourceHandle": "video",
+      "targetHandle": "video"
+    },
+    {
+      "source": "n5",
+      "target": "n7",
+      "sourceHandle": "value",
+      "targetHandle": "segments"
+    },
+    {
+      "source": "n6",
+      "target": "n7",
+      "sourceHandle": "audio",
+      "targetHandle": "audio"
+    },
+    {
+      "source": "n4",
+      "target": "n7",
+      "sourceHandle": "translated_subtitles",
+      "targetHandle": "styled_subtitle"
+    }
+  ]
+}

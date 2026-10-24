@@ -1,0 +1,10 @@
+{
+  "id": "fw_jsm_narration_pipeline",
+  "name": "影视解说流水线",
+  "version": "1.0.0",
+  "kind": "workflow",
+  "source": "server-workflow-local-source",
+  "updated_at": 1792262478.2246726,
+  "aligned_to": "t3 优化节点口径（packages 70 包 + dev user_nodes 33 包，2026-10-17）",
+  "workflow_sha256": "f20b6dfbf5c0b5d3cfb87eb7bf0ef5a85b6762924ea579d50d52377c93cf5f11"
+}

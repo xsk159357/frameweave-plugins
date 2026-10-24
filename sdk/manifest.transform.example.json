@@ -1,0 +1,60 @@
+{
+  "schema_version": 2,
+  "engine_api": "1.0",
+  "type_id": "user/name_greeter",
+  "title": "姓名问候（transform 示例）",
+  "category": "用户节点",
+  "description": "声明式纯数据变换：拼接前缀与姓名，输出问候语与长度",
+  "version": "1.0.0",
+  "kind": "transform",
+  "runtime": "transform",
+  "inputs": [
+    {
+      "name": "name",
+      "type": "STRING",
+      "label": "名字",
+      "required": true
+    }
+  ],
+  "outputs": [
+    {
+      "name": "greeting",
+      "type": "STRING",
+      "label": "问候语"
+    },
+    {
+      "name": "length",
+      "type": "INT",
+      "label": "长度"
+    }
+  ],
+  "params": [
+    {
+      "name": "prefix",
+      "type": "STRING",
+      "label": "前缀",
+      "default": "你好"
+    }
+  ],
+  "transform": {
+    "greeting": {
+      "op": "concat",
+      "sources": [
+        {
+          "$param": "prefix"
+        },
+        {
+          "$input": "name"
+        }
+      ],
+      "sep": "，",
+      "suffix": "！"
+    },
+    "length": {
+      "op": "len",
+      "source": {
+        "$input": "name"
+      }
+    }
+  }
+}

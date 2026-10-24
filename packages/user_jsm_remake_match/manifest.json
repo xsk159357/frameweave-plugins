@@ -1,0 +1,296 @@
+{
+  "schema_version": 2,
+  "engine_api": "1.0",
+  "type_id": "user/jsm_remake_match",
+  "title": "精选复刻匹配",
+  "category": "语义",
+  "description": "B3 精选复刻：解说画面↔原片画面全本地匹配（灰度缩略图粗筛 + DINOv2/Chinese-CLIP 语义精排 + 全局时序 DP + log-mel 音频裁决），输出取材匹配表（ref_source/ref_name/ref_path/speed）；39 参数档位化为 快速/均衡/精准 预设 + 高级参数组；特征磁盘缓存跨运行复用。干净重实现 curated_remake_matcher（保留全局 DP + 音频裁决灵魂）。",
+  "version": "1.0.0",
+  "kind": "python",
+  "runtime": "python",
+  "entrypoint": "node.py",
+  "class_name": "RemakeMatchNode",
+  "inputs": [
+    {
+      "name": "commentary",
+      "type": "VIDEO",
+      "label": "解说视频",
+      "required": true,
+      "default": null,
+      "widget": "text",
+      "options": [],
+      "description": "解说成品视频（其画面应来自一个或多个原片片段拼接）"
+    },
+    {
+      "name": "originals",
+      "type": "JSON",
+      "label": "原片列表",
+      "required": true,
+      "default": null,
+      "widget": "text",
+      "options": [],
+      "description": "原片集合：JSON 数组，元素为素材库资产 id / 文件路径 / {id|path,name,source} 对象"
+    }
+  ],
+  "outputs": [
+    {
+      "name": "matches",
+      "type": "JSON",
+      "label": "匹配表",
+      "required": true,
+      "default": null,
+      "widget": "text",
+      "options": [],
+      "description": "取材匹配表：[{segment_index,start,end,ref_source,ref_name,ref_path,ref_start,ref_end,similarity,speed,audio_score,audio_evidence,suspect}]"
+    },
+    {
+      "name": "report",
+      "type": "JSON",
+      "label": "匹配报告",
+      "required": true,
+      "default": null,
+      "widget": "text",
+      "options": [],
+      "description": "preset/语义模型与降级链/特征缓存命中/DP 路径统计/音频裁决证据"
+    }
+  ],
+  "params": [
+    {
+      "name": "preset",
+      "type": "STRING",
+      "label": "档位预设",
+      "required": true,
+      "default": "balanced",
+      "widget": "select",
+      "options": [
+        "fast",
+        "balanced",
+        "precise"
+      ],
+      "description": "fast=灰度+全局DP（零模型）；balanced=DINOv2-S/CLIP+音频裁决存疑段；precise=DINOv2-Base+全段音频裁决+高精度细修"
+    },
+    {
+      "name": "semantic_model",
+      "type": "STRING",
+      "label": "语义模型",
+      "required": true,
+      "default": "auto",
+      "widget": "select",
+      "options": [
+        "auto",
+        "dino",
+        "dino_base",
+        "chinese_clip",
+        "none"
+      ],
+      "description": "语义精排模型选择；auto=按预设回退链（precise 优先 dinov2-base，balanced 优先 dinov2-small）；none=纯灰度"
+    },
+    {
+      "name": "model_dir",
+      "type": "STRING",
+      "label": "模型目录",
+      "required": false,
+      "default": "",
+      "widget": "text",
+      "options": [],
+      "description": "DINOv2/CLIP 权重目录（空=自动探测 FRAMEWEAVE_DINO_DIR / FRAMEWEAVE_CLIP_DIR / DATA_DIR/models）"
+    },
+    {
+      "name": "use_cache",
+      "type": "BOOL",
+      "label": "特征磁盘缓存",
+      "required": true,
+      "default": true,
+      "widget": "toggle",
+      "options": [],
+      "description": "灰度索引/语义索引/log-mel 按路径哈希缓存到缓存目录，跨运行复用"
+    },
+    {
+      "name": "cache_dir",
+      "type": "STRING",
+      "label": "缓存目录",
+      "required": false,
+      "default": "",
+      "widget": "text",
+      "options": [],
+      "description": "特征缓存目录（空=workdir/remake_cache）"
+    },
+    {
+      "name": "fps",
+      "type": "INT",
+      "label": "灰度采样帧率",
+      "required": true,
+      "default": 4,
+      "widget": "number",
+      "options": [],
+      "description": "灰度缩略图解码帧率（快速 4 / 均衡 4 / 精准 12）"
+    },
+    {
+      "name": "subtitle_crop",
+      "type": "FLOAT",
+      "label": "字幕裁剪比例",
+      "required": true,
+      "default": 0.8,
+      "widget": "number",
+      "options": [],
+      "description": "保留画面高度比例（裁掉底部 1-x，默认裁掉底部 20%）"
+    },
+    {
+      "name": "bar_detect",
+      "type": "BOOL",
+      "label": "黑边自动检测",
+      "required": true,
+      "default": true,
+      "widget": "toggle",
+      "options": [],
+      "description": "ffmpeg cropdetect 采样探测黑边并裁剪（宽银幕片）"
+    },
+    {
+      "name": "audio_refine",
+      "type": "BOOL",
+      "label": "音频裁决",
+      "required": true,
+      "default": true,
+      "widget": "toggle",
+      "options": [],
+      "description": "log-mel 音频最终裁决：纠正画面相似但场景错误的段（全局 DP 灵魂之二）"
+    },
+    {
+      "name": "audio_win",
+      "type": "FLOAT",
+      "label": "音频裁决窗口(秒)",
+      "required": true,
+      "default": 18.0,
+      "widget": "number",
+      "options": [],
+      "description": "原片侧音频搜索窗口 ±秒"
+    },
+    {
+      "name": "audio_query",
+      "type": "FLOAT",
+      "label": "音频查询时长(秒)",
+      "required": true,
+      "default": 6.0,
+      "widget": "number",
+      "options": [],
+      "description": "解说侧音频查询窗长"
+    },
+    {
+      "name": "audio_suspect",
+      "type": "FLOAT",
+      "label": "音频存疑阈值",
+      "required": true,
+      "default": 0.12,
+      "widget": "number",
+      "options": [],
+      "description": "音频相关得分低于该值 → 段标记 suspect（待人工复核）"
+    },
+    {
+      "name": "min_seg_dur",
+      "type": "FLOAT",
+      "label": "最短段时长(秒)",
+      "required": true,
+      "default": 1.0,
+      "widget": "number",
+      "options": [],
+      "description": "低于该时长的残段并入较长邻段"
+    },
+    {
+      "name": "cross_file_pen",
+      "type": "FLOAT",
+      "label": "跨原片惩罚",
+      "required": true,
+      "default": 0.35,
+      "widget": "number",
+      "options": [],
+      "description": "全局 DP：切换原片文件的偏移惩罚"
+    },
+    {
+      "name": "within_shot_jump_pen",
+      "type": "FLOAT",
+      "label": "段内跳变惩罚",
+      "required": true,
+      "default": 0.6,
+      "widget": "number",
+      "options": [],
+      "description": "全局 DP：同原片内偏移突变惩罚"
+    },
+    {
+      "name": "boundary_jump_pen",
+      "type": "FLOAT",
+      "label": "原片边界跳转惩罚",
+      "required": true,
+      "default": 0.1,
+      "widget": "number",
+      "options": [],
+      "description": "全局 DP：跨越原片播放边界（到 0 或结尾）的惩罚"
+    },
+    {
+      "name": "drift_scale",
+      "type": "FLOAT",
+      "label": "偏移漂移系数",
+      "required": true,
+      "default": 0.03,
+      "widget": "number",
+      "options": [],
+      "description": "全局 DP：段内偏移漂移（非 1x 速度）惩罚系数"
+    },
+    {
+      "name": "gray_suspect",
+      "type": "FLOAT",
+      "label": "灰度存疑阈值",
+      "required": true,
+      "default": 0.45,
+      "widget": "number",
+      "options": [],
+      "description": "灰度相关得分低于该值缓存段视为存疑（交给语义/音频裁决）"
+    },
+    {
+      "name": "dino_suspect",
+      "type": "FLOAT",
+      "label": "语义存疑阈值",
+      "required": true,
+      "default": 0.55,
+      "widget": "number",
+      "options": [],
+      "description": "语义（DINOv2/CLIP）相似度低于该值 → 段标 suspect"
+    },
+    {
+      "name": "dino_strong",
+      "type": "FLOAT",
+      "label": "语义强确认阈值",
+      "required": true,
+      "default": 0.75,
+      "widget": "number",
+      "options": [],
+      "description": "语义相似度高于该值 → 跳过音频裁决（已强确认）"
+    }
+  ],
+  "permission": {
+    "subprocess": {
+      "enabled": true,
+      "argv_allowlist": [
+        "ffmpeg",
+        "ffprobe"
+      ]
+    },
+    "fs": {
+      "write": [
+        "remake_cache/**"
+      ]
+    },
+    "env": {
+      "vars": [
+        "FRAMEWEAVE_DINO_DIR",
+        "FRAMEWEAVE_CLIP_DIR",
+        "FRAMEWEAVE_MODELS_DIR"
+      ]
+    }
+  },
+  "signature": {
+    "alg": "ed25519",
+    "key_id": "a8998646b062c170",
+    "value": "J80FXBICACK3ZAWb6RMsSR8endytgLskFdBZ2S0BxPtgjDFLtyaRPaqLMTfF3Ny1+45rgRliGQGVZtlQ8rzyBg==",
+    "over": "manifest"
+  }
+}

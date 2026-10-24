@@ -1,0 +1,139 @@
+{
+  "schema_version": 2,
+  "engine_api": "1.0",
+  "type_id": "user/jsm_video_transcode",
+  "title": "视频转码",
+  "category": "剪辑",
+  "description": "显式容器/视频编码/音频编码/缩放/帧率转码节点。",
+  "version": "1.0.0",
+  "kind": "python",
+  "runtime": "python",
+  "entrypoint": "node.py",
+  "class_name": "VideoTranscodeNode",
+  "inputs": [
+    {
+      "name": "video",
+      "type": "VIDEO",
+      "label": "源视频",
+      "required": true
+    }
+  ],
+  "outputs": [
+    {
+      "name": "transcoded",
+      "type": "VIDEO",
+      "label": "转码视频"
+    },
+    {
+      "name": "stats",
+      "type": "JSON",
+      "label": "转码统计"
+    }
+  ],
+  "params": [
+    {
+      "name": "container",
+      "type": "STRING",
+      "label": "容器",
+      "default": "mp4",
+      "widget": "select",
+      "options": [
+        "mp4",
+        "mkv",
+        "webm",
+        "mov",
+        "avi",
+        "ts"
+      ]
+    },
+    {
+      "name": "video_codec",
+      "type": "STRING",
+      "label": "视频编码",
+      "default": "h264",
+      "widget": "select",
+      "options": [
+        "copy",
+        "h264",
+        "h265",
+        "vp9",
+        "av1",
+        "prores"
+      ]
+    },
+    {
+      "name": "audio_codec",
+      "type": "STRING",
+      "label": "音频编码",
+      "default": "aac",
+      "widget": "select",
+      "options": [
+        "copy",
+        "aac",
+        "opus",
+        "mp3",
+        "flac",
+        "none"
+      ]
+    },
+    {
+      "name": "crf",
+      "type": "INT",
+      "label": "质量 CRF",
+      "default": 23,
+      "widget": "number"
+    },
+    {
+      "name": "preset",
+      "type": "STRING",
+      "label": "预设",
+      "default": "medium",
+      "widget": "select",
+      "options": [
+        "fast",
+        "medium",
+        "slow"
+      ]
+    },
+    {
+      "name": "max_width",
+      "type": "INT",
+      "label": "最大宽度",
+      "default": 0,
+      "widget": "number"
+    },
+    {
+      "name": "fps",
+      "type": "INT",
+      "label": "帧率",
+      "default": 0,
+      "widget": "number"
+    },
+    {
+      "name": "output_name",
+      "type": "STRING",
+      "label": "输出文件名",
+      "default": "transcoded",
+      "widget": "text"
+    }
+  ],
+  "permission": {
+    "fs": {
+      "write": [
+        "scratch/**"
+      ]
+    },
+    "subprocess": {
+      "enabled": true,
+      "argv_allowlist": [
+        "ffmpeg"
+      ]
+    }
+  },
+  "signature": {
+    "alg": "ed25519",
+    "key_id": "a8998646b062c170",
+    "value": "4II6g3bgCID8mAcLgiyWOdIng3QPn1M5pd4W95iYsl2k8GLjMeKOxXL5xIvBJyZjosYiod4RpbsYZ01jLRJhAA==",
+    "over": "manifest"
+  }
+}

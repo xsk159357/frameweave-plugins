@@ -1,0 +1,10 @@
+{
+  "id": "wf_subtitle_polish",
+  "name": "字幕精修与工程导出",
+  "version": "1.0.0",
+  "kind": "workflow",
+  "source": "server-workflow-local-source",
+  "updated_at": 1792266701.0948548,
+  "aligned_to": "t3 优化节点口径（packages 70 包 + dev user_nodes 33 包，2026-10-17）",
+  "workflow_sha256": "c0456f7d50e40f2a3aee1b22386d582a1679cd2c773ce03cfbc805804735f48d"
+}

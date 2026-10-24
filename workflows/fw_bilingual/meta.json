@@ -1,0 +1,10 @@
+{
+  "id": "fw_bilingual",
+  "name": "双语翻译配音",
+  "version": "1.0.0",
+  "kind": "workflow",
+  "source": "server-workflow-local-source",
+  "updated_at": 1792266701.093063,
+  "aligned_to": "t3 优化节点口径（packages 70 包 + dev user_nodes 33 包，2026-10-17）",
+  "workflow_sha256": "7bedc68afe2e84b136b9a71ca956b01f83b7ce8e70e35ee0e946e945cae39e0f"
+}

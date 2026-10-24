@@ -1,0 +1,10 @@
+{
+  "id": "f2400f44fe2b",
+  "name": "一条龙 · 15分钟出片",
+  "version": "1.0.0",
+  "kind": "workflow",
+  "source": "backend-data-workflow(cleaned)",
+  "updated_at": 1792262478.2209995,
+  "aligned_to": "t3 优化节点口径（packages 70 包 + dev user_nodes 33 包，2026-10-17）",
+  "workflow_sha256": "fb403ccb213510616ffbb8239a81c05c2a563c2000bc9a25a7eea918afb60083"
+}

@@ -1,0 +1,52 @@
+{
+  "schema_version": 2,
+  "engine_api": "1.0",
+  "type_id": "core/file_output",
+  "title": "文件输出",
+  "category": "输出",
+  "description": "将任意数据保存为平台 JSON 资产文件，离线可用",
+  "version": "1.0.0",
+  "kind": "python",
+  "runtime": "python",
+  "entrypoint": "node.py",
+  "class_name": "FileOutputNode",
+  "inputs": [
+    {
+      "name": "data",
+      "type": "ANY",
+      "label": "数据",
+      "required": true
+    }
+  ],
+  "outputs": [
+    {
+      "name": "file",
+      "type": "JSON",
+      "label": "文件资产",
+      "required": true
+    },
+    {
+      "name": "path",
+      "type": "STRING",
+      "label": "路径",
+      "required": false
+    }
+  ],
+  "params": [
+    {
+      "name": "filename",
+      "type": "STRING",
+      "label": "文件名",
+      "required": true,
+      "default": "output.json",
+      "widget": "text"
+    }
+  ],
+  "permission": {},
+  "signature": {
+    "alg": "ed25519",
+    "key_id": "a8998646b062c170",
+    "value": "krPwKEYwcACJ09cRfubIoYsPphjtNSxRb8ReE+pjFgPDpRLhK/3zJo6sZD0thRgxW4q1wWKszoWx6hhE/r11Dg==",
+    "over": "manifest"
+  }
+}

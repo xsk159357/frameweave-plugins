@@ -1,0 +1,134 @@
+{
+  "tpl_id": "jsm_image_studio",
+  "name": "文生图 / 图生图",
+  "description": "对话式生图双模式：文生图（提示词→OpenAI兼容生图）与图生图（参考图+提示词→编辑生图）→ 图片资产落盘。API Key 用 @secret:名称 引用保险箱。",
+  "version": "1.0.0",
+  "kind": "workflow",
+  "tags": [
+    "解说猫复刻",
+    "生图",
+    "文生图",
+    "官方"
+  ],
+  "nodes": [
+    {
+      "id": "n1",
+      "type": "core/value_input",
+      "x": 40,
+      "y": 300,
+      "params": {
+        "type": "STRING",
+        "value": "赛博朋克城市夜景，电影感"
+      },
+      "status": "pending",
+      "inputs": {}
+    },
+    {
+      "id": "n2",
+      "type": "core/load_image",
+      "x": 40,
+      "y": 560,
+      "params": {
+        "path": ""
+      },
+      "status": "pending",
+      "inputs": {}
+    },
+    {
+      "id": "n3",
+      "type": "user/jsm_image_generate",
+      "x": 260,
+      "y": 300,
+      "params": {
+        "provider": "openai",
+        "base_url": "https://api.openai.com/v1",
+        "model": "gpt-image-1",
+        "api_key": "@secret:image_api_key",
+        "aspect_ratio": "1:1",
+        "size": "1024x1024",
+        "quality": "auto",
+        "count": 1
+      },
+      "status": "pending",
+      "inputs": {
+        "prompt": "n1"
+      }
+    },
+    {
+      "id": "n4",
+      "type": "user/jsm_image_edit",
+      "x": 260,
+      "y": 560,
+      "params": {
+        "base_url": "https://api.openai.com/v1",
+        "model": "gpt-image-1",
+        "api_key": "@secret:image_api_key",
+        "size": "1024x1024",
+        "count": 1
+      },
+      "status": "pending",
+      "inputs": {
+        "reference_image": "n2",
+        "prompt": "n1"
+      }
+    },
+    {
+      "id": "n5",
+      "type": "core/file_output",
+      "x": 480,
+      "y": 300,
+      "params": {
+        "filename": "generated_image.json"
+      },
+      "status": "pending",
+      "inputs": {
+        "data": "n3"
+      }
+    },
+    {
+      "id": "n6",
+      "type": "core/file_output",
+      "x": 480,
+      "y": 560,
+      "params": {
+        "filename": "edited_image.json"
+      },
+      "status": "pending",
+      "inputs": {
+        "data": "n4"
+      }
+    }
+  ],
+  "edges": [
+    {
+      "source": "n1",
+      "target": "n3",
+      "sourceHandle": "value",
+      "targetHandle": "prompt"
+    },
+    {
+      "source": "n2",
+      "target": "n4",
+      "sourceHandle": "image",
+      "targetHandle": "reference_image"
+    },
+    {
+      "source": "n1",
+      "target": "n4",
+      "sourceHandle": "value",
+      "targetHandle": "prompt"
+    },
+    {
+      "source": "n3",
+      "target": "n5",
+      "sourceHandle": "images",
+      "targetHandle": "data"
+    },
+    {
+      "source": "n4",
+      "target": "n6",
+      "sourceHandle": "image",
+      "targetHandle": "data"
+    }
+  ]
+}

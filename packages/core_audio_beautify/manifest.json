@@ -1,0 +1,184 @@
+{
+  "schema_version": 2,
+  "engine_api": "1.0",
+  "type_id": "core/audio_beautify",
+  "title": "参考音频美化（C7）",
+  "category": "音频",
+  "description": "Demucs 去 BGM → 剪气口 → loudnorm → 24k 单声道 wav；30s 上限截断、<3s 明确报错；demucs/ffmpeg 均子进程隔离",
+  "version": "1.0.0",
+  "kind": "python",
+  "runtime": "python",
+  "entrypoint": "node.py",
+  "class_name": "AudioBeautifyNode",
+  "inputs": [
+    {
+      "name": "audio",
+      "type": "AUDIO",
+      "label": "参考音频",
+      "required": true,
+      "default": null,
+      "widget": "text",
+      "options": [],
+      "description": "待美化参考音频（≥3s，>30s 自动截断到 30s）"
+    }
+  ],
+  "outputs": [
+    {
+      "name": "beautified",
+      "type": "AUDIO",
+      "label": "美化音频",
+      "required": true,
+      "default": null,
+      "widget": "text",
+      "options": [],
+      "description": "24k/单声道/≤30s wav（Demucs 去 BGM + 剪气口 + loudnorm 后）"
+    },
+    {
+      "name": "report",
+      "type": "JSON",
+      "label": "美化报告",
+      "required": true,
+      "default": null,
+      "widget": "text",
+      "options": [],
+      "description": "逐阶段状态与错误码（S13 语义）、输入/输出时长、格式断言"
+    }
+  ],
+  "params": [
+    {
+      "name": "max_seconds",
+      "type": "FLOAT",
+      "label": "时长上限(秒)",
+      "required": true,
+      "default": 30.0,
+      "widget": "number",
+      "options": [],
+      "description": "输入超过上限从前端截断（输出 ≤30s）"
+    },
+    {
+      "name": "min_seconds",
+      "type": "FLOAT",
+      "label": "最短时长(秒)",
+      "required": true,
+      "default": 3.0,
+      "widget": "number",
+      "options": [],
+      "description": "输入短于此明确报错（invalid: 前缀）"
+    },
+    {
+      "name": "enable_demucs",
+      "type": "BOOL",
+      "label": "Demucs 去 BGM",
+      "required": true,
+      "default": true,
+      "widget": "toggle",
+      "options": [],
+      "description": "经 core/vocal_separate 子进程分离（去 BGM 保留人声）；失败降级原音并记 STAGE_DEMUCS_FAILED"
+    },
+    {
+      "name": "model",
+      "type": "STRING",
+      "label": "Demucs 模型",
+      "required": true,
+      "default": "htdemucs",
+      "widget": "select",
+      "options": [
+        "htdemucs",
+        "htdemucs_ft",
+        "mdx_extra_q"
+      ],
+      "description": "透传 vocal_separate.model"
+    },
+    {
+      "name": "device",
+      "type": "STRING",
+      "label": "设备",
+      "required": true,
+      "default": "auto",
+      "widget": "select",
+      "options": [
+        "auto",
+        "cuda",
+        "cpu"
+      ],
+      "description": "透传 vocal_separate.device（auto=GPU 崩溃自动 CPU 重试）"
+    },
+    {
+      "name": "python_exe",
+      "type": "STRING",
+      "label": "Python 解释器",
+      "required": false,
+      "default": "",
+      "widget": "text",
+      "options": [],
+      "description": "装有 demucs 的解释器；留空用当前进程"
+    },
+    {
+      "name": "silence_max_ms",
+      "type": "INT",
+      "label": "气口静音上限(ms)",
+      "required": true,
+      "default": 250,
+      "widget": "number",
+      "options": [],
+      "description": "剪气口：大于该值的内部静音保留、更短静音缩短（透传 audio_master.silence_max_ms）"
+    },
+    {
+      "name": "loudnorm_target_lufs",
+      "type": "FLOAT",
+      "label": "响度目标(LUFS)",
+      "required": true,
+      "default": -14.0,
+      "widget": "number",
+      "options": [],
+      "description": "透传 audio_master.loudnorm_target_lufs"
+    },
+    {
+      "name": "sample_rate",
+      "type": "INT",
+      "label": "输出采样率",
+      "required": true,
+      "default": 24000,
+      "widget": "number",
+      "options": [],
+      "description": "成品采样率（默认 24k）"
+    },
+    {
+      "name": "channels",
+      "type": "INT",
+      "label": "输出声道",
+      "required": true,
+      "default": 1,
+      "widget": "number",
+      "options": [],
+      "description": "成品声道数（默认单声道）"
+    },
+    {
+      "name": "ffmpeg_path",
+      "type": "STRING",
+      "label": "ffmpeg 路径",
+      "required": false,
+      "default": "",
+      "widget": "text",
+      "options": [],
+      "description": "留空用平台依赖解析"
+    }
+  ],
+  "permission": {
+    "subprocess": {
+      "enabled": true,
+      "argv_allowlist": [
+        "ffmpeg",
+        "ffmpeg.exe",
+        "ffprobe",
+        "ffprobe.exe"
+      ]
+    }
+  },
+  "signature": {
+    "alg": "ed25519",
+    "key_id": "a8998646b062c170",
+    "value": "dEbb73taKR3RxNmsxzOCN0Ja8m0IzHLk+sC8w3n/s676f4KrqvzDuiwtorN5Ow2T5jvtnRoTfcCbrlSRB/MSCg==",
+    "over": "manifest"
+  }
+}

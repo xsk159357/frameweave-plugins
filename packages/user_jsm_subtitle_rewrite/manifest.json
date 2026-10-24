@@ -1,0 +1,142 @@
+{
+  "schema_version": 2,
+  "engine_api": "1.0",
+  "type_id": "user/jsm_subtitle_rewrite",
+  "title": "字幕洗稿重构",
+  "category": "语义",
+  "description": "同语言字幕洗稿降重（tk_rewrite 语义）：保持行数/事实/角色严格对应，适合 TTS 口播；API Key 用 @secret: 引用",
+  "version": "1.0.0",
+  "kind": "python",
+  "runtime": "python",
+  "entrypoint": "node.py",
+  "class_name": "JsmSubtitleRewriteNode",
+  "inputs": [
+    {
+      "name": "subtitles",
+      "type": "SUBTITLE",
+      "label": "字幕",
+      "required": true,
+      "default": null,
+      "widget": "text",
+      "options": [],
+      "description": "字幕行 {index,start,end,text}"
+    },
+    {
+      "name": "prompt",
+      "type": "STRING",
+      "label": "洗稿指令(可选)",
+      "required": false,
+      "default": null,
+      "widget": "text",
+      "options": [],
+      "description": "覆盖默认洗稿要求；留空用内置 tk_rewrite 语义"
+    }
+  ],
+  "outputs": [
+    {
+      "name": "rewritten",
+      "type": "SUBTITLE",
+      "label": "洗稿字幕",
+      "required": true,
+      "default": null,
+      "widget": "text",
+      "options": [],
+      "description": "洗稿后字幕（行数/时间戳与原字幕严格一致）"
+    },
+    {
+      "name": "report",
+      "type": "JSON",
+      "label": "洗稿报告",
+      "required": false,
+      "default": null,
+      "widget": "text",
+      "options": [],
+      "description": "模式/降级行/模型/耗时"
+    }
+  ],
+  "params": [
+    {
+      "name": "api_key",
+      "type": "STRING",
+      "label": "API Key",
+      "required": false,
+      "default": "",
+      "widget": "password",
+      "options": [],
+      "description": "支持 @secret:名称 引用保险箱"
+    },
+    {
+      "name": "base_url",
+      "type": "STRING",
+      "label": "中转地址",
+      "required": false,
+      "default": "https://api.openai.com/v1",
+      "widget": "text",
+      "options": [],
+      "description": ""
+    },
+    {
+      "name": "model",
+      "type": "STRING",
+      "label": "模型",
+      "required": false,
+      "default": "",
+      "widget": "text",
+      "options": [],
+      "description": "留空用全局 LLM 配置"
+    },
+    {
+      "name": "batch_size",
+      "type": "INT",
+      "label": "单批行数",
+      "required": false,
+      "default": 60,
+      "widget": "number",
+      "options": [],
+      "description": "超过分批逐批洗稿"
+    },
+    {
+      "name": "retries",
+      "type": "INT",
+      "label": "重试次数",
+      "required": false,
+      "default": 2,
+      "widget": "number",
+      "options": [],
+      "description": ""
+    },
+    {
+      "name": "timeout",
+      "type": "INT",
+      "label": "超时(秒)",
+      "required": false,
+      "default": 180,
+      "widget": "number",
+      "options": [],
+      "description": ""
+    }
+  ],
+  "permission": {
+    "secret": {
+      "refs": [
+        "*"
+      ]
+    },
+    "network": {
+      "allow": [
+        "*"
+      ]
+    },
+    "fs": {
+      "write": [
+        "assets/**"
+      ]
+    }
+  },
+  "signature": {
+    "alg": "ed25519",
+    "key_id": "a8998646b062c170",
+    "value": "W5FPaKpHtEGCOaNDvBIINaFMSyjGhLRCH6nlg+fB9ry6BVufRN1YoNWpbAgJ5lwNU5kRni6SLQKNRHl8PeTvCw==",
+    "over": "manifest"
+  }
+}

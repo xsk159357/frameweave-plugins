@@ -1,0 +1,241 @@
+{
+  "tpl_id": "fw_oneclick",
+  "name": "一条龙 · 15分钟出片",
+  "description": "导入视频一键出片：场景检测→AI文案→配音→字幕→渲染+剪映草稿导出（0.3.2 版）",
+  "version": "1.0.0",
+  "kind": "workflow",
+  "tags": [
+    "一条龙",
+    "官方",
+    "出片"
+  ],
+  "nodes": [
+    {
+      "id": "n1",
+      "type": "core/load_video",
+      "x": 40,
+      "y": 320,
+      "params": {
+        "path": ""
+      },
+      "status": "pending",
+      "inputs": {}
+    },
+    {
+      "id": "n2",
+      "type": "core/scene_detect",
+      "x": 260,
+      "y": 320,
+      "params": {
+        "sample_fps": 1,
+        "threshold": 0.12,
+        "min_duration": 0.6
+      },
+      "status": "pending",
+      "inputs": {
+        "video": "n1"
+      }
+    },
+    {
+      "id": "n3",
+      "type": "core/ai_narrate",
+      "x": 480,
+      "y": 320,
+      "params": {
+        "mode": "上帝视角",
+        "style": "悬疑解说",
+        "language": "中文",
+        "api_key": "",
+        "base_url": "https://shouquan.frameweave.top/v1",
+        "model": "gpt-4o",
+        "target_chars": 800
+      },
+      "status": "pending",
+      "inputs": {
+        "video": "n1",
+        "scenes": "n2"
+      }
+    },
+    {
+      "id": "n4",
+      "type": "core/tts",
+      "x": 700,
+      "y": 160,
+      "params": {
+        "engine": "edge",
+        "voice": "zh-CN-YunxiNeural",
+        "rate": "+0%",
+        "output_format": "mp3"
+      },
+      "status": "pending",
+      "inputs": {
+        "script": "n3"
+      }
+    },
+    {
+      "id": "n5",
+      "type": "core/asr",
+      "x": 700,
+      "y": 480,
+      "params": {
+        "engine": "local",
+        "model": "large-v3",
+        "language": "zh",
+        "device": "auto"
+      },
+      "status": "pending",
+      "inputs": {
+        "video": "n1"
+      }
+    },
+    {
+      "id": "n6",
+      "type": "core/subtitle_compose",
+      "x": 920,
+      "y": 480,
+      "params": {
+        "preset": "知识科普",
+        "animation": "fade",
+        "karaoke": true
+      },
+      "status": "pending",
+      "inputs": {
+        "subtitle": "n5",
+        "script": "n3"
+      }
+    },
+    {
+      "id": "n7",
+      "type": "core/video_render",
+      "x": 1140,
+      "y": 160,
+      "params": {
+        "aspect": "16:9",
+        "resolution": "1080p",
+        "fps": 30,
+        "burn_subtitle": true,
+        "transition": "fade",
+        "output_name": "FrameWeave成品"
+      },
+      "status": "pending",
+      "inputs": {
+        "video": "n1",
+        "segments": "n2",
+        "audio": "n4",
+        "styled_subtitle": "n6"
+      }
+    },
+    {
+      "id": "n8",
+      "type": "core/draft_export",
+      "x": 1140,
+      "y": 480,
+      "params": {
+        "format": "all",
+        "aspect": "16:9",
+        "resolution": "1080p",
+        "draft_name": "FrameWeave_导出",
+        "output_dir": ""
+      },
+      "status": "pending",
+      "inputs": {
+        "video": "n1",
+        "segments": "n2",
+        "audio": "n4",
+        "styled_subtitle": "n6"
+      }
+    }
+  ],
+  "edges": [
+    {
+      "source": "n1",
+      "target": "n2",
+      "sourceHandle": "video",
+      "targetHandle": "video"
+    },
+    {
+      "source": "n1",
+      "target": "n3",
+      "sourceHandle": "video",
+      "targetHandle": "video"
+    },
+    {
+      "source": "n2",
+      "target": "n3",
+      "sourceHandle": "scenes",
+      "targetHandle": "scenes"
+    },
+    {
+      "source": "n3",
+      "target": "n4",
+      "sourceHandle": "script",
+      "targetHandle": "script"
+    },
+    {
+      "source": "n1",
+      "target": "n5",
+      "sourceHandle": "video",
+      "targetHandle": "video"
+    },
+    {
+      "source": "n5",
+      "target": "n6",
+      "sourceHandle": "subtitles",
+      "targetHandle": "subtitle"
+    },
+    {
+      "source": "n3",
+      "target": "n6",
+      "sourceHandle": "script",
+      "targetHandle": "script"
+    },
+    {
+      "source": "n1",
+      "target": "n7",
+      "sourceHandle": "video",
+      "targetHandle": "video"
+    },
+    {
+      "source": "n2",
+      "target": "n7",
+      "sourceHandle": "scenes",
+      "targetHandle": "segments"
+    },
+    {
+      "source": "n4",
+      "target": "n7",
+      "sourceHandle": "audio",
+      "targetHandle": "audio"
+    },
+    {
+      "source": "n6",
+      "target": "n7",
+      "sourceHandle": "styled_subtitle",
+      "targetHandle": "styled_subtitle"
+    },
+    {
+      "source": "n1",
+      "target": "n8",
+      "sourceHandle": "video",
+      "targetHandle": "video"
+    },
+    {
+      "source": "n2",
+      "target": "n8",
+      "sourceHandle": "scenes",
+      "targetHandle": "segments"
+    },
+    {
+      "source": "n4",
+      "target": "n8",
+      "sourceHandle": "audio",
+      "targetHandle": "audio"
+    },
+    {
+      "source": "n6",
+      "target": "n8",
+      "sourceHandle": "styled_subtitle",
+      "targetHandle": "styled_subtitle"
+    }
+  ]
+}

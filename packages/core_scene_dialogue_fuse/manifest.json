@@ -1,0 +1,80 @@
+{
+  "schema_version": 2,
+  "engine_api": "1.0",
+  "type_id": "core/scene_dialogue_fuse",
+  "title": "场景-对白融合",
+  "category": "分析",
+  "description": "B5：字幕按时间中心点挂载到场景 → rich_scenes[]（含 dialogues），供保留原声决策/双轨布局复用",
+  "version": "1.0.0",
+  "kind": "python",
+  "runtime": "python",
+  "entrypoint": "node.py",
+  "class_name": "SceneDialogueFuseNode",
+  "inputs": [
+    {
+      "name": "scenes",
+      "type": "SEGMENTS",
+      "label": "场景片段",
+      "required": true,
+      "default": null,
+      "widget": "text",
+      "options": [],
+      "description": "场景列表 [{index,start,end,shot_type,visual_description,audio_content}]（兼容 start_time/end_time）"
+    },
+    {
+      "name": "subtitles",
+      "type": "SUBTITLE",
+      "label": "字幕",
+      "required": true,
+      "default": null,
+      "widget": "text",
+      "options": [],
+      "description": "Whisper 字幕 [{start,end,text,speaker?}]，按 (start+end)/2 中心点挂载"
+    }
+  ],
+  "outputs": [
+    {
+      "name": "rich_scenes",
+      "type": "JSON",
+      "label": "富场景",
+      "required": true,
+      "default": null,
+      "widget": "text",
+      "options": [],
+      "description": "{schema_version, mode, scenes:[{index,start,end,duration,shot_type,visual_description,audio_content,has_dialogue,dialogues[],mode,narration,keep_dialogue_ids}]}"
+    },
+    {
+      "name": "report",
+      "type": "JSON",
+      "label": "融合报告",
+      "required": false,
+      "default": null,
+      "widget": "text",
+      "options": [],
+      "description": "挂载/未挂载统计与时间窗摘要"
+    }
+  ],
+  "params": [
+    {
+      "name": "scene_time_keys",
+      "type": "STRING",
+      "label": "场景时间键",
+      "required": false,
+      "default": "auto",
+      "widget": "select",
+      "options": [
+        "auto",
+        "start/end",
+        "start_time/end_time"
+      ],
+      "description": "auto=优先 start_time/end_time（原版键），缺省回退 start/end"
+    }
+  ],
+  "permission": {},
+  "signature": {
+    "alg": "ed25519",
+    "key_id": "a8998646b062c170",
+    "value": "DOWGq1yb0tbu5HkNdd2FmbzmyFdRlKuCjVSDRfPylRq9Id+CoC1xz72hblDetNmAkSKG7AZlDN2bCJ9lxbbHDQ==",
+    "over": "manifest"
+  }
+}

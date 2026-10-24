@@ -1,0 +1,98 @@
+{
+  "schema_version": 2,
+  "engine_api": "1.0",
+  "type_id": "user/jsm_video_enhance",
+  "title": "视频画质增强",
+  "category": "剪辑",
+  "description": "ffmpeg 滤镜画质增强（unsharp/lanczos/eq/hqdn3d），轻量离线版，不依赖模型中心",
+  "version": "1.0.0",
+  "kind": "python",
+  "runtime": "python",
+  "entrypoint": "node.py",
+  "class_name": "JsmVideoEnhanceNode",
+  "inputs": [
+    {
+      "name": "video",
+      "type": "VIDEO",
+      "label": "源视频",
+      "required": true,
+      "default": null,
+      "widget": "text",
+      "options": [],
+      "description": "待增强视频"
+    }
+  ],
+  "outputs": [
+    {
+      "name": "video_out",
+      "type": "VIDEO",
+      "label": "增强视频",
+      "required": true,
+      "default": null,
+      "widget": "text",
+      "options": [],
+      "description": "增强后的视频资产"
+    },
+    {
+      "name": "stats",
+      "type": "JSON",
+      "label": "增强报告",
+      "required": true,
+      "default": null,
+      "widget": "text",
+      "options": [],
+      "description": "预设/滤镜/尺寸/耗时"
+    }
+  ],
+  "params": [
+    {
+      "name": "preset",
+      "type": "STRING",
+      "label": "增强预设",
+      "required": true,
+      "default": "auto",
+      "widget": "select",
+      "options": [
+        "auto",
+        "clarity",
+        "hd",
+        "vivid",
+        "denoise"
+      ],
+      "description": "clarity=锐化；hd=Lanczos 放大+锐化；vivid=饱和对比增强；denoise=降噪"
+    },
+    {
+      "name": "output_name",
+      "type": "STRING",
+      "label": "输出文件名",
+      "required": true,
+      "default": "enhanced",
+      "widget": "text",
+      "options": [],
+      "description": ""
+    }
+  ],
+  "permission": {
+    "subprocess": {
+      "enabled": true,
+      "argv_allowlist": [
+        "ffmpeg",
+        "ffmpeg.exe",
+        "ffprobe",
+        "ffprobe.exe"
+      ]
+    },
+    "fs": {
+      "write": [
+        "jsm_video_enhance/**",
+        "assets/**"
+      ]
+    }
+  },
+  "signature": {
+    "alg": "ed25519",
+    "key_id": "a8998646b062c170",
+    "value": "TwvTaRI1pp4/F5GbEFVJnsyFUIK9OZYizBNrE5fAWl+bXVp4Eej8pSP67bDyVEgCMjWucvNDYiMlwixBXTuJBA==",
+    "over": "manifest"
+  }
+}

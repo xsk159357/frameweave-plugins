@@ -1,0 +1,75 @@
+"""插件节点骨架（kind=python）——拷贝到你的插件包并改名（如 my_plugin_node.py，
+同步改 manifest.json 的 entrypoint 与 class_name）。"""
+from __future__ import annotations
+import os
+import uuid
+from typing import Any, Dict
+
+# 平台公开面（与 manifest 端口声明一致，v2 契约以 manifest 为唯一真源）
+from app.assets import Asset
+from app.nodespec import NodeBase, NodeSpec, PortSpec, PortType
+
+
+class MyPluginNode(NodeBase):
+    """示例 python 节点：读取一段文本，输出拼接后的文本与统计 JSON。"""
+
+    @classmethod
+    def spec(cls) -> NodeSpec:
+        # ★ 端口声明必须与 manifest.json 的 inputs/outputs/params 一一对应（R1）
+        return NodeSpec(
+            type_id="user/my_plugin",
+            title="我的插件",
+            category="用户节点",
+            description="SDK 骨架示例节点",
+            inputs=[
+                PortSpec(name="text", type=PortType.STRING, label="输入文本", required=True),
+            ],
+            outputs=[
+                PortSpec(name="result", type=PortType.STRING, label="拼接结果"),
+                PortSpec(name="stats", type=PortType.JSON, label="统计"),
+            ],
+            params=[
+                PortSpec(name="prefix", type=PortType.STRING, label="前缀", default="FW",
+                         widget="text"),
+                PortSpec(name="mode", type=PortType.STRING, label="模式", default="upper",
+                         widget="select", options=["upper", "lower", "raw"]),
+            ],
+            version="1.0.0",
+        )
+
+    async def setup(self, ctx) -> None:
+        # 一次性初始化（如加载模型）；不需要就留空（默认无操作）
+        pass
+
+    async def run(self, ctx, inputs, params) -> Dict[str, Any]:
+        store = ctx["store"]          # AssetStore
+        text = inputs.get("text")
+        if isinstance(text, Asset):   # 上游 python 节点 → Asset；读载荷用 read_json / path
+            payload = store.read_json(text.id) if text.path and text.path.endswith(".json") else None
+            text = payload.get("text") if isinstance(payload, dict) else text.path
+        text = str(text or "")
+        prefix = str(params.get("prefix", "FW"))
+        mode = str(params.get("mode", "upper"))
+        if mode == "upper":
+            body = text.upper()
+        elif mode == "lower":
+            body = text.lower()
+        else:
+            body = text
+        result = prefix + " - " + body
+        ctx["progress"](0.5)          # 进度上报（0~1）
+        # 结构化输出：save_asset(asset, payload=...) 自动落 json
+        stats = store.save_asset(
+            Asset(id="", kind=PortType.JSON.value, meta={"mode": mode}),
+            payload={"len": len(text), "mode": mode},
+        )
+        # 文本输出：返回端口名 -> Asset 或值
+        return {"result": result, "stats": stats}
+
+
+# 【参考】同步子进程的正确姿势（P0.4）：走 ctx 托管，不在 async run 里裸调 subprocess.run
+# async def run(self, ctx, inputs, params):
+#     out = await ctx["run_tracked"](["ffprobe", "-version"], timeout=30)
+#     if out.returncode != 0:
+#         raise RuntimeError(f"ffprobe 失败: {out.stderr.decode(errors='replace')}")
+#     return {"result": out.stdout.decode(errors="replace")}

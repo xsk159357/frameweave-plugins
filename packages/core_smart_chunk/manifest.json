@@ -1,0 +1,109 @@
+{
+  "schema_version": 2,
+  "engine_api": "1.0",
+  "type_id": "core/smart_chunk",
+  "title": "智能分块",
+  "category": "分析",
+  "description": "按场景边界聚合成时长目标窗的分块（180s 窗/120-240s 界；末块过短并入前块）",
+  "version": "2.0.0",
+  "kind": "python",
+  "runtime": "python",
+  "entrypoint": "node.py",
+  "class_name": "SmartChunkNode",
+  "inputs": [
+    {
+      "name": "video",
+      "type": "VIDEO",
+      "label": "视频",
+      "required": true,
+      "default": null,
+      "widget": "text",
+      "options": [],
+      "description": "输入视频资产"
+    },
+    {
+      "name": "scenes",
+      "type": "SEGMENTS",
+      "label": "场景片段",
+      "required": true,
+      "default": null,
+      "widget": "text",
+      "options": [],
+      "description": "场景检测输出的片段列表"
+    }
+  ],
+  "outputs": [
+    {
+      "name": "chunks",
+      "type": "JSON",
+      "label": "分块结果",
+      "required": true,
+      "default": null,
+      "widget": "text",
+      "options": [],
+      "description": "分块列表（含 scene_indices 与 video_time_offset）"
+    },
+    {
+      "name": "report",
+      "type": "JSON",
+      "label": "分块报告",
+      "required": false,
+      "default": null,
+      "widget": "text",
+      "options": [],
+      "description": "分块统计与警告"
+    }
+  ],
+  "params": [
+    {
+      "name": "target_duration",
+      "type": "FLOAT",
+      "label": "目标窗长(秒)",
+      "required": true,
+      "default": 180.0,
+      "widget": "number",
+      "options": [],
+      "description": "每个分块的目标时长"
+    },
+    {
+      "name": "min_duration",
+      "type": "FLOAT",
+      "label": "最小窗长(秒)",
+      "required": true,
+      "default": 120.0,
+      "widget": "number",
+      "options": [],
+      "description": "分块时长下限；末块不足时按 tail_policy 处理"
+    },
+    {
+      "name": "max_duration",
+      "type": "FLOAT",
+      "label": "最大窗长(秒)",
+      "required": true,
+      "default": 240.0,
+      "widget": "number",
+      "options": [],
+      "description": "分块时长上限"
+    },
+    {
+      "name": "tail_policy",
+      "type": "STRING",
+      "label": "末块策略",
+      "required": true,
+      "default": "merge_back",
+      "widget": "select",
+      "options": [
+        "merge_back",
+        "keep"
+      ],
+      "description": "末块过短时并入前块（merge_back）或保留（keep）"
+    }
+  ],
+  "permission": {},
+  "signature": {
+    "alg": "ed25519",
+    "key_id": "a8998646b062c170",
+    "value": "0eWEpmZW0oGfskd/sqSb5SLZutHETvftQHiOQ2mNjjApuVB5WKIO9tU5OQqiyPzlPOZbzwHb12ZFaSkfgn+QCw==",
+    "over": "manifest"
+  }
+}

@@ -1,0 +1,195 @@
+{
+  "schema_version": 2,
+  "engine_api": "1.0",
+  "type_id": "core/analyze_chunks",
+  "title": "分块视觉分析（A4）",
+  "category": "分析",
+  "description": "chunks + video → descriptions JSON（shot_type/visual_description/audio_content）；并发≤5、解析重试 3、JSON schema 校验；接入 ai_narrate 零关键帧省 Token 路径",
+  "version": "1.0.0",
+  "kind": "python",
+  "runtime": "python",
+  "entrypoint": "node.py",
+  "class_name": "AnalyzeChunksNode",
+  "inputs": [
+    {
+      "name": "video",
+      "type": "VIDEO",
+      "label": "视频",
+      "required": true,
+      "default": null,
+      "widget": "text",
+      "options": [],
+      "description": "输入视频资产（分块抽帧来源）"
+    },
+    {
+      "name": "chunks",
+      "type": "JSON",
+      "label": "分块结果",
+      "required": true,
+      "default": null,
+      "widget": "text",
+      "options": [],
+      "description": "core/smart_chunk 输出的分块列表（或 {chunks:[...]} 信封）"
+    }
+  ],
+  "outputs": [
+    {
+      "name": "descriptions",
+      "type": "JSON",
+      "label": "场景描述",
+      "required": true,
+      "default": null,
+      "widget": "text",
+      "options": [],
+      "description": "分块描述 JSON（items: {chunk_index,index,scene_indices,start,end,shot_type,visual_description,audio_content}），可直接接入 core/ai_narrate 的 descriptions 输入"
+    },
+    {
+      "name": "report",
+      "type": "JSON",
+      "label": "分析报告",
+      "required": false,
+      "default": null,
+      "widget": "text",
+      "options": [],
+      "description": "逐块状态、Token 估算与省 Token 路径对比（description_path vs keyframe_path）"
+    }
+  ],
+  "params": [
+    {
+      "name": "provider",
+      "type": "STRING",
+      "label": "Provider",
+      "required": true,
+      "default": "auto",
+      "widget": "select",
+      "options": [
+        "auto",
+        "openai",
+        "gemini"
+      ],
+      "description": "auto=按 base_url 识别（generativelanguage → gemini）"
+    },
+    {
+      "name": "api_key",
+      "type": "STRING",
+      "label": "API Key",
+      "required": false,
+      "default": "",
+      "widget": "password",
+      "options": [],
+      "description": "支持 @secret:名称 引用保险箱"
+    },
+    {
+      "name": "base_url",
+      "type": "STRING",
+      "label": "API 地址",
+      "required": false,
+      "default": "",
+      "widget": "text",
+      "options": [],
+      "description": "留空按 provider 默认（OpenAI / Gemini）"
+    },
+    {
+      "name": "model",
+      "type": "STRING",
+      "label": "视觉模型",
+      "required": true,
+      "default": "gemini-1.5-flash",
+      "widget": "text",
+      "options": [],
+      "description": "支持视觉输入的模型"
+    },
+    {
+      "name": "concurrency",
+      "type": "INT",
+      "label": "并发上限",
+      "required": true,
+      "default": 3,
+      "widget": "number",
+      "options": [],
+      "description": "分块并行分析并发数（硬上限 5）"
+    },
+    {
+      "name": "retries",
+      "type": "INT",
+      "label": "解析重试次数",
+      "required": true,
+      "default": 3,
+      "widget": "number",
+      "options": [],
+      "description": "JSON 解析失败/schema 校验失败/网络失败的重试次数"
+    },
+    {
+      "name": "frames_per_chunk",
+      "type": "INT",
+      "label": "每块采样帧数",
+      "required": true,
+      "default": 3,
+      "widget": "number",
+      "options": [],
+      "description": "每个分块内均分采样画面帧数（3 帧语义）"
+    },
+    {
+      "name": "frame_scale",
+      "type": "INT",
+      "label": "帧宽(px)",
+      "required": true,
+      "default": 448,
+      "widget": "number",
+      "options": [],
+      "description": "抽帧缩放宽边（控制视觉 Token 成本）"
+    },
+    {
+      "name": "temperature",
+      "type": "FLOAT",
+      "label": "温度",
+      "required": true,
+      "default": 0.2,
+      "widget": "number",
+      "options": [],
+      "description": ""
+    },
+    {
+      "name": "max_tokens",
+      "type": "INT",
+      "label": "最大 Token",
+      "required": true,
+      "default": 1024,
+      "widget": "number",
+      "options": [],
+      "description": ""
+    },
+    {
+      "name": "json_schema",
+      "type": "BOOL",
+      "label": "JSON schema 校验",
+      "required": true,
+      "default": true,
+      "widget": "toggle",
+      "options": [],
+      "description": "对输出做 shot_type/visual_description/audio_content 契约校验，失败重试"
+    }
+  ],
+  "permission": {
+    "subprocess": {
+      "enabled": true,
+      "argv_allowlist": [
+        "ffmpeg",
+        "ffmpeg.exe",
+        "ffprobe",
+        "ffprobe.exe"
+      ]
+    },
+    "secret": {
+      "refs": [
+        "*"
+      ]
+    }
+  },
+  "signature": {
+    "alg": "ed25519",
+    "key_id": "a8998646b062c170",
+    "value": "sxabDAdIB+B6Sd/0ckDv+RO9lqyCk5XzA+ykYcu5XCmeGZ6ci7xaMMfvqLKtnnPxLQklfr7gnO6G93twCQGHDw==",
+    "over": "manifest"
+  }
+}

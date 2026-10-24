@@ -1,0 +1,267 @@
+{
+  "schema_version": 2,
+  "engine_api": "1.0",
+  "type_id": "core/asr",
+  "title": "语音转字幕",
+  "category": "分析",
+  "description": "ASR 字幕 + A5 对白提取（含 role）：faster-whisper 本地转录 / OpenAI 兼容远程 / Gemini input_audio 直听 60s 窗；输出 SUBTITLE 与 dialogue[{start,end,role,text}]；可选 sherpa-onnx 说话人区分（speaker 字段）",
+  "version": "3.1.0",
+  "kind": "python",
+  "runtime": "python",
+  "entrypoint": "node.py",
+  "class_name": "ASRNode",
+  "inputs": [
+    {
+      "name": "video",
+      "type": "VIDEO",
+      "label": "视频",
+      "required": false,
+      "default": null,
+      "widget": "text",
+      "options": [],
+      "description": "输入视频（未接 audio 时取视频音轨转写）"
+    },
+    {
+      "name": "audio",
+      "type": "AUDIO",
+      "label": "音频(可选)",
+      "required": false,
+      "default": null,
+      "widget": "text",
+      "options": [],
+      "description": "独立音频输入（优先于视频音轨）"
+    }
+  ],
+  "outputs": [
+    {
+      "name": "subtitles",
+      "type": "SUBTITLE",
+      "label": "字幕",
+      "required": true,
+      "default": null,
+      "widget": "text",
+      "options": [],
+      "description": "字幕行列表 {index,start,end,text,confidence?,words?,role?}"
+    },
+    {
+      "name": "dialogues",
+      "type": "JSON",
+      "label": "对白(含角色)",
+      "required": false,
+      "default": null,
+      "widget": "text",
+      "options": [],
+      "description": "A5 dialogue[{start,end,role,text}]；role=narrator/speaker/unknown"
+    },
+    {
+      "name": "srt",
+      "type": "STRING",
+      "label": "SRT 文本",
+      "required": false,
+      "default": null,
+      "widget": "text",
+      "options": [],
+      "description": "标准 SRT 字幕文本"
+    },
+    {
+      "name": "report",
+      "type": "JSON",
+      "label": "转写报告",
+      "required": false,
+      "default": null,
+      "widget": "text",
+      "options": [],
+      "description": "引擎/模型/语言/统计与降级警告"
+    }
+  ],
+  "params": [
+    {
+      "name": "engine",
+      "type": "STRING",
+      "label": "引擎",
+      "required": true,
+      "default": "auto",
+      "widget": "select",
+      "options": [
+        "auto",
+        "local",
+        "remote",
+        "gemini"
+      ],
+      "description": "auto=本地 faster-whisper 优先，失败退远程/Gemini"
+    },
+    {
+      "name": "model",
+      "type": "STRING",
+      "label": "本地模型",
+      "required": true,
+      "default": "small",
+      "widget": "select",
+      "options": [
+        "tiny",
+        "base",
+        "small",
+        "medium",
+        "large-v3"
+      ],
+      "description": "faster-whisper 模型大小或本地模型目录"
+    },
+    {
+      "name": "language",
+      "type": "STRING",
+      "label": "语言",
+      "required": true,
+      "default": "zh",
+      "widget": "select",
+      "options": [
+        "zh",
+        "en",
+        "ja",
+        "ko",
+        "auto"
+      ],
+      "description": "auto=自动检测"
+    },
+    {
+      "name": "device",
+      "type": "STRING",
+      "label": "设备",
+      "required": true,
+      "default": "auto",
+      "widget": "select",
+      "options": [
+        "auto",
+        "cpu",
+        "cuda"
+      ],
+      "description": "auto=服务器默认 CPU；GPU 请显式选 cuda"
+    },
+    {
+      "name": "compute_type",
+      "type": "STRING",
+      "label": "计算精度",
+      "required": true,
+      "default": "int8",
+      "widget": "select",
+      "options": [
+        "int8",
+        "float16",
+        "float32"
+      ],
+      "description": "CTranslate2 计算精度"
+    },
+    {
+      "name": "vad",
+      "type": "BOOL",
+      "label": "VAD 过滤静音",
+      "required": true,
+      "default": true,
+      "widget": "toggle",
+      "options": [],
+      "description": "静音段过滤，提升转写精度"
+    },
+    {
+      "name": "word_timestamps",
+      "type": "BOOL",
+      "label": "词级时间戳",
+      "required": true,
+      "default": false,
+      "widget": "toggle",
+      "options": [],
+      "description": "输出每句的词级 {word,start,end}，供对话细切"
+    },
+    {
+      "name": "api_key",
+      "type": "STRING",
+      "label": "API Key",
+      "required": false,
+      "default": "",
+      "widget": "password",
+      "options": [],
+      "description": "远程引擎用；支持 @secret:名称 引用保险箱"
+    },
+    {
+      "name": "base_url",
+      "type": "STRING",
+      "label": "中转地址",
+      "required": true,
+      "default": "https://generativelanguage.googleapis.com/v1beta",
+      "widget": "text",
+      "options": [],
+      "description": "OpenAI 兼容 /audio/transcriptions 或 Gemini generateContent 根"
+    },
+    {
+      "name": "remote_model",
+      "type": "STRING",
+      "label": "远程模型",
+      "required": true,
+      "default": "whisper-1",
+      "widget": "text",
+      "options": [],
+      "description": "remote 引擎的 OpenAI 兼容模型名；gemini 引擎请用 gemini_model"
+    },
+    {
+      "name": "gemini_model",
+      "type": "STRING",
+      "label": "Gemini 模型",
+      "required": true,
+      "default": "gemini-1.5-flash",
+      "widget": "text",
+      "options": [],
+      "description": "gemini 引擎的 generateContent 模型名"
+    },
+    {
+      "name": "window_seconds",
+      "type": "FLOAT",
+      "label": "Gemini 直听窗(秒)",
+      "required": true,
+      "default": 60.0,
+      "widget": "number",
+      "options": [],
+      "description": "gemini 引擎按此窗长切分逐窗直听"
+    },
+    {
+      "name": "add_roles",
+      "type": "BOOL",
+      "label": "标注角色(role)",
+      "required": true,
+      "default": true,
+      "widget": "toggle",
+      "options": [],
+      "description": "为字幕行补 role 并输出 dialogues 端口（本地 Whisper 用启发式）"
+    },
+    {
+      "name": "enable_diarization",
+      "type": "BOOL",
+      "label": "说话人区分",
+      "required": true,
+      "default": false,
+      "widget": "toggle",
+      "options": [],
+      "description": "启用 sherpa-onnx 说话人区分（TK 流程）；为字幕行补 speaker 字段（speaker_0/1...）"
+    },
+    {
+      "name": "diarization_model_dir",
+      "type": "STRING",
+      "label": "Diarization 模型目录",
+      "required": true,
+      "default": "",
+      "widget": "text",
+      "options": [],
+      "description": "sherpa-onnx 说话人区分模型目录（含 model.onnx/segmentation 与 embedding 模型）；留空自动探测 models/diarization"
+    }
+  ],
+  "permission": {
+    "secret": {
+      "refs": [
+        "*"
+      ]
+    }
+  },
+  "signature": {
+    "alg": "ed25519",
+    "key_id": "a8998646b062c170",
+    "value": "8VqTSiCmwzpNwgwaY+5G1x45Gz2bme6XFkGrwu6wkEVapV3QXh7mU+CFJZACQ76KsZcNT+wy4Qe9MGtFxM76Ag==",
+    "over": "manifest"
+  }
+}

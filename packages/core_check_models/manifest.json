@@ -1,0 +1,93 @@
+{
+  "schema_version": 2,
+  "engine_api": "1.0",
+  "type_id": "core/check_models",
+  "title": "模型就绪检查",
+  "category": "控制",
+  "description": "轻量模型就绪检查（A10）：按模型清单解析路径并检查存在性（可选 sha256），report:JSON 输出逐项就绪状态；下载职责归宿主模型中心，缺失项给出下载指引（hf download，05 复现指南 §1.2）",
+  "version": "1.0.0",
+  "kind": "python",
+  "runtime": "python",
+  "entrypoint": "node.py",
+  "class_name": "CheckModelsNode",
+  "inputs": [],
+  "outputs": [
+    {
+      "name": "report",
+      "type": "JSON",
+      "label": "就绪报告",
+      "required": false,
+      "default": null,
+      "widget": "text",
+      "options": [],
+      "description": "模型就绪状态报告：路径解析 + 存在性 + 可选 hash + 缺失项下载指引（与 fw env-check 模型项对拍）"
+    },
+    {
+      "name": "models",
+      "type": "JSON",
+      "label": "逐项状态",
+      "required": false,
+      "default": null,
+      "widget": "text",
+      "options": [],
+      "description": "逐模型就绪明细列表（report.models 同构）"
+    },
+    {
+      "name": "ready",
+      "type": "BOOL",
+      "label": "全部就绪",
+      "required": false,
+      "default": null,
+      "widget": "text",
+      "options": [],
+      "description": "清单内全部模型就绪时为 true"
+    }
+  ],
+  "params": [
+    {
+      "name": "models",
+      "type": "STRING",
+      "label": "模型清单",
+      "required": false,
+      "default": "",
+      "widget": "text",
+      "options": [],
+      "description": "JSON 数组（模型 id 或 {id,repo,file,dir} 对象）、换行/逗号分隔 id 或全量清单对象；留空 = models_registry.json 全部（默认 6 模型）"
+    },
+    {
+      "name": "registry_path",
+      "type": "STRING",
+      "label": "注册表路径",
+      "required": false,
+      "default": "",
+      "widget": "file",
+      "options": [],
+      "description": "models_registry.json 覆盖路径（留空 = 平台默认注册表 backend/models_registry.json）"
+    },
+    {
+      "name": "with_hash",
+      "type": "BOOL",
+      "label": "计算 sha256",
+      "required": false,
+      "default": false,
+      "widget": "toggle",
+      "options": [],
+      "description": "对就绪模型的权重文件流式计算 sha256（大文件较耗时，按需开启）"
+    }
+  ],
+  "permission": {
+    "fs": {
+      "read": [
+        "${FRAMEWEAVE_MODELS_DIR}/**",
+        "${DATA_DIR}/models/**",
+        "${DATA_DIR}/../models_registry.json"
+      ]
+    }
+  },
+  "signature": {
+    "alg": "ed25519",
+    "key_id": "a8998646b062c170",
+    "value": "Hk+L3XAVfJCIeM5N0fRPsXjrMrz/ZTy7vzao2LND7JGHtH3zMmeYfc4AYTWPK3ptIKCp07I15+75v+o/9vGiBQ==",
+    "over": "manifest"
+  }
+}

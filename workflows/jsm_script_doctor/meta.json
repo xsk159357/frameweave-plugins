@@ -1,0 +1,10 @@
+{
+  "id": "jsm_script_doctor",
+  "name": "脚本医生 · 文案质检",
+  "version": "1.0.0",
+  "kind": "workflow",
+  "source": "official",
+  "updated_at": 1792265081.4004571,
+  "aligned_to": "t3 优化节点口径（packages 70 包 + dev user_nodes 33 包，2026-10-17）",
+  "workflow_sha256": "7c37ed18889ae68b28d44e6dbd2e206596e987b83a7b52fe959d481369c1e8d1"
+}

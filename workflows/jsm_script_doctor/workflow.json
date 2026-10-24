@@ -1,0 +1,94 @@
+{
+  "tpl_id": "jsm_script_doctor",
+  "name": "脚本医生 · 文案质检",
+  "description": "粘贴文案→6维深度质检+12项硬指标+3套全文改写方案→结论等级；本地规则引擎离线可用，配置 API Key 时 LLM 增强润色。items:JSON 批次信封与直连 script 单条双路。",
+  "version": "1.0.0",
+  "kind": "workflow",
+  "tags": [
+    "解说猫复刻",
+    "脚本医生",
+    "文案质检",
+    "官方"
+  ],
+  "nodes": [
+    {
+      "id": "n1",
+      "type": "core/value_input",
+      "x": 40,
+      "y": 300,
+      "params": {
+        "type": "STRING",
+        "value": "示例解说文案……"
+      },
+      "status": "pending",
+      "inputs": {}
+    },
+    {
+      "id": "n2",
+      "type": "user/jsm_script_doctor",
+      "x": 260,
+      "y": 300,
+      "params": {
+        "min_length": 20,
+        "api_key": "@secret:llm_api_key",
+        "base_url": "",
+        "model": "",
+        "llm_backend": "internal",
+        "rewrite_count": 3,
+        "max_concurrent": 2,
+        "retries": 1,
+        "resume": true
+      },
+      "status": "pending",
+      "inputs": {
+        "script": "n1"
+      }
+    },
+    {
+      "id": "n3",
+      "type": "core/text_output",
+      "x": 480,
+      "y": 200,
+      "params": {
+        "note": "质检报告"
+      },
+      "status": "pending",
+      "inputs": {
+        "text": "n2"
+      }
+    },
+    {
+      "id": "n4",
+      "type": "core/file_output",
+      "x": 480,
+      "y": 400,
+      "params": {
+        "filename": "script_doctor_diagnosis.json"
+      },
+      "status": "pending",
+      "inputs": {
+        "data": "n2"
+      }
+    }
+  ],
+  "edges": [
+    {
+      "source": "n1",
+      "target": "n2",
+      "sourceHandle": "value",
+      "targetHandle": "script"
+    },
+    {
+      "source": "n2",
+      "target": "n3",
+      "sourceHandle": "diagnosis",
+      "targetHandle": "text"
+    },
+    {
+      "source": "n2",
+      "target": "n4",
+      "sourceHandle": "diagnosis",
+      "targetHandle": "data"
+    }
+  ]
+}

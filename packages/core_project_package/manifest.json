@@ -1,0 +1,179 @@
+{
+  "schema_version": 2,
+  "engine_api": "1.0",
+  "type_id": "core/project_package",
+  "title": "项目输出打包",
+  "category": "输出",
+  "description": "项目输出打包：project_config.ini/split_cam/video_split_info/srt/all_des/封面帧；键名与明文修复（B3/B4/B5）。",
+  "version": "1.0.0",
+  "kind": "python",
+  "runtime": "python",
+  "entrypoint": "node.py",
+  "class_name": "ProjectPackageNode",
+  "inputs": [
+    {
+      "name": "video",
+      "type": "VIDEO",
+      "label": "视频",
+      "required": true,
+      "default": null,
+      "widget": "text",
+      "options": [],
+      "description": "源视频资产"
+    },
+    {
+      "name": "scenes",
+      "type": "SEGMENTS",
+      "label": "片段列表",
+      "required": true,
+      "default": null,
+      "widget": "text",
+      "options": [],
+      "description": "split_cam 风格片段列表"
+    },
+    {
+      "name": "subtitles",
+      "type": "SUBTITLE",
+      "label": "字幕",
+      "required": false,
+      "default": null,
+      "widget": "text",
+      "options": [],
+      "description": "字幕列表（生成 srt/时间轴 json）"
+    },
+    {
+      "name": "descriptions",
+      "type": "JSON",
+      "label": "场景描述",
+      "required": false,
+      "default": null,
+      "widget": "text",
+      "options": [],
+      "description": "视觉分析描述 [{start,end,desc}]（写入 all_des/scenarios）"
+    },
+    {
+      "name": "project",
+      "type": "JSON",
+      "label": "项目设置",
+      "required": false,
+      "default": null,
+      "widget": "text",
+      "options": [],
+      "description": "settings 覆盖（project_config.ini）"
+    }
+  ],
+  "outputs": [
+    {
+      "name": "package",
+      "type": "JSON",
+      "label": "打包结果",
+      "required": true,
+      "default": null,
+      "widget": "text",
+      "options": [],
+      "description": "打包结果（全部产物路径）"
+    },
+    {
+      "name": "report",
+      "type": "JSON",
+      "label": "报告",
+      "required": false,
+      "default": null,
+      "widget": "text",
+      "options": [],
+      "description": "打包报告"
+    }
+  ],
+  "params": [
+    {
+      "name": "output_dir",
+      "type": "STRING",
+      "label": "输出目录",
+      "required": true,
+      "default": "",
+      "widget": "text",
+      "options": [],
+      "description": "留空输出到资产目录"
+    },
+    {
+      "name": "cover_time",
+      "type": "FLOAT",
+      "label": "封面抽帧时间",
+      "required": true,
+      "default": 5.0,
+      "widget": "number",
+      "options": [],
+      "description": "封面帧时间点（秒）"
+    },
+    {
+      "name": "include_cover",
+      "type": "BOOL",
+      "label": "生成封面帧",
+      "required": true,
+      "default": true,
+      "widget": "toggle",
+      "options": [],
+      "description": ""
+    },
+    {
+      "name": "language_select",
+      "type": "STRING",
+      "label": "语言",
+      "required": true,
+      "default": "中文",
+      "widget": "text",
+      "options": [],
+      "description": "project_config 设置"
+    },
+    {
+      "name": "person_select",
+      "type": "STRING",
+      "label": "人称",
+      "required": true,
+      "default": "third",
+      "widget": "text",
+      "options": [],
+      "description": "project_config 设置"
+    },
+    {
+      "name": "story_select",
+      "type": "STRING",
+      "label": "故事模板",
+      "required": true,
+      "default": "cjbkkt_mod",
+      "widget": "text",
+      "options": [],
+      "description": "project_config 设置"
+    },
+    {
+      "name": "audio_speed",
+      "type": "FLOAT",
+      "label": "语速",
+      "required": true,
+      "default": 4.5,
+      "widget": "number",
+      "options": [],
+      "description": "project_config 设置"
+    }
+  ],
+  "permission": {
+    "subprocess": {
+      "enabled": true,
+      "argv_allowlist": [
+        "ffmpeg"
+      ]
+    },
+    "fs": {
+      "write": [
+        "project/**",
+        "assets/**"
+      ]
+    }
+  },
+  "signature": {
+    "alg": "ed25519",
+    "key_id": "a8998646b062c170",
+    "value": "9EVuMz/5kK2Kxq6hWiL+dbg4Ez3zCzV7H9IHg6SnjvQo6dT92c7tHYfO3ap/XB35kwbhQnoUtTKAdVGpGCWnDQ==",
+    "over": "manifest"
+  }
+}

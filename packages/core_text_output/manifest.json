@@ -1,0 +1,46 @@
+{
+  "schema_version": 2,
+  "engine_api": "1.0",
+  "type_id": "core/text_output",
+  "title": "文本输出",
+  "category": "输出",
+  "description": "将任意值整理为可查看的文本统计 JSON，离线可用",
+  "version": "1.0.0",
+  "kind": "python",
+  "runtime": "python",
+  "entrypoint": "node.py",
+  "class_name": "TextOutputNode",
+  "inputs": [
+    {
+      "name": "text",
+      "type": "ANY",
+      "label": "输入",
+      "required": true
+    }
+  ],
+  "outputs": [
+    {
+      "name": "result",
+      "type": "JSON",
+      "label": "输出",
+      "required": true
+    }
+  ],
+  "params": [
+    {
+      "name": "note",
+      "type": "STRING",
+      "label": "备注",
+      "required": false,
+      "default": "",
+      "widget": "text"
+    }
+  ],
+  "permission": {},
+  "signature": {
+    "alg": "ed25519",
+    "key_id": "a8998646b062c170",
+    "value": "xwTlPxoZ6a1g8THuYLPqApioJbJhdNoPOrAr4ermemAUsBfr+T62VT3BBb6BSp9Vabo9XBLeqZF5TujQaldGCw==",
+    "over": "manifest"
+  }
+}

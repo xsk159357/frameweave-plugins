@@ -1,0 +1,520 @@
+{
+  "schema_version": 2,
+  "engine_api": "1.0",
+  "type_id": "core/tts",
+  "title": "TTS 配音（多引擎）",
+  "category": "音频",
+  "description": "文字转语音：Edge免费 / IndexTTS2本地克隆 / OpenAI兼容 / 阿里NLS+CosyVoice / 豆包火山；支持长文本分块与分段批量合成",
+  "version": "2.1.0",
+  "kind": "python",
+  "runtime": "python",
+  "entrypoint": "node.py",
+  "class_name": "TTSNode",
+  "inputs": [
+    {
+      "name": "script",
+      "type": "SCRIPT",
+      "label": "文案",
+      "required": false,
+      "default": null,
+      "widget": "text",
+      "options": [],
+      "description": "整段解说文案（单条合成）；与 segments 二选一"
+    },
+    {
+      "name": "segments",
+      "type": "SEGMENTS",
+      "label": "分段列表",
+      "required": false,
+      "default": null,
+      "widget": "text",
+      "options": [],
+      "description": "分段批量合成：每段取 text/narration/source_text 字段"
+    },
+    {
+      "name": "audio_in",
+      "type": "AUDIO",
+      "label": "人工音频",
+      "required": false,
+      "default": null,
+      "widget": "text",
+      "options": [],
+      "description": "manual 引擎使用"
+    },
+    {
+      "name": "audio_ref",
+      "type": "AUDIO",
+      "label": "克隆参考音",
+      "required": false,
+      "default": null,
+      "widget": "text",
+      "options": [],
+      "description": "indextts 引擎使用"
+    }
+  ],
+  "outputs": [
+    {
+      "name": "audio",
+      "type": "AUDIO",
+      "label": "配音音频",
+      "required": true,
+      "default": null,
+      "widget": "text",
+      "options": [],
+      "description": "合成音频（批量合并时=合并文件，未合并=首个成功段）"
+    },
+    {
+      "name": "duration",
+      "type": "FLOAT",
+      "label": "音频时长(秒)",
+      "required": true,
+      "default": null,
+      "widget": "text",
+      "options": [],
+      "description": "合成音频总时长"
+    },
+    {
+      "name": "marks",
+      "type": "JSON",
+      "label": "时间戳标记",
+      "required": true,
+      "default": null,
+      "widget": "text",
+      "options": [],
+      "description": "分段/分块时间戳与状态"
+    },
+    {
+      "name": "report",
+      "type": "JSON",
+      "label": "合成报告",
+      "required": true,
+      "default": null,
+      "widget": "text",
+      "options": [],
+      "description": "引擎/策略/重试/耗时/warnings"
+    }
+  ],
+  "params": [
+    {
+      "name": "direct_text",
+      "type": "STRING",
+      "label": "直接输入文案",
+      "required": true,
+      "default": "",
+      "widget": "text",
+      "options": [],
+      "description": "留空时使用上游文案输入"
+    },
+    {
+      "name": "engine",
+      "type": "STRING",
+      "label": "引擎",
+      "required": true,
+      "default": "edge",
+      "widget": "select",
+      "options": [
+        "edge",
+        "manual",
+        "indextts",
+        "cloud",
+        "aliyun",
+        "volcano"
+      ],
+      "description": "edge=微软免费；manual=人工导入；indextts=IndexTTS2 本地克隆；cloud=OpenAI 兼容云端；aliyun=阿里 NLS+CosyVoice；volcano=豆包火山"
+    },
+    {
+      "name": "voice",
+      "type": "STRING",
+      "label": "音色",
+      "required": true,
+      "default": "zh-CN-XiaoxiaoNeural",
+      "widget": "select",
+      "options": [
+        "zh-CN-XiaoxiaoNeural",
+        "zh-CN-XiaoyiNeural",
+        "zh-CN-YunjianNeural",
+        "zh-CN-YunxiNeural",
+        "zh-CN-YunxiaNeural",
+        "zh-CN-YunyangNeural",
+        "zh-CN-liaoning-XiaobeiNeural",
+        "zh-CN-shaanxi-XiaoniNeural",
+        "zh-CN-XiaomoNeural",
+        "zh-CN-XiaoruiNeural",
+        "zh-CN-XiaoshuangNeural",
+        "zh-CN-XiaoxuanNeural",
+        "zh-CN-XiaoxueNeural",
+        "zh-CN-XiaoyanNeural",
+        "zh-CN-XiaoyouNeural",
+        "zh-CN-XiaozhenNeural",
+        "zh-CN-YunfengNeural",
+        "zh-CN-YunhaoNeural",
+        "zh-CN-YunzeNeural",
+        "zh-TW-HsiaoChenNeural",
+        "zh-TW-HsiaoYuNeural",
+        "zh-TW-YunJheNeural",
+        "zh-HK-HiuGaaiNeural",
+        "zh-HK-HiuMaanNeural",
+        "zh-HK-WanLungNeural",
+        "en-US-JennyNeural",
+        "en-US-AriaNeural",
+        "en-US-GuyNeural",
+        "en-US-ChristopherNeural",
+        "en-US-EricNeural",
+        "en-US-MichelleNeural",
+        "en-GB-SoniaNeural",
+        "en-GB-RyanNeural",
+        "en-AU-NatashaNeural",
+        "ja-JP-NanamiNeural",
+        "ja-JP-KeitaNeural",
+        "ja-JP-AoiNeural",
+        "ko-KR-SunHiNeural",
+        "ko-KR-InJoonNeural"
+      ],
+      "description": "edge 音色；indextts/cloud 由 lang/cloud_voice 等控制"
+    },
+    {
+      "name": "rate",
+      "type": "STRING",
+      "label": "语速",
+      "required": true,
+      "default": "+0%",
+      "widget": "text",
+      "options": [],
+      "description": "edge-tts 语速如 +10%"
+    },
+    {
+      "name": "pitch",
+      "type": "STRING",
+      "label": "音调",
+      "required": true,
+      "default": "+0Hz",
+      "widget": "text",
+      "options": [],
+      "description": "edge-tts 音调"
+    },
+    {
+      "name": "volume",
+      "type": "STRING",
+      "label": "音量",
+      "required": true,
+      "default": "+0%",
+      "widget": "text",
+      "options": [],
+      "description": "edge-tts 音量如 -20%"
+    },
+    {
+      "name": "output_format",
+      "type": "STRING",
+      "label": "输出格式",
+      "required": true,
+      "default": "mp3",
+      "widget": "select",
+      "options": [
+        "mp3",
+        "wav",
+        "ogg"
+      ],
+      "description": ""
+    },
+    {
+      "name": "lang",
+      "type": "STRING",
+      "label": "克隆语言",
+      "required": true,
+      "default": "ZH",
+      "widget": "select",
+      "options": [
+        "ZH",
+        "EN",
+        "JA",
+        "ES",
+        "AR"
+      ],
+      "description": "indextts 引擎"
+    },
+    {
+      "name": "duration_factor",
+      "type": "STRING",
+      "label": "语速倍率",
+      "required": true,
+      "default": "1.0",
+      "widget": "text",
+      "options": [],
+      "description": "0.5~2.0，1.0 为原速；indextts 合成后变速"
+    },
+    {
+      "name": "server_url",
+      "type": "STRING",
+      "label": "克隆服务地址",
+      "required": true,
+      "default": "http://127.0.0.1:3900",
+      "widget": "text",
+      "options": [],
+      "description": "IndexTTS2/OmniVoice 常驻服务（兼容旧版 8791）"
+    },
+    {
+      "name": "auto_start_server",
+      "type": "BOOL",
+      "label": "自动拉起服务",
+      "required": true,
+      "default": true,
+      "widget": "toggle",
+      "options": [],
+      "description": "首次用时自动启动克隆服务"
+    },
+    {
+      "name": "api_key",
+      "type": "STRING",
+      "label": "API Key",
+      "required": true,
+      "default": null,
+      "widget": "password",
+      "options": [],
+      "description": "云端 TTS Key；可填 @secret:名称 引用保险箱"
+    },
+    {
+      "name": "base_url",
+      "type": "STRING",
+      "label": "中转地址",
+      "required": true,
+      "default": "https://ameaaos.com/v1",
+      "widget": "text",
+      "options": [],
+      "description": "OpenAI 兼容 base（含 /v1）"
+    },
+    {
+      "name": "cloud_model",
+      "type": "STRING",
+      "label": "云端模型",
+      "required": true,
+      "default": "tts-1",
+      "widget": "text",
+      "options": [],
+      "description": ""
+    },
+    {
+      "name": "cloud_voice",
+      "type": "STRING",
+      "label": "云端音色",
+      "required": true,
+      "default": "alloy",
+      "widget": "text",
+      "options": [],
+      "description": "OpenAI 音色: alloy/echo/fable/onyx/nova/shimmer"
+    },
+    {
+      "name": "cloud_speed",
+      "type": "STRING",
+      "label": "云端语速",
+      "required": true,
+      "default": "1.0",
+      "widget": "text",
+      "options": [],
+      "description": "0.25~4.0"
+    },
+    {
+      "name": "aliyun_mode",
+      "type": "STRING",
+      "label": "阿里模式",
+      "required": true,
+      "default": "nls",
+      "widget": "select",
+      "options": [
+        "nls",
+        "cosyvoice"
+      ],
+      "description": "nls=NLS REST 标准音色；cosyvoice=DashScope 大模型音色"
+    },
+    {
+      "name": "aliyun_appkey",
+      "type": "STRING",
+      "label": "阿里 AppKey",
+      "required": true,
+      "default": null,
+      "widget": "text",
+      "options": [],
+      "description": "NLS AppKey（可 @secret:名称 引用）"
+    },
+    {
+      "name": "aliyun_token",
+      "type": "STRING",
+      "label": "阿里 Token",
+      "required": true,
+      "default": null,
+      "widget": "text",
+      "options": [],
+      "description": "NLS 预签发 Token 或 DashScope API Key（可 @secret:名称 引用）；留空且填 AK/SK 时自动换取"
+    },
+    {
+      "name": "aliyun_ak_id",
+      "type": "STRING",
+      "label": "阿里 AccessKey ID",
+      "required": true,
+      "default": null,
+      "widget": "text",
+      "options": [],
+      "description": "NLS Token 换取用 AccessKey ID（可 @secret:名称 引用）"
+    },
+    {
+      "name": "aliyun_ak_secret",
+      "type": "STRING",
+      "label": "阿里 AccessKey Secret",
+      "required": true,
+      "default": null,
+      "widget": "password",
+      "options": [],
+      "description": "NLS Token 换取用 AccessKey Secret（可 @secret:名称 引用）"
+    },
+    {
+      "name": "aliyun_model",
+      "type": "STRING",
+      "label": "CosyVoice 模型",
+      "required": true,
+      "default": "cosyvoice-v2",
+      "widget": "text",
+      "options": [],
+      "description": "cosyvoice-v2 / cosyvoice-v3-flash"
+    },
+    {
+      "name": "aliyun_base_url",
+      "type": "STRING",
+      "label": "阿里合成端点",
+      "required": true,
+      "default": "https://nls-gateway-cn-shanghai.aliyuncs.com",
+      "widget": "text",
+      "options": [],
+      "description": "nls 模式=NLS /stream/v1/tts 网关；cosyvoice 模式=DashScope base（默认 https://dashscope.aliyuncs.com，可配代理/地域端点）"
+    },
+    {
+      "name": "aliyun_token_url",
+      "type": "STRING",
+      "label": "NLS Token 端点",
+      "required": true,
+      "default": "https://nls-meta.cn-shanghai.aliyuncs.com/oauth2/token",
+      "widget": "text",
+      "options": [],
+      "description": "AK/SK 换取 NLS Token 的 RPC 端点"
+    },
+    {
+      "name": "volcano_appid",
+      "type": "STRING",
+      "label": "豆包 AppID",
+      "required": true,
+      "default": null,
+      "widget": "text",
+      "options": [],
+      "description": "火山引擎豆包 TTS AppID（可 @secret:名称 引用）"
+    },
+    {
+      "name": "volcano_token",
+      "type": "STRING",
+      "label": "豆包 AccessToken",
+      "required": true,
+      "default": null,
+      "widget": "password",
+      "options": [],
+      "description": "火山引擎豆包 TTS AccessToken（可 @secret:名称 引用）"
+    },
+    {
+      "name": "volcano_cluster",
+      "type": "STRING",
+      "label": "豆包集群",
+      "required": true,
+      "default": "volcano_tts",
+      "widget": "text",
+      "options": [],
+      "description": ""
+    },
+    {
+      "name": "volcano_base_url",
+      "type": "STRING",
+      "label": "豆包合成端点",
+      "required": true,
+      "default": "https://openspeech.bytedance.com",
+      "widget": "text",
+      "options": [],
+      "description": "POST /api/v1/tts 基址"
+    },
+    {
+      "name": "chunk_chars",
+      "type": "INT",
+      "label": "长文本分块字数",
+      "required": true,
+      "default": 800,
+      "widget": "number",
+      "options": [],
+      "description": "edge/indextts 按标点分块合成再合并，避免超长输入截断"
+    },
+    {
+      "name": "max_concurrent",
+      "type": "INT",
+      "label": "批量并发",
+      "required": true,
+      "default": 5,
+      "widget": "number",
+      "options": [],
+      "description": "分段/分块并行上限（edge 生效；provider 默认不高于 5）"
+    },
+    {
+      "name": "retries",
+      "type": "INT",
+      "label": "单条重试次数",
+      "required": true,
+      "default": 3,
+      "widget": "number",
+      "options": [],
+      "description": "网络/超时类错误指数退避重试"
+    },
+    {
+      "name": "merge_audio",
+      "type": "BOOL",
+      "label": "批量合并音频",
+      "required": true,
+      "default": true,
+      "widget": "toggle",
+      "options": [],
+      "description": "分段批量时是否合并为单个音频；关闭时 audio=首个成功段"
+    },
+    {
+      "name": "ffmpeg_path",
+      "type": "STRING",
+      "label": "ffmpeg 路径",
+      "required": true,
+      "default": "",
+      "widget": "text",
+      "options": [],
+      "description": "留空自动探测（PATH / FRAMEWEAVE_FFMPEG / 默认安装位置）"
+    }
+  ],
+  "permission": {
+    "subprocess": {
+      "enabled": true,
+      "argv_allowlist": [
+        "python",
+        "python.exe",
+        "ffmpeg",
+        "ffprobe"
+      ]
+    },
+    "network": {
+      "allow": [
+        "*",
+        "127.0.0.1:3900",
+        "127.0.0.1:8791",
+        "localhost:3900",
+        "localhost:8791"
+      ]
+    },
+    "secret": {
+      "refs": [
+        "*"
+      ]
+    }
+  },
+  "signature": {
+    "alg": "ed25519",
+    "key_id": "a8998646b062c170",
+    "value": "HlU6u2rGv5s524wpjMHNDH7ZoLD8nC9/Zf42VKAiIMimI9Nw4dn/c8hR5u4DKGBAdjEdOIFxjpBWUYUfWQxtDw==",
+    "over": "manifest"
+  }
+}

@@ -1,0 +1,95 @@
+{
+  "tpl_id": "jsm_vocal_separate",
+  "name": "人声分离",
+  "description": "视频/音频→Demucs htdemucs 双轨分离（人声/伴奏）→ WAV 落盘（GPU 失败自动降级 CPU）。items:JSON 批次信封与直连 video/audio 单条双路。",
+  "version": "1.0.0",
+  "kind": "workflow",
+  "tags": [
+    "解说猫复刻",
+    "人声分离",
+    "音频",
+    "官方"
+  ],
+  "nodes": [
+    {
+      "id": "n1",
+      "type": "core/load_video",
+      "x": 40,
+      "y": 300,
+      "params": {
+        "path": "",
+        "paths": "",
+        "copy_into_store": true,
+        "probe_timeout": 30,
+        "trim_start": 0.0,
+        "trim_end": 0.0
+      },
+      "status": "pending",
+      "inputs": {}
+    },
+    {
+      "id": "n2",
+      "type": "core/vocal_separate",
+      "x": 260,
+      "y": 300,
+      "params": {
+        "model": "htdemucs",
+        "stems": 2,
+        "device": "auto",
+        "python_exe": "",
+        "format": "wav",
+        "ffmpeg_path": ""
+      },
+      "status": "pending",
+      "inputs": {
+        "video": "n1"
+      }
+    },
+    {
+      "id": "n3",
+      "type": "core/file_output",
+      "x": 480,
+      "y": 200,
+      "params": {
+        "filename": "vocals.json"
+      },
+      "status": "pending",
+      "inputs": {
+        "data": "n2"
+      }
+    },
+    {
+      "id": "n4",
+      "type": "core/file_output",
+      "x": 480,
+      "y": 400,
+      "params": {
+        "filename": "accompaniment.json"
+      },
+      "status": "pending",
+      "inputs": {
+        "data": "n2"
+      }
+    }
+  ],
+  "edges": [
+    {
+      "source": "n1",
+      "target": "n2",
+      "sourceHandle": "video",
+      "targetHandle": "video"
+    },
+    {
+      "source": "n2",
+      "target": "n3",
+      "sourceHandle": "vocals",
+      "targetHandle": "data"
+    },
+    {
+      "source": "n2",
+      "target": "n4",
+      "sourceHandle": "accompaniment",
+      "targetHandle": "data"
+    }
+  ]
+}

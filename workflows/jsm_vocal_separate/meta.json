@@ -1,0 +1,10 @@
+{
+  "id": "jsm_vocal_separate",
+  "name": "人声分离",
+  "version": "1.0.0",
+  "kind": "workflow",
+  "source": "official",
+  "updated_at": 1792265081.4011369,
+  "aligned_to": "t3 优化节点口径（packages 70 包 + dev user_nodes 33 包，2026-10-17）",
+  "workflow_sha256": "cd2b5197534651072f7982cbde9166ec05b126afaf245bdfb370144048445113"
+}

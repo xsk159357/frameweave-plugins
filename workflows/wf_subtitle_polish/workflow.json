@@ -1,0 +1,180 @@
+{
+  "tpl_id": "wf_subtitle_polish",
+  "name": "字幕精修与工程导出",
+  "description": "高精度 ASR→对白字级细切→字幕样式→剪映/Premiere 工程导出",
+  "version": "1.0.0",
+  "kind": "workflow",
+  "tags": [
+    "字幕",
+    "影视解说",
+    "官方"
+  ],
+  "nodes": [
+    {
+      "id": "n1",
+      "type": "core/load_video",
+      "x": 30,
+      "y": 300,
+      "params": {
+        "path": "",
+        "copy_into_store": true
+      },
+      "status": "pending",
+      "inputs": {}
+    },
+    {
+      "id": "n2",
+      "type": "core/asr",
+      "x": 300,
+      "y": 300,
+      "params": {
+        "engine": "auto",
+        "model": "large-v3",
+        "language": "zh",
+        "device": "auto",
+        "word_timestamps": true
+      },
+      "status": "pending",
+      "inputs": {
+        "video": "n1"
+      }
+    },
+    {
+      "id": "n3",
+      "type": "user/jsm_dialogue_refine",
+      "x": 560,
+      "y": 300,
+      "params": {
+        "pause_threshold": 0.55,
+        "adaptive": true,
+        "min_segment_chars": 2,
+        "max_segment_chars": 36
+      },
+      "status": "pending",
+      "inputs": {
+        "word_timestamps": "n2",
+        "dialogues": "n2",
+        "items": "n2"
+      },
+      "input_slots": {
+        "word_timestamps": 0,
+        "dialogues": 0,
+        "items": 0
+      }
+    },
+    {
+      "id": "n4",
+      "type": "core/subtitle_compose",
+      "x": 820,
+      "y": 300,
+      "params": {
+        "preset": "知识科普",
+        "animation": "fade",
+        "karaoke": true
+      },
+      "status": "pending",
+      "inputs": {
+        "subtitle": "n3"
+      },
+      "input_slots": {
+        "subtitle": 0
+      }
+    },
+    {
+      "id": "n5",
+      "type": "core/draft_export",
+      "x": 1080,
+      "y": 300,
+      "params": {
+        "format": "all",
+        "aspect": "16:9",
+        "resolution": "1080p",
+        "draft_name": "字幕精修导出",
+        "enable_subtitle": true,
+        "fps": 30
+      },
+      "status": "pending",
+      "inputs": {
+        "video": "n1",
+        "segments": "n6",
+        "styled_subtitle": "n4"
+      },
+      "input_slots": {
+        "segments": 0
+      }
+    },
+    {
+      "id": "n6",
+      "type": "core/json_get",
+      "x": 940,
+      "y": 300,
+      "params": {
+        "path": "",
+        "default": ""
+      },
+      "status": "pending",
+      "inputs": {
+        "json": "n3"
+      },
+      "input_slots": {
+        "json": 0
+      }
+    }
+  ],
+  "edges": [
+    {
+      "source": "n1",
+      "target": "n2",
+      "sourceHandle": "video",
+      "targetHandle": "video"
+    },
+    {
+      "source": "n2",
+      "target": "n3",
+      "sourceHandle": "subtitles",
+      "targetHandle": "word_timestamps"
+    },
+    {
+      "source": "n2",
+      "target": "n3",
+      "sourceHandle": "subtitles",
+      "targetHandle": "dialogues"
+    },
+    {
+      "source": "n2",
+      "target": "n3",
+      "sourceHandle": "subtitles",
+      "targetHandle": "items"
+    },
+    {
+      "source": "n3",
+      "target": "n4",
+      "sourceHandle": "refined",
+      "targetHandle": "subtitle"
+    },
+    {
+      "source": "n1",
+      "target": "n5",
+      "sourceHandle": "video",
+      "targetHandle": "video"
+    },
+    {
+      "source": "n4",
+      "target": "n5",
+      "sourceHandle": "styled_subtitle",
+      "targetHandle": "styled_subtitle"
+    },
+    {
+      "source": "n3",
+      "target": "n6",
+      "sourceHandle": "refined",
+      "targetHandle": "json"
+    },
+    {
+      "source": "n6",
+      "target": "n5",
+      "sourceHandle": "value",
+      "targetHandle": "segments"
+    }
+  ]
+}

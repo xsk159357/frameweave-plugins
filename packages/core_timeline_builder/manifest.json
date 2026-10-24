@@ -1,0 +1,55 @@
+{
+  "schema_version": 2,
+  "engine_api": "1.0",
+  "type_id": "core/timeline_builder",
+  "title": "时间线构建(校验)",
+  "category": "分析",
+  "description": "split_cam 规范校验/规范化（S3-T11/A7）：输入原始分镜行，输出规范化 rows 供渲染/导出",
+  "version": "1.0.0",
+  "kind": "python",
+  "runtime": "python",
+  "entrypoint": "node.py",
+  "class_name": "TimelineBuilderNode",
+  "inputs": [
+    {
+      "name": "rows",
+      "type": "JSON",
+      "label": "分镜行",
+      "required": true,
+      "default": null,
+      "widget": "text",
+      "options": [],
+      "description": "split_cam 原始行数组或 {rows:[...]}"
+    }
+  ],
+  "outputs": [
+    {
+      "name": "timeline",
+      "type": "TIMELINE",
+      "label": "规范化时间线",
+      "required": true,
+      "default": null,
+      "widget": "text",
+      "options": [],
+      "description": "规范化 split_cam 行（segment_index/speed/src_start/src_end/OST/video）"
+    },
+    {
+      "name": "report",
+      "type": "JSON",
+      "label": "构建报告",
+      "required": false,
+      "default": null,
+      "widget": "text",
+      "options": [],
+      "description": "行数/字段/规范化状态"
+    }
+  ],
+  "params": [],
+  "permission": {},
+  "signature": {
+    "alg": "ed25519",
+    "key_id": "a8998646b062c170",
+    "value": "b7mLUDB0U8g5Yf09k8yKR9+clM8HdLL0w9fQKMSNOcp9q/3Hf5DLQsI6/lc1Sum2HJD5lSBigJzUTUTeXQ1NBQ==",
+    "over": "manifest"
+  }
+}
