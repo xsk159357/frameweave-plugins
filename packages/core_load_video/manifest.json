@@ -1,4 +1,4 @@
-﻿{
+{
   "schema_version": 2,
   "engine_api": "1.0",
   "type_id": "core/load_video",
@@ -135,7 +135,7 @@
   "signature": {
     "alg": "ed25519",
     "key_id": "a8998646b062c170",
-    "value": "oJQkdG4jRYa0YlTjdkm48dM0m5JCo1DtsOQ0JN6ukg16ndMfjTsLip7KGCwaZtTYofrWmHONGGfr/oFAoHZlDQ==",
+    "value": "6PFnZtzjrACAu2gVIdz8Ved3pVppCOVCNONjYlYjaQ906lcmySjMyMwUfw2XPSISw+VIjuKUA2CPvHQYRfc7BA==",
     "over": "manifest"
   }
 }
