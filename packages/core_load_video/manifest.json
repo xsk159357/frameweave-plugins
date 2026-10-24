@@ -5,7 +5,7 @@
   "title": "导入视频",
   "category": "输入",
   "description": "导入本地视频并解析完整元数据；paths 支持 JSON/换行/通配符批量导入为批次信封；trim_start/trim_end 记录有效裁剪范围供下游跳过片头片尾",
-  "version": "2.1.1",
+  "version": "2.1.2",
   "kind": "python",
   "runtime": "python",
   "entrypoint": "node.py",
@@ -135,7 +135,8 @@
   "signature": {
     "alg": "ed25519",
     "key_id": "a8998646b062c170",
-    "value": "6PFnZtzjrACAu2gVIdz8Ved3pVppCOVCNONjYlYjaQ906lcmySjMyMwUfw2XPSISw+VIjuKUA2CPvHQYRfc7BA==",
+    "value": "sY3enQUpuZdLBu4gti1XuvuL0IEeutSdOWCngiVxIzLszGSPstonSgukjWSLvSncWodw77pWtrnH0isvZjFcBQ==",
     "over": "manifest"
-  }
+  },
+  "deps": []
 }

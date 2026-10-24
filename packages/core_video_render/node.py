@@ -22,6 +22,20 @@ from typing import Any, Dict, List, Optional
 
 from app.assets import Asset
 from app.nodespec import NodeBase, NodeSpec, PortSpec, PortType
+from app import ai_label
+
+
+def _apply_ai_label(expr: str, final_label: str):
+    """把 AI 生成合成内容**显式标识**接到 filter_complex 末尾。
+
+    返回 (expr, final_label)；无中文字体时 drawtext_filter() 为空串，
+    原样返回（仅靠 metadata 隐式标识），不抛异常。
+    """
+    frag = ai_label.drawtext_filter()
+    if frag:
+        expr = expr + ";" + "[" + final_label + "]" + frag + "[vlabel]"
+        final_label = "vlabel"
+    return expr, final_label
 
 # ---------------------------------------------------------------- 工具
 
@@ -139,9 +153,8 @@ async def probe_media(ctx, path: str) -> Dict[str, Any]:
         })
     if a:
         out["has_audio"] = True
-    # FW-DEV-55：`_num(a, b)` 的第二个实参会**先求值**——纯音频（无视频流 ⇒ v=None）时
+    # FW-DEV-55：`_num(a, b)` 的第二个实参**先求值**——纯音频（无视频流 ⇒ v=None）时
     # `v.get("duration")` 在 _num 被调用之前就抛 AttributeError，即使 fmt.duration 有效。
-    # 必须用条件表达式把它挪到「v 存在」时才求值。
     out["duration"] = _num(fmt.get("duration"), _num(v.get("duration")) if v else None)
     out["bit_rate"] = _num(fmt.get("bit_rate"))
     out["size"] = _num(fmt.get("size"))
@@ -153,6 +166,54 @@ def _sec2ass(t: float) -> str:
     m = int(t % 3600 // 60)
     s = t % 60
     return f"{h}:{m:02d}:{s:05.2f}"
+
+
+def _scale_subs_for_tempo(subs: Any, tempo: float, total_sec: float
+                          ) -> tuple:
+    """音频按 atempo 压缩/拉伸后，字幕轴必须同步除以 tempo（FW-DEV-67）。
+
+    为什么：成片 t 时刻显示的应当是配音轴 t*tempo 处的字幕。不缩放的话，
+    成片 t 时刻显示的是配音轴 t 处的字幕，而音频实际已到 t*tempo ⇒ 错位随 t 线性增长
+    （tempo=1.0508 时 30 s 处已差 1.5 s，用户看到"字幕越到后面越早"）。
+
+    tempo == 1.0 ⇒ **原样返回**（逐位不变，align_mode=none / 等长场景不受影响）。
+    tempo != 1.0 ⇒ 每条 cue 的 start/end 都除以 tempo；若 max(end) 超过成片总时长，
+    截断到总时长并返回一条 warning（不静默）。
+
+    返回 (subs, warnings)。
+    """
+    warnings: List[str] = []
+    if not subs or not isinstance(subs, list) or tempo == 1.0:
+        return subs, warnings
+    try:
+        t = float(tempo)
+    except (TypeError, ValueError):
+        return subs, warnings
+    if t <= 0 or t == 1.0:
+        return subs, warnings
+    scaled: List[Any] = []
+    for c in subs:
+        if not isinstance(c, dict):
+            scaled.append(c)
+            continue
+        try:
+            st = float(c.get("start", 0.0) or 0.0) / t
+            en = float(c.get("end", 0.0) or 0.0) / t
+        except (TypeError, ValueError):
+            scaled.append(c)
+            continue
+        scaled.append({**c, "start": round(st, 3), "end": round(en, 3)})
+    ends = [float(c.get("end", 0.0) or 0.0) for c in scaled if isinstance(c, dict)]
+    max_end = max(ends) if ends else 0.0
+    limit = float(total_sec or 0.0)
+    if limit > 0 and max_end > limit + 1e-6:
+        warnings.append(
+            "字幕轴按 tempo=%.4f 缩放后超出成片时长（max(end)=%.3f > total=%.3f），"
+            "已截断到成片末尾" % (t, max_end, limit))
+        for c in scaled:
+            if isinstance(c, dict) and float(c.get("end", 0.0) or 0.0) > limit:
+                c["end"] = round(limit, 3)
+    return scaled, warnings
 
 
 def _build_ass(subs: List[Dict[str, Any]], canvas: tuple, style: Dict[str, Any]) -> str:
@@ -250,7 +311,7 @@ class VideoRenderNode(NodeBase):
                 PortSpec(name="output_name", type=PortType.STRING, label="输出文件名",
                          default="chengpian", widget="text"),
             ],
-            version="1.2.1",
+            version="1.2.3",
         )
 
     async def run(self, ctx, inputs, params) -> Dict[str, Any]:
@@ -364,6 +425,9 @@ class VideoRenderNode(NodeBase):
                 seg_durs.append(en - st)
             if transition != "cut" and n > 1:
                 total_sec = max(sum(seg_durs) - trans_dur * (n - 1), 0.1)
+
+        # FW-DEV-67：tempo≠1 时把字幕轴除回 tempo；tempo==1 时原样不动（回归线）。
+        subs, sub_scale_warnings = _scale_subs_for_tempo(subs, align_tempo, total_sec)
 
         # ---- filtergraph：视频 ----
         scale = (f"scale={w}:{h}:force_original_aspect_ratio=increase,crop={w}:{h}"
@@ -479,6 +543,8 @@ class VideoRenderNode(NodeBase):
                 audio_label = "aout"
 
         # ---- 组装命令 ----
+        # AI 生成合成内容：显式标识追加到 filter_complex 末尾（同一次编码，不额外转码）
+        expr, final_label = _apply_ai_label(expr, final_label)
         cmd = [ffmpeg_path(), "-y", "-fflags", "+genpts+igndts"]
         for i in range(n):
             cmd += ["-i", video.path]
@@ -493,6 +559,9 @@ class VideoRenderNode(NodeBase):
                 "-pix_fmt", "yuv420p"]
         if audio_label:
             cmd += ["-c:a", "aac", "-b:a", "192k"]
+
+        # AI 生成合成内容：隐式标识写进容器 metadata（必须在输出文件之前）
+        cmd += ai_label.metadata_args()
 
         out_mp4 = os.path.join(workdir, out_name + ".mp4")
         cmd += [out_mp4]
@@ -542,9 +611,18 @@ class VideoRenderNode(NodeBase):
             "align_mode": align_mode,
             "align_used": align_used,
             "align_tempo": round(align_tempo, 4) if align_tempo != 1.0 else None,
+            # FW-DEV-67：字幕轴是否按 tempo 缩放过（tempo==1 时为 applied=false，轴逐位不变）
+            "subtitle_shift": {
+                "applied": bool(align_tempo != 1.0 and subs),
+                "tempo": round(align_tempo, 4),
+                "max_end": round(max([float(c.get("end", 0.0) or 0.0)
+                                      for c in (subs or []) if isinstance(c, dict)], default=0.0), 3),
+                "total_seconds": round(float(total_sec or 0.0), 3),
+            },
             "color_grade": color_grade if grade else None,
             "source_probe": {k: probe.get(k) for k in ("width", "height", "fps", "duration", "bit_rate")},
-            "warnings": [probe.get("warning")] if probe.get("warning") else [],
+            "warnings": ([probe.get("warning")] if probe.get("warning") else [])
+                        + list(sub_scale_warnings),
             "dependency": {"ffmpeg": _dep("ffmpeg"), "ffprobe": _dep("ffprobe")},
         }
         asset = store.save_asset(

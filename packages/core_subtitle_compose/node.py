@@ -53,7 +53,7 @@ class SubtitleComposeNode(NodeBase):
                          widget="select", options=["none", "typewriter", "bounce", "fade", "fadeup"]),
                 PortSpec(name="karaoke", type=PortType.BOOL, label="逐字卡点", default=True),
             ],
-            version="1.0.1",
+            version="1.0.2",
         )
 
     async def run(self, ctx, inputs, params) -> Dict[str, Any]:

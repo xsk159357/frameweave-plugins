@@ -536,7 +536,7 @@ class TTSNode(NodeBase):
                 PortSpec(name="ffmpeg_path", type=PortType.STRING, label="ffmpeg 路径", default="",
                          widget="text", description="留空自动探测"),
             ],
-            version=_pkg_version("2.2.1"),
+            version=_pkg_version("2.2.2"),
         )
 
     async def run(self, ctx, inputs, params) -> Dict[str, Any]:

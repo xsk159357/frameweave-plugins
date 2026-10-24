@@ -69,6 +69,10 @@ TOP_LEVEL_KEYS = {
     "entrypoint", "class_name", "inputs", "outputs", "params", "transform",
     "gpu_required", "gpu_recommended", "streaming", "permission",
     "dependencies", "ui", "web", "signature",
+    # 与后端 app/plugin/manifest_v2.py:TOP_LEVEL_KEYS 同源（2026-10-25 对齐）。
+    # 这三项此前只在后端白名单里 ⇒ SDK 门禁误报 G2「未知顶层字段」，
+    # 带 deps 的官方包打不了包/签不了名，而 build_seed 却接受 —— 两套口径。
+    "deps", "search_aliases", "deprecated",
 }
 PORT_KEYS = {
     "name", "type", "label", "required", "default", "widget", "options",

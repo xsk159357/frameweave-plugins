@@ -492,7 +492,7 @@ class ASRNode(NodeBase):
                          widget="text",
                          description="sherpa-onnx 说话人区分模型目录（含 model.onnx/segmentation 与 embedding 模型）；留空自动探测 models/diarization"),
             ],
-            version="3.1.5",
+            version="3.1.6",
         )
 
     async def run(self, ctx: dict, inputs: dict, params: dict) -> Dict[str, Any]:

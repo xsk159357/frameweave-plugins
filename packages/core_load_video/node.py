@@ -341,7 +341,7 @@ class LoadVideoNode(NodeBase):
                          default=0.0, widget="number",
                          description=">0 时记录裁剪终点（<=起点或0=不裁剪），下游据此跳过片尾"),
             ],
-            version="2.1.0",
+            version="2.1.2",
         )
 
     async def _load_single(self, ctx: dict, path: str, copy: bool) -> Asset:

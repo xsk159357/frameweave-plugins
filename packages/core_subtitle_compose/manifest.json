@@ -5,7 +5,7 @@
   "title": "字幕装配",
   "category": "输出",
   "description": "字幕高级样式：花字/特效/逐句卡点动画",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "kind": "python",
   "runtime": "python",
   "entrypoint": "node.py",
@@ -152,7 +152,8 @@
   "signature": {
     "alg": "ed25519",
     "key_id": "a8998646b062c170",
-    "value": "BBkWrqab3TUsCDmz32V2utXw9OWb46n70VqBtfSwXLsoRI6QKKDtz9TWtT0VYRr/S7kd1HlqBu+v20t+jqtsCQ==",
+    "value": "PX3wKi4xJa9j6AWpVc2WDjEdW/u6/Xp03tRY02t7kTu0Z2fuatlRBdm5oEHBA5WxaW9NV+wy6xscypiqiAwRAA==",
     "over": "manifest"
-  }
+  },
+  "deps": []
 }
