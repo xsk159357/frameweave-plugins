@@ -5,7 +5,7 @@
   "title": "AI 文案生成",
   "category": "语义",
   "description": "解说文案：上帝视角（视频/场景/描述）· 扩写 · 配画面 · 仿写 · 神回复；OpenAI/Gemini 兼容",
-  "version": "2.2.0",
+  "version": "2.2.1",
   "kind": "python",
   "runtime": "python",
   "entrypoint": "node.py",
@@ -50,6 +50,13 @@
       "widget": "text",
       "options": [],
       "description": "扩写草稿 / 配画面文案 / 仿写示例"
+    },
+    {
+      "name": "items",
+      "type": "JSON",
+      "label": "手写分镜",
+      "required": false,
+      "description": "passthrough 模式专用：JSON 数组，每项 {text,start,end}；原样透传成 narration（不改时间、不重切）"
     }
   ],
   "outputs": [
@@ -97,7 +104,8 @@
         "扩写",
         "配画面",
         "仿写",
-        "神回复"
+        "神回复",
+        "passthrough"
       ],
       "description": "神回复=每分镜一句毒舌神回复（高光混剪用）"
     },
@@ -324,7 +332,7 @@
   "signature": {
     "alg": "ed25519",
     "key_id": "a8998646b062c170",
-    "value": "W6qXYrXoY/oFE4VJhBjdsxVY8duV5ej478pVcdvIwlDjGCHJk2CxP6jArM4uCPlUDtKEJOSm1SNjAePQJxN9CQ==",
+    "value": "kytEpXrLSMGiwjr+UyuXWjvR81WZUW9qcG+GTh+PoPjHMe7Jc5gOjsSKrZBEmwnjPJbHABX+rOcMAh2E/sj5BQ==",
     "over": "manifest"
   }
 }

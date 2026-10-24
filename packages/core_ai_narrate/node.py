@@ -364,6 +364,9 @@ class AINarrateNode(NodeBase):
                 PortSpec("scenes", PortType.SEGMENTS, label="场景片段", required=False),
                 PortSpec("descriptions", PortType.JSON, label="场景描述", required=False),
                 PortSpec("draft", PortType.SCRIPT, label="文案草稿/示例", required=False),
+                PortSpec("items", PortType.JSON, label="手写分镜", required=False,
+                         description="passthrough 模式专用：JSON 数组，每项 {text,start,end}；"
+                                     "原样透传成 narration（不改时间、不重切）"),
             ],
             outputs=[
                 PortSpec("script", PortType.SCRIPT, label="解说文案", required=True),
@@ -372,7 +375,8 @@ class AINarrateNode(NodeBase):
             ],
             params=[
                 PortSpec("mode", PortType.STRING, label="模式", default="上帝视角",
-                         widget="select", options=["上帝视角", "扩写", "配画面", "仿写", "神回复"]),
+                         widget="select", options=["上帝视角", "扩写", "配画面", "仿写", "神回复",
+                                                   "passthrough"]),
                 PortSpec("style", PortType.STRING, label="风格", default=DEFAULT_STYLE,
                          widget="select", options=list(STYLE_PACKS.keys()) + ["自定义"]),
                 PortSpec("custom_style", PortType.STRING, label="自定义风格描述", required=False, default="", widget="text"),
@@ -643,7 +647,43 @@ class AINarrateNode(NodeBase):
         # ---- 模式分发
         result_text = ""
         narration_segments: List[Dict[str, Any]] = []
-        if mode == "上帝视角":
+        if mode == "passthrough":
+            # 人写分镜原样透传（B 案）：不调 _split_sentences / local_match、不改 start/end。
+            # 时间权威 = 作者写的时间；这里只校验 + 补 tts_duration（估算，仅作容量参考）。
+            items_in = inputs.get("items")
+            data: Any = items_in
+            if items_in is not None and getattr(items_in, "id", ""):
+                data = store.read_json(items_in.id)
+            if isinstance(data, dict):
+                data = data.get("segments") or data.get("items")
+            if not isinstance(data, list) or not data:
+                raise RuntimeError(
+                    "invalid: passthrough 需要手写分镜输入（items）："
+                    "JSON 数组，每项含 text / start / end")
+            for i, raw in enumerate(data):
+                if not isinstance(raw, dict):
+                    raise RuntimeError(f"invalid: items[{i}] 必须是对象")
+                text = str(raw.get("text") or raw.get("narration") or "").strip()
+                if not text:
+                    raise RuntimeError(f"invalid: items[{i}] 缺 text")
+                try:
+                    st = float(raw.get("start"))
+                    en = float(raw.get("end"))
+                except (TypeError, ValueError):
+                    raise RuntimeError(
+                        f"invalid: items[{i}] 的 start/end 必须是数字（不许缺省猜 0 起）")
+                if en <= st:
+                    raise RuntimeError(
+                        f"invalid: items[{i}] 的 end({en}) 必须大于 start({st})")
+                narration_segments.append({
+                    "index": i, "text": text,
+                    "start": st, "end": en,          # 原样保留：不 round、不扩窗、不重切
+                    "scene_ids": list(raw.get("scene_ids") or []),
+                    "tts_duration": estimate_tts(text, cps),
+                })
+            result_text = "\n".join(sg["text"] for sg in narration_segments)  # 行数 = items 数
+            strategy_used = "passthrough"
+        elif mode == "上帝视角":
             prompt = _base_prompt("分析视频内容并撰写完整解说文案。")
             if descriptions:
                 prompt += "\n【场景描述】\n" + scene_lines(scenes_sorted, descriptions, language) + "\n"
