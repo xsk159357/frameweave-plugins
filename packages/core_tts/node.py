@@ -56,6 +56,9 @@ EDGE_VOICES = [
 
 _PUNCT_SPLIT = re.compile(r"(?<=[。！？；，、,.!?;:])")
 
+# edge-tts 的 SentenceBoundary/WordBoundary 用 100ns tick 记时间（offset=1000000 即 0.1 s），不是秒。
+_EDGE_100NS = 10_000_000.0
+
 # ---- edge 失败分流（FW-DEV-36，2026-10-25）----
 # 背景：微软朗读端点自 2026-10 起只接受 v2 安全令牌（Sec-MS-GEC-Version=2-<Chromium>），
 # edge-tts 7.2.8 发的是 v1 ⇒ WSS 握手一律 403「Invalid response status」；7.3.1 起发 v2 才能通。
@@ -373,15 +376,52 @@ def _cues_from_rows(rows: List[tuple]) -> List[Dict[str, Any]]:
     return cues
 
 
+def _cues_from_sentence_rows(rows: List[tuple], max_seconds: float = 8.0) -> List[Dict[str, Any]]:
+    """[(start, end, text)] 来自 SentenceBoundary → cue 列表。
+
+    cue 单位是「句」，时间轴取服务端给的 offset/duration，**不插值、不估算**，标 measured。
+    只有单句超过产品验收上限（默认 8.0 s）时才切：切出的子 cue 标 estimated，
+    插值范围被限制在这一句之内，不会跨句累积漂移——这是唯一允许的 estimated 来源。
+    """
+    cues: List[Dict[str, Any]] = []
+    for start, end, text in rows:
+        text = str(text or "").strip()
+        if not text:
+            continue
+        start, end = float(start), float(end)
+        dur = max(0.0, end - start)
+        if dur <= 0:
+            continue
+        if max_seconds <= 0 or dur <= max_seconds:
+            cues.append({"start": round(start, 3), "end": round(end, 3), "text": text,
+                         "timing_source": "measured", "granularity": "sentence"})
+            continue
+        n = int(dur // max_seconds) + 1          # 上限之内尽量少的份数
+        step = dur / n
+        tl = max(1, len(text))
+        for i in range(n):
+            a = start + i * step
+            b = start + (i + 1) * step if i < n - 1 else end
+            piece = text[int(round(tl * i / n)):int(round(tl * (i + 1) / n))].strip()
+            if not piece:
+                continue
+            cues.append({"start": round(a, 3), "end": round(b, 3), "text": piece,
+                         "timing_source": "estimated", "granularity": "sentence-split"})
+    return cues
+
+
 def _subtitles_from_marks(marks: Dict[str, Any]) -> List[Dict[str, Any]]:
-    """marks → SUBTITLE：时间轴直接取段边界，不二次推算（C 方案的核心）。"""
+    """无 SentenceBoundary 的回落：按 marks 段（= chunk）出 cue，粒度标 chunk。"""
     rows = []
     for s in ((marks or {}).get("segments") or []):
         if not isinstance(s, dict):
             continue
         rows.append((s.get("start", 0.0), s.get("end", 0.0), s.get("text"),
                      s.get("duration_source")))
-    return _cues_from_rows(rows)
+    cues = _cues_from_rows(rows)
+    for c in cues:
+        c["granularity"] = "chunk"
+    return cues
 
 
 class TTSNode(NodeBase):
@@ -591,9 +631,14 @@ class TTSNode(NodeBase):
     async def _synth_worker(self, ctx, engine: str, p: Dict[str, Any],
                             text: str, out_path: str,
                             inputs: Optional[dict] = None) -> Dict[str, Any]:
-        """合成一段文本到 out_path；返回 {path, duration}。内部负责引擎分发与重试。"""
+        """合成一段文本到 out_path；返回 {path, duration, bounds}。内部负责引擎分发与重试。
+
+        bounds 只有 edge 引擎会给（服务端 SentenceBoundary），其余引擎为 None——
+        批量出字幕时据此决定「按句」还是「按段」。
+        """
+        bounds: List[Dict[str, Any]] = []
         if engine == "edge":
-            await self._edge_synth_with_retry(ctx, p, text, out_path)
+            bounds = await self._edge_synth_with_retry(ctx, p, text, out_path)
         elif engine == "indextts":
             await self._indextts_synth_with_retry(ctx, inputs or {}, params=p,
                                                   text=text, out_path=out_path)
@@ -606,11 +651,17 @@ class TTSNode(NodeBase):
         else:
             raise RuntimeError(f"批量不支持引擎: {engine}")
         duration = await _probe_duration(ctx, p.get("ffmpeg_path", ""), out_path)
-        return {"path": out_path, "duration": duration}
+        return {"path": out_path, "duration": duration, "bounds": bounds}
 
     # ------------------------------------------------------------ edge
 
-    async def _edge_synth_with_retry(self, ctx, p: Dict[str, Any], text: str, out_path: str) -> None:
+    async def _edge_synth_with_retry(self, ctx, p: Dict[str, Any], text: str,
+                                     out_path: str) -> List[Dict[str, Any]]:
+        """合成一段文本；返回该段的 SentenceBoundary（秒，本段局部时间轴）。
+
+        不能用 `comm.save()`：它只落音频，**把服务端每次都在发的 SentenceBoundary 丢掉**。
+        而字幕要的逐句时间轴正是这些事件给的（offset/duration 单位是 100ns tick）。
+        """
         import edge_tts
         retries = int(p.get("retries", 3))
         attempt = 0
@@ -619,10 +670,22 @@ class TTSNode(NodeBase):
             try:
                 comm = edge_tts.Communicate(text, voice=p["voice"], rate=p["rate"],
                                             pitch=p["pitch"], volume=p["volume"])
-                await comm.save(out_path)
+                bounds: List[Dict[str, Any]] = []
+                with open(out_path, "wb") as f:
+                    async for chunk in comm.stream():
+                        ctype = chunk.get("type")
+                        if ctype == "audio" and chunk.get("data"):
+                            f.write(chunk["data"])
+                        elif ctype == "SentenceBoundary":
+                            start = float(chunk.get("offset") or 0) / _EDGE_100NS
+                            dur = float(chunk.get("duration") or 0) / _EDGE_100NS
+                            txt = str(chunk.get("text") or "").strip()
+                            if txt and dur > 0:
+                                bounds.append({"start": round(start, 3),
+                                               "end": round(start + dur, 3), "text": txt})
                 if not os.path.exists(out_path) or os.path.getsize(out_path) == 0:
                     raise RuntimeError("edge-tts 输出为空")
-                return
+                return bounds
             except asyncio.CancelledError:
                 raise
             except Exception as e:
@@ -647,9 +710,9 @@ class TTSNode(NodeBase):
         async def one(chunk: str) -> Dict[str, Any]:
             async with sem:
                 path = self._uniq_path(out_dir, "edge_chunk", ext)
-                await self._edge_synth_with_retry(ctx, p, chunk, path)
+                bounds = await self._edge_synth_with_retry(ctx, p, chunk, path)
                 dur = await _probe_duration(ctx, p["ffmpeg_path"], path)
-                return {"path": path, "duration": dur, "chars": len(chunk)}
+                return {"path": path, "duration": dur, "chars": len(chunk), "bounds": bounds}
 
         results = await asyncio.gather(*(one(c) for c in chunks))
         for i, r in enumerate(results):
@@ -684,8 +747,27 @@ class TTSNode(NodeBase):
                   "warnings": [f"分块合成 {len(chunks)} 段并合并"] if len(chunks) > 1 else []}
         report["duration_measured"] = marks.get("duration_measured", 0)
         report["duration_estimated"] = marks.get("duration_estimated", 0)
+        # 字幕 cue：单位是「句」，取服务端 SentenceBoundary；chunk 只做请求批量单位，不进字幕。
+        # 各 chunk 的 offset 是局部时间轴，跨块按**实测块时长**累加偏移（直接拼接音频，无静音间隙）。
+        sentence_rows = []
+        cursor = 0.0
+        for r in results:
+            bounds_r = r.get("bounds") or []
+            for b in bounds_r:
+                sentence_rows.append((cursor + b["start"], cursor + b["end"], b["text"]))
+            # 跨块推进量取 max(ffprobe 实测块长, 该块最后一个句边界)——两者会差几十毫秒
+            # （边界时间轴略长于容器时长），只按 ffprobe 推进会与前一块最后一句重叠。
+            cursor += max(float(r["duration"] or 0.0),
+                          float(bounds_r[-1]["end"]) if bounds_r else 0.0)
+        cues = _cues_from_sentence_rows(sentence_rows)
+        if not cues:
+            cues = _subtitles_from_marks(marks)   # 无边界事件 → 退化为按块，标 chunk 粒度
+        report["cue_total"] = len(cues)
+        report["cue_sentence"] = sum(1 for c in cues if c.get("granularity") == "sentence")
+        report["cue_split"] = sum(1 for c in cues if c.get("granularity") == "sentence-split")
+        report["cue_chunk"] = sum(1 for c in cues if c.get("granularity") == "chunk")
         return {"audio": asset, "duration": total_dur, "marks": marks,
-                "subtitles": self._save_subtitles(ctx["store"], _subtitles_from_marks(marks)),
+                "subtitles": self._save_subtitles(ctx["store"], cues),
                 "report": report}
 
     @staticmethod
@@ -1575,35 +1657,45 @@ class TTSNode(NodeBase):
                                        {"engine": engine, "voice": voice, "batch": True,
                                         "merged": merge, "segments": len(segs),
                                         "rt_s": round(time.time() - started, 1)}, duration=total_dur)
-        # 字幕（C 方案）：cue 时间轴 = **合并后音频的真实累计时长**。
-        # 批量里 worker 返回的 start/end 是「输入分段」的时间轴（来自 SEGMENTS 资产），
-        # 合并音频后不可直接搬用——按 succeeded 的原序累加各段实测时长才与成片对齐。
+        # 字幕（C 方案）：按句累加。各段的 SentenceBoundary 是**段内**时间轴，
+        # 跨段按该段实测时长累加（合并音频是直接拼接，段间无静音；真出现间隙时由下面
+        # cue_tail_gap 自检暴露出来，而不是靠"大概对"）。
         text_by_index = {s["index"]: s["text"] for s in segs}
-        cue_rows = []
+        sentence_rows = []
         cursor = 0.0
         for it in succeeded:
             r = it.get("result") or {}
-            r_dur = r.get("duration")
-            if r_dur:
-                r_src = "measured"
-                r_dur = float(r_dur)
+            r_dur = float(r.get("duration") or 0.0)
+            seg_bounds = r.get("bounds") or []
+            if seg_bounds:
+                for b in seg_bounds:
+                    sentence_rows.append((cursor + b["start"], cursor + b["end"], b["text"]))
             else:
-                r_src = "estimated"
-                r_dur = (total_dur or 0.0) / max(len(succeeded), 1)
-            cue_rows.append((cursor, cursor + r_dur, text_by_index.get(r.get("index")), r_src))
-            cursor += r_dur
-        subtitles = self._save_subtitles(store, _cues_from_rows(cue_rows))
+                sentence_rows.append((cursor, cursor + r_dur, text_by_index.get(r.get("index"))))
+            # 同单条：推进量取 max(实测段长, 段内最后一个句边界)，避免跨段重叠
+            cursor += max(r_dur, float(seg_bounds[-1]["end"]) if seg_bounds else 0.0)
+        cues = _cues_from_sentence_rows(sentence_rows)
+        subtitles = self._save_subtitles(store, cues)
+        cue_tail_gap = round(float(total_dur or 0.0) - (cues[-1]["end"] if cues else 0.0), 3)
+        n_measured_batch = sum(1 for c in cues if c.get("timing_source") == "measured")
         marks = {"engine": engine, "voice": voice, "batch": True, "segments": marks_items,
                  "total_duration": total_dur,
-                 "duration_measured": sum(1 for c in cue_rows if c[3] == "measured"),
-                 "duration_estimated": sum(1 for c in cue_rows if c[3] == "estimated")}
+                 "duration_measured": n_measured_batch,
+                 "duration_estimated": len(cues) - n_measured_batch}
         report = {"engine": engine, "voice": voice, "batch": True,
                   "summary": {k: report_base[k] for k in ("total", "succeeded", "failed", "pending")},
                   "error_categories": report_base.get("error_categories", {}),
                   "duration": total_dur, "rt_s": round(time.time() - started, 1),
                   "duration_measured": marks["duration_measured"],
                   "duration_estimated": marks["duration_estimated"],
-                  "warnings": []}
+                  "cue_total": len(cues),
+                  "cue_sentence": sum(1 for c in cues if c.get("granularity") == "sentence"),
+                  "cue_split": sum(1 for c in cues if c.get("granularity") == "sentence-split"),
+                  "cue_chunk": sum(1 for c in cues if c.get("granularity") == "chunk"),
+                  "cue_tail_gap": cue_tail_gap,
+                  "warnings": ([] if abs(cue_tail_gap) < 0.3 else
+                               ["cue 末端与合并音频总长相差 %.3fs（段间可能有静音/拼接间隙）"
+                                % cue_tail_gap])}
         return {"audio": asset, "duration": total_dur, "marks": marks,
                 "subtitles": subtitles, "report": report}
 
