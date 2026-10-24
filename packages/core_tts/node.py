@@ -297,25 +297,106 @@ def _ffprobe_bin(ffmpeg: str) -> str:
     return "ffprobe"
 
 
-async def _probe_duration(ctx, ffmpeg_path: str, media_path: str) -> Optional[float]:
-    """ffprobe 音频时长（秒）。失败返回 None（不阻断主流程）。
+def _tts_warn(msg: str) -> None:
+    """按 UTF-8 **字节**写 stderr（冻结进程 stderr 跟控制台代码页，普通 print 会变 GBK，
+    UTF-8 工具 grep 不到 —— FW-DEV-63 同族问题）。"""
+    line = "[tts.probe] " + str(msg) + "\n"
+    try:
+        import sys as _sys
+        buf = getattr(_sys.stderr, "buffer", None)
+        if buf is not None:
+            buf.write(line.encode("utf-8"))
+            buf.flush()
+            return
+    except Exception:  # noqa: BLE001
+        pass
+    try:
+        print(line.rstrip("\n"))
+    except Exception:  # noqa: BLE001
+        pass
 
-    run_tracked 默认继承 stdout（不捕获）——显式 PIPE 捕获，否则输出落入父进程
-    控制台、stdout=None，时长探测恒失败（duration/marks 退化为 0）。
+
+def _tts_info(msg: str) -> None:
+    """成功也要留一行（1 行，不刷屏）：证明"探测确实跑过"，避免把"没跑"当成"跑失败"。"""
+    line = "[tts.probe] INFO " + str(msg) + "\n"
+    try:
+        import sys as _sys
+        buf = getattr(_sys.stderr, "buffer", None)
+        if buf is not None:
+            buf.write(line.encode("utf-8"))
+            buf.flush()
+            return
+    except Exception:  # noqa: BLE001
+        pass
+    try:
+        print(line.rstrip("\n"))
+    except Exception:  # noqa: BLE001
+        pass
+
+
+def _stdout_text(out) -> str:
+    """把 run_tracked 的 stdout 归一成文本。
+
+    两种执行模式返回类型不同，**这是本函数存在的唯一理由**：
+      主进程 engine.run_tracked → CompletedProcess(..., out, err) 且 Popen 未开 text ⇒ **bytes**
+      worker  WorkerContext.run_tracked → _WorkerProcResult，`.stdout` 是 **str**（诊断尾巴）
+    旧实现只做 `out.stdout.decode(...)`，在 worker 模式下抛 AttributeError，
+    又被外层的 `except Exception: return None` 静默吞掉 ⇒ duration 恒 None ⇒
+    place_by_start 整体退回首尾拼接（2026-10-25 e2e 实测：cue 全挤在 0.1–34 s）。
+    """
+    raw = getattr(out, "stdout", None)
+    if raw is None:
+        return ""
+    if isinstance(raw, (bytes, bytearray)):
+        return bytes(raw).decode("utf-8", "replace")
+    return str(raw)
+
+
+async def _probe_duration(ctx, ffmpeg_path: str, media_path: str) -> Optional[float]:
+    """ffprobe 媒体时长（秒）。失败返回 None（不阻断主流程），但**必然留一条 WARN**。
+
+    历史上这里踩过两个坑，都已写进实现：
+      ① run_tracked 默认继承 stdout（不捕获）⇒ 显式 PIPE；
+      ② worker 模式返回 str、主进程模式返回 bytes ⇒ 统一走 _stdout_text()。
+    另按 FW-DEV-42：worker 的 `.stdout` 只是 4,000 字符**诊断尾巴**，被截断时改用
+    `run_tracked_full` 重试（ffprobe -show_format 很小，但不能再出现"截断被当成业务失败"）。
     """
     import subprocess as _sp
     ffmpeg = _resolve_ffmpeg(ffmpeg_path)
     ffprobe = _ffprobe_bin(ffmpeg)
+    cmd = [ffprobe, "-v", "quiet", "-print_format", "json", "-show_format", str(media_path)]
     try:
-        out = await ctx["run_tracked"](
-            [ffprobe, "-v", "quiet", "-print_format", "json", "-show_format", media_path],
-            timeout=60, stdout=_sp.PIPE, stderr=_sp.PIPE)
-        if out.returncode != 0 or not out.stdout:
+        out = await ctx["run_tracked"](cmd, timeout=60, stdout=_sp.PIPE, stderr=_sp.PIPE)
+        text = _stdout_text(out)
+        if getattr(out, "truncated", False):
+            full = (ctx.get("run_tracked_full") if isinstance(ctx, dict) else None)
+            if full is not None:
+                out2 = await full(cmd, timeout=60)
+                text2 = _stdout_text(out2)
+                if text2.strip():
+                    out, text = out2, text2
+        if int(getattr(out, "returncode", 0) or 0) != 0 or not text.strip():
+            _tts_warn(
+                "时长探测失败 rc=%s stdout_type=%s stdout_len=%d stderr=%r media=%r exists=%s ffprobe=%r"
+                % (getattr(out, "returncode", None), type(getattr(out, "stdout", None)).__name__,
+                   len(text), (getattr(out, "stderr", "") or "")[:200] if not isinstance(
+                       getattr(out, "stderr", ""), (bytes, bytearray)) else bytes(
+                       getattr(out, "stderr", b""))[:200], str(media_path),
+                   os.path.isfile(str(media_path)), ffprobe))
             return None
-        data = json.loads(out.stdout.decode("utf-8", "replace"))
+        data = json.loads(text)
         dur = float((data.get("format") or {}).get("duration", 0) or 0)
-        return round(dur, 3) if dur > 0 else None
-    except Exception:
+        if dur <= 0:
+            _tts_warn("时长探测得到非正数 duration=%r media=%r" % (dur, str(media_path)))
+            return None
+        _tts_info("时长探测成功 duration=%.3f media=%r ffprobe=%r stdout_type=%s"
+                  % (round(dur, 3), str(media_path), ffprobe,
+                     type(getattr(out, "stdout", None)).__name__))
+        return round(dur, 3)
+    except Exception as e:  # noqa: BLE001 —— 不阻断主流程，但绝不静默
+        _tts_warn("时长探测异常 %s: %s media=%r exists=%s ffprobe=%r"
+                  % (type(e).__name__, str(e)[:200], str(media_path),
+                     os.path.isfile(str(media_path)), ffprobe))
         return None
 
 
