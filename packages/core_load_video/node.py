@@ -54,8 +54,13 @@ def _parse_fps(rate: Any) -> float:
         return 0.0
 
 
-async def _run_cmd(ctx: Any, cmd: List[str], timeout: float, text: bool = True) -> Any:
+async def _run_cmd(ctx: Any, cmd: List[str], timeout: float, text: bool = True,
+                   full: bool = False) -> Any:
     """执行子进程并捕获输出。
+
+    full=True（FW-DEV-42）：优先走 `ctx.run_tracked_full`，拿**完整** stdout/stderr。
+    走普通 run_tracked 得到的是 4,000 字符**诊断尾巴**，ffprobe -show_streams 实测
+    4,398 B，会被切头 → json.loads 在 char 0 失败 → 误报「不是有效视频」。
 
     优先平台托管执行（可取消/杀进程树）——但平台 run_tracked 是 wait 后读管道，
     在部分 ffmpeg 构建上会因管道持有而死锁；故先用短预算试探，失败立即回退
@@ -63,6 +68,12 @@ async def _run_cmd(ctx: Any, cmd: List[str], timeout: float, text: bool = True) 
     """
     import asyncio
     import subprocess as _sp
+    rt_full = ctx.get("run_tracked_full") if isinstance(ctx, dict) else None
+    if full and rt_full is not None:
+        try:
+            return await rt_full(cmd, timeout=max(float(timeout), 10.0))
+        except Exception:  # noqa: BLE001 —— 失败则按下面两条老路走
+            pass
     rt = ctx.get("run_tracked") if isinstance(ctx, dict) else None
     if rt is not None:
         try:
@@ -150,10 +161,13 @@ async def probe_video(path: str, ctx: Any = None, timeout: float = 30.0) -> Dict
         try:
             proc = await _run_cmd(
                 ctx, [probe, "-v", "quiet", "-print_format", "json",
-                      "-show_format", "-show_streams", path], timeout, text=True)
+                      "-show_format", "-show_streams", path], timeout, text=True, full=True)
         except Exception as e:  # noqa: BLE001
             last_err = f"{probe}: {e}"
             continue
+        if getattr(proc, "truncated", False):
+            # FW-DEV-42：尾巴被截断必须留痕，否则下游只会看到「stdout 非 JSON」
+            meta["warnings"].append("ffprobe 输出被截断（诊断尾巴模式），结果可能不完整")
         if proc.returncode == 0 and proc.stdout:
             try:
                 data = json.loads(proc.stdout)
