@@ -56,6 +56,70 @@ EDGE_VOICES = [
 
 _PUNCT_SPLIT = re.compile(r"(?<=[。！？；，、,.!?;:])")
 
+# ---- edge 失败分流（FW-DEV-36，2026-10-25）----
+# 背景：微软朗读端点自 2026-10 起只接受 v2 安全令牌（Sec-MS-GEC-Version=2-<Chromium>），
+# edge-tts 7.2.8 发的是 v1 ⇒ WSS 握手一律 403「Invalid response status」；7.3.1 起发 v2 才能通。
+# 403 属于**端点侧令牌版本**问题：重试 3 次只是让用户多等几秒再看到同一个「配音失败」，
+# 所以要立刻失败并把「该升级依赖」说清楚；连接类错误才值得重试。
+_EDGE_HINT_SIGNATURE = (
+    "配音服务签名已过期，请升级到新版本（需要 edge-tts>=7.3.1）。"
+    "这是配音服务端的安全令牌更新，重试无效。")
+_EDGE_HINT_NETWORK = "网络不通，无法连接配音服务。请检查网络/代理后重试。"
+
+
+def _edge_version() -> str:
+    try:
+        import edge_tts
+        return str(getattr(edge_tts, "__version__", "?"))
+    except Exception:  # noqa: BLE001 —— 版本只用于提示，取不到不影响分流
+        return "未安装"
+
+
+def _edge_http_status(exc: BaseException) -> Optional[int]:
+    """尽力取 HTTP 状态：aiohttp/websockets 两族的字段名不同，两条都试。"""
+    for attr in ("status", "status_code"):
+        v = getattr(exc, attr, None)
+        if isinstance(v, int):
+            return v
+    resp = getattr(exc, "response", None)
+    if resp is not None:
+        for attr in ("status_code", "status"):
+            v = getattr(resp, attr, None)
+            if isinstance(v, int):
+                return v
+    return None
+
+
+def _edge_failure_kind(exc: BaseException) -> str:
+    """edge 失败分类：signature（令牌/403，不可重试）/ network（可重试）/ dependency / other。"""
+    if _edge_http_status(exc) == 403:
+        return "signature"
+    text = "%s: %s" % (type(exc).__name__, exc)
+    if "Sec-MS-GEC" in text:
+        return "signature"
+    if isinstance(exc, (ImportError, AttributeError)) and "edge_tts" in text:
+        return "dependency"
+    low = type(exc).__name__.lower()
+    if isinstance(exc, (asyncio.TimeoutError, TimeoutError, ConnectionError, OSError)):
+        return "network"
+    if any(k in low for k in ("connector", "clientconnection", "servertimeout",
+                              "serverdisconnected", "clientoserror", "clientpayloaderror")):
+        return "network"
+    if "getaddrinfo" in text or "name resolution" in text.lower():
+        return "network"
+    return "other"
+
+
+def _edge_failure_message(kind: str, exc: BaseException, attempts: int) -> str:
+    if kind == "signature":
+        return "%s（当前 edge-tts %s）" % (_EDGE_HINT_SIGNATURE, _edge_version())
+    if kind == "dependency":
+        return ("配音依赖异常，请重新安装或升级 edge-tts（>=7.3.1）：%s（当前 %s）"
+                % (exc, _edge_version()))
+    if kind == "network":
+        return "%s（%s）" % (_EDGE_HINT_NETWORK, exc)
+    return "edge-tts 第 %d 次失败: %s" % (attempts, exc)
+
 # ---- S3-T8（C3）：音色库动态加载（单一数据源 = core_voice_library/data/tts_library.json）----
 # T6 双份数据不复发：214 条音色只存在 core_voice_library 资源中（packages/ 与 user_nodes/
 # 安装态均为同级目录），本节点动态读取，绝不内嵌第二份清单。
@@ -519,8 +583,10 @@ class TTSNode(NodeBase):
             except asyncio.CancelledError:
                 raise
             except Exception as e:
-                if attempt > retries:
-                    raise RuntimeError(f"edge-tts 第 {attempt} 次失败: {e}")
+                kind = _edge_failure_kind(e)
+                # 签名/依赖类重试无用（令牌版本不会自己变回来）：立刻失败并把原因说清。
+                if kind in ("signature", "dependency") or attempt > retries:
+                    raise RuntimeError(_edge_failure_message(kind, e, attempt)) from e
                 await asyncio.sleep(min(30, 0.25 * (2 ** attempt)))
 
     async def _run_edge_single(self, ctx, inputs, params, text: str, progress) -> Dict[str, Any]:
