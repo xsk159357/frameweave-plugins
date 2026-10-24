@@ -5,7 +5,7 @@
   "title": "MP4 渲染",
   "category": "输出",
   "description": "自动混剪出片：片段拼接 + 转场 + 配音/原声/背景乐混音 + 字幕烧录 + 可选覆盖视频轨 + 音画对齐 + 调色；带进度与成品 ffprobe 验证。",
-  "version": "1.2.3",
+  "version": "1.2.4",
   "kind": "python",
   "runtime": "python",
   "entrypoint": "node.py",
@@ -70,6 +70,13 @@
       "widget": "text",
       "options": [],
       "description": "背景音乐音频"
+    },
+    {
+      "name": "layout",
+      "type": "JSON",
+      "label": "混音布局",
+      "required": false,
+      "description": "core/mixed_audio_layout 输出。给出后只在保留的台词区间放出原声（区间内满音量 1.0，区间外静音），需 audio_mix=mix 才生效"
     }
   ],
   "outputs": [
@@ -306,7 +313,7 @@
   "signature": {
     "alg": "ed25519",
     "key_id": "a8998646b062c170",
-    "value": "uJYMAxEBrMw7jS+e/eQ9mOAge1u876w1QtxgyNBURo1UlN8e9XkjxSd653MJbvEurkm/d9W5ilNqLiAbmlVxCg==",
+    "value": "BJtlksFptHaeiZjY075ghmFATrpbSvXITHqzWsvAPSY9FJJ7jhktRpf5ct47SHgtsMQS/p+nRy1MwByK4wlRDA==",
     "over": "manifest"
   },
   "deps": []

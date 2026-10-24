@@ -16,6 +16,7 @@ from __future__ import annotations
 import asyncio
 import json
 import os
+import re
 import shutil
 import subprocess
 from typing import Any, Dict, List, Optional
@@ -216,6 +217,92 @@ def _scale_subs_for_tempo(subs: Any, tempo: float, total_sec: float
     return scaled, warnings
 
 
+def _layout_clip_ranges(layout: Any) -> List[tuple]:
+    """取 mixed_audio_layout.original_clips 的**源时间轴**保留区间（该放原声的台词段）。
+
+    优先 start/end（已含 padding_before/after），退回 original_start/original_end。
+    坏数据不抛异常（一段坏 layout 不该让整片渲染失败），跳过并留给调用方计数。
+    """
+    if not isinstance(layout, dict):
+        return []
+    clips = layout.get("original_clips")
+    if not isinstance(clips, list):
+        return []
+    out: List[tuple] = []
+    for c in clips:
+        if not isinstance(c, dict):
+            continue
+        try:
+            a = float(c.get("start", c.get("original_start")))
+            b = float(c.get("end", c.get("original_end")))
+        except (TypeError, ValueError):
+            continue
+        if b > a:
+            out.append((max(a, 0.0), b))
+    out.sort()
+    return out
+
+
+def _map_clips_to_output(clips: List[tuple], segs: List[Dict[str, Any]],
+                         seg_durs: List[float], trans_dur: float,
+                         total_sec: float) -> tuple:
+    """源时间轴区间 → 成片（拼接后）时间轴区间。
+
+    成片时间轴上第 i 段起点：off_0 = 0；off_i = off_{i-1} + dur_{i-1} - trans_dur
+    —— 与 xfade 的 offset 递推一致（本文件 xfade 循环里 offset=acc-trans_dur），
+    所以开转场时也是按**实际重叠后**的位置算，不是按累加和硬减。
+
+    返回 (ranges, warnings, dropped_seconds)：落在所有段之外的时长被丢弃并计入
+    dropped_seconds（不静默 —— 调用方写进 report/warnings）。
+    """
+    n = len(segs)
+    offsets: List[float] = []
+    acc = 0.0
+    for i in range(n):
+        offsets.append(max(acc, 0.0))
+        acc = acc + seg_durs[i] - (trans_dur if i < n - 1 else 0.0)
+    bounds: List[tuple] = []
+    for i in range(n):
+        st = _num(segs[i].get("start", 0))
+        bounds.append((st, st + seg_durs[i]))
+    limit = float(total_sec or 0.0)
+    out: List[tuple] = []
+    warnings: List[str] = []
+    dropped = 0.0
+    for a, b in clips:
+        hit = False
+        for i in range(n):
+            s0, s1 = bounds[i]
+            lo = max(a, s0)
+            hi = min(b, s1)
+            if hi <= lo:
+                continue
+            hit = True
+            o_lo = offsets[i] + (lo - s0)
+            o_hi = offsets[i] + (hi - s0)
+            if limit > 0:
+                o_hi = min(o_hi, limit)
+            if o_hi > o_lo:
+                out.append((round(o_lo, 3), round(o_hi, 3)))
+        if not hit:
+            dropped += (b - a)
+    out.sort()
+    merged: List[tuple] = []
+    for a, b in out:
+        if merged and a <= merged[-1][1] + 1e-6:
+            merged[-1] = (merged[-1][0], max(merged[-1][1], b))
+        else:
+            merged.append((a, b))
+    if dropped > 0.05:
+        warnings.append("原声保留区间有 %.3fs 落在所有片段之外（已丢弃，不静默）" % dropped)
+    return merged, warnings, dropped
+
+
+def _volume_gate_expr(ranges: List[tuple]) -> str:
+    """'between(t,a,b)+between(t,c,d)' —— 供 volume 的 if() 逐帧求值（1=可闻，0=静音）。"""
+    return "+".join("between(t,%.3f,%.3f)" % (a, b) for a, b in ranges)
+
+
 def _build_ass(subs: List[Dict[str, Any]], canvas: tuple, style: Dict[str, Any]) -> str:
     """生成 ASS 字幕（PlayRes 对齐画布，字号随画布高度缩放）。"""
     w, h = canvas
@@ -267,6 +354,9 @@ class VideoRenderNode(NodeBase):
                 PortSpec(name="segments", type=PortType.SEGMENTS, label="片段列表", required=True),
                 PortSpec(name="audio", type=PortType.AUDIO, label="配音音频", required=False),
                 PortSpec(name="styled_subtitle", type=PortType.SUBTITLE, label="样式字幕", required=False),
+                PortSpec(name="layout", type=PortType.JSON, label="混音布局", required=False,
+                         description="core/mixed_audio_layout 输出。给出后只在保留的台词区间放出原声"
+                                     "（区间内满音量 1.0，区间外静音），需 audio_mix=mix 才生效"),
                 PortSpec(name="overlay", type=PortType.VIDEO, label="覆盖视频轨", required=False,
                          description="整段覆盖在成片上的第二视频轨"),
                 PortSpec(name="bgm", type=PortType.AUDIO, label="背景音乐", required=False),
@@ -311,7 +401,7 @@ class VideoRenderNode(NodeBase):
                 PortSpec(name="output_name", type=PortType.STRING, label="输出文件名",
                          default="chengpian", widget="text"),
             ],
-            version="1.2.3",
+            version="1.2.4",
         )
 
     async def run(self, ctx, inputs, params) -> Dict[str, Any]:
@@ -329,6 +419,8 @@ class VideoRenderNode(NodeBase):
         audio = inputs.get("audio")
         sub_asset = inputs.get("styled_subtitle")
         subs = store.read_json(sub_asset.id) if sub_asset is not None else None
+        layout_asset = inputs.get("layout")
+        layout_obj = store.read_json(layout_asset.id) if layout_asset is not None else None
         overlay = inputs.get("overlay")
         bgm = inputs.get("bgm")
 
@@ -355,6 +447,14 @@ class VideoRenderNode(NodeBase):
         original_vol = max(_num(params.get("original_volume", 0.35), 0.35), 0.0)
         bgm_vol = max(_num(params.get("bgm_volume", 0.3), 0.3), 0.0)
         overlay_alpha = min(max(_num(params.get("overlay_alpha", 0.8), 0.8), 0.0), 1.0)
+        # T3（1.2.4）：混音布局 —— 只在保留的台词区间放出原声（区间内 1.0、区间外静音）
+        layout_clips = _layout_clip_ranges(layout_obj)
+        layout_note: List[str] = []
+        if layout_asset is not None and not layout_clips:
+            layout_note.append("layout 输入为空或没有 original_clips（按无 layout 处理）")
+        if layout_clips and audio_mix != "mix":
+            layout_note.append(
+                "layout 已给但 audio_mix=%s（仅 mix 模式生效，本次忽略 layout）" % audio_mix)
         out_name = _safe_name(str(params.get("output_name", "chengpian")) or "chengpian")
         # G4：音画双向微调模式；G25：调色
         align_mode = str(params.get("align_mode", "none") or "none")
@@ -366,7 +466,12 @@ class VideoRenderNode(NodeBase):
             color_grade = "none" if str(color_grade or "").strip() == "" else color_grade
 
         # ---- 画布 ----
-        if aspect == "original" or res == "source":
+        # 1.2.4：resolution 额外接受 "WxH" 自定义画布（如 1280x544 = 2.35:1 不补黑边）；
+        # 不匹配时仍走原预设表，既有取值逐位不变（回归线）。
+        custom_canvas = re.match(r"^(\d{2,5})[xX×](\d{2,5})$", str(res or "").strip())
+        if custom_canvas:
+            w, h = int(custom_canvas.group(1)), int(custom_canvas.group(2))
+        elif aspect == "original" or res == "source":
             if src_w and src_h:
                 w, h = src_w, src_h
             else:
@@ -491,31 +596,61 @@ class VideoRenderNode(NodeBase):
         bgm_ok = bgm is not None and getattr(bgm, "path", "") and os.path.exists(bgm.path)
         audio_label = ""
         extra_inputs: List[Any] = []
+        gate_ranges: List[tuple] = []   # T3：原声保留区间（成片时间轴）；空 ⇒ 无 layout
+        mix_layers: List[str] = []      # 本次实际参与混音的音轨标签（report 用）
         tempo_chain = f",atempo={align_tempo:.4f}" if align_tempo != 1.0 else ""
         if audio_mix == "narration_only" and narration_ok:
             extra_inputs.append(audio)
             expr += f";[{n}:a]atrim=0:{total_sec:.3f},asetpts=PTS-STARTPTS{tempo_chain},volume={narration_vol:.3f}[aN]"
             audio_label = "aN"
+            mix_layers = ["aN"]
             if bgm_ok:
                 extra_inputs.append(bgm)
                 expr += f";[{n + 1}:a]atrim=0:{total_sec:.3f},asetpts=PTS-STARTPTS,volume={bgm_vol:.3f}[aB]"
                 expr += f";[aN][aB]amix=inputs=2:duration=first:dropout_transition=0[aout]"
                 audio_label = "aout"
+                mix_layers = ["aN", "aB"]
         elif audio_mix == "mix":
             # 解说 + 原声（逐段 concat）+ 背景乐
             chain = []
+            if not narration_ok:
+                # 触发面：某章文案全是〔原声〕、或 narration 合成失败但有兜底 ⇒ 这也会走到
+                layout_note.append("audio_mix=mix 但无解说输入 ⇒ 原声/BGM 单路透传（不生成 amix/c=1）")
             if narration_ok:
                 extra_inputs.append(audio)
                 chain.append(f"[{n}:a]atrim=0:{total_sec:.3f},asetpts=PTS-STARTPTS{tempo_chain},volume={narration_vol:.3f}[mN]")
             orig_labels = []
+            gate_warnings: List[str] = []
+            orig_mix_label = "[mO]"
             if src_has_audio:
+                # 有 layout（且 audio_mix=mix）时：窗口内满音量 1.0，窗口外由 gate 静音；
+                # 无 layout 时保持 1.2.3 的 original_volume 语义（逐位一致，回归线）
+                orig_gain_tok = "1.000" if (layout_clips and audio_mix == "mix") else f"{original_vol:.3f}"
                 for i in range(n):
                     st = _num(segs[i].get("start", 0))
                     en = _num(segs[i].get("end", st + 1.0))
-                    chain.append(f"[{i}:a]atrim=start={st:.3f}:end={en:.3f},asetpts=PTS-STARTPTS,volume={original_vol:.3f}[aO{i}]")
+                    chain.append(f"[{i}:a]atrim=start={st:.3f}:end={en:.3f},asetpts=PTS-STARTPTS,volume={orig_gain_tok}[aO{i}]")
                     orig_labels.append(f"[aO{i}]")
                 if orig_labels:
-                    chain.append("".join(orig_labels) + f"concat=n={len(orig_labels)}:v=0:a=1[mO]")
+                    # n==1 不许 concat=n=1（ffmpeg 直接 -22），单段透传
+                    if len(orig_labels) == 1:
+                        orig_mix_label = orig_labels[0]
+                    else:
+                        chain.append("".join(orig_labels) + f"concat=n={len(orig_labels)}:v=0:a=1[mO]")
+                        orig_mix_label = "[mO]"
+                    if orig_gain_tok == "1.000":
+                        gate_ranges, gate_warnings, _dropped = _map_clips_to_output(
+                            layout_clips, segs, seg_durs, trans_dur if transition != "cut" else 0.0,
+                            total_sec)
+                        if gate_ranges:
+                            # 用 if() 逐帧求值，不用 enable=：volume 的 enable 语义是
+                            # 「过滤器不启用 ⇒ 原样透传」，静音不了窗口外（实测过）。
+                            chain.append("[%s]volume=volume='if(%s,1,0)':eval=frame[mOg]"
+                                         % (orig_mix_label.strip("[]"), _volume_gate_expr(gate_ranges)))
+                            orig_mix_label = "[mOg]"
+                            layout_note.extend(gate_warnings)
+                        else:
+                            layout_note.append("layout 的保留区间全部落在片段之外（原声按静音处理）")
             if bgm_ok:
                 extra_inputs.append(bgm)
                 chain.append(f"[{n + (1 if narration_ok else 0)}:a]atrim=0:{total_sec:.3f},asetpts=PTS-STARTPTS,volume={bgm_vol:.3f}[mB]")
@@ -523,12 +658,20 @@ class VideoRenderNode(NodeBase):
             if narration_ok:
                 mix_in.append("[mN]")
             if orig_labels:
-                mix_in.append("[mO]")
+                mix_in.append(orig_mix_label)
             if bgm_ok:
                 mix_in.append("[mB]")
             if mix_in:
-                chain.append("".join(mix_in) + f"amix=inputs={len(mix_in)}:duration=first:dropout_transition=0[aout]")
-                audio_label = "aout"
+                if len(mix_in) == 1:
+                    # 只有一路：不生成 amix（amix 要求 ≥2 个输入，inputs=1 会 -22），直接透传该标签
+                    audio_label = mix_in[0].strip("[]")
+                    mix_layers = [audio_label]
+                else:
+                    chain.append("".join(mix_in) + f"amix=inputs={len(mix_in)}:duration=first:dropout_transition=0[aout]")
+                    audio_label = "aout"
+                    mix_layers = [x.strip("[]") for x in mix_in]
+            else:
+                layout_note.append("audio_mix=mix 但没有任何可用音轨（无解说/无原声/无 BGM）⇒ 成片无音轨")
             if chain:
                 expr += ";" + ";".join(chain)
         elif audio_mix == "original_only" and src_has_audio:
@@ -539,8 +682,11 @@ class VideoRenderNode(NodeBase):
                 expr += f";[{i}:a]atrim=start={st:.3f}:end={en:.3f},asetpts=PTS-STARTPTS,volume={original_vol:.3f}[aO{i}]"
                 labels.append(f"[aO{i}]")
             if labels:
-                expr += ";" + "".join(labels) + f"concat=n={len(labels)}:v=0:a=1[aout]"
-                audio_label = "aout"
+                if len(labels) == 1:
+                    audio_label = labels[0].strip("[]")   # n==1：不许 concat=n=1
+                else:
+                    expr += ";" + "".join(labels) + f"concat=n={len(labels)}:v=0:a=1[aout]"
+                    audio_label = "aout"
 
         # ---- 组装命令 ----
         # AI 生成合成内容：显式标识追加到 filter_complex 末尾（同一次编码，不额外转码）
@@ -607,6 +753,8 @@ class VideoRenderNode(NodeBase):
             "transition_duration": trans_dur if transition != "cut" and n > 1 else 0.0,
             "subtitle_count": len(subs) if has_subs else 0,
             "audio_mix": audio_mix,
+            "audio_layers": list(mix_layers),
+            "audio_track_present": bool(audio_label),
             "overlay": has_overlay,
             "align_mode": align_mode,
             "align_used": align_used,
@@ -620,9 +768,19 @@ class VideoRenderNode(NodeBase):
                 "total_seconds": round(float(total_sec or 0.0), 3),
             },
             "color_grade": color_grade if grade else None,
+            # T3（1.2.4）：原声门控（无 layout 时 mode=off，与 1.2.3 行为相同）
+            "original_gate": {
+                "mode": "layout_clips" if gate_ranges else "off",
+                "gain_inside": 1.0 if gate_ranges else None,
+                "gain_outside": 0.0 if gate_ranges else None,
+                "base_volume": None if gate_ranges else round(original_vol, 3),
+                "ranges": [[a, b] for a, b in gate_ranges],
+                "kept_seconds": round(sum(b - a for a, b in gate_ranges), 3),
+                "layout_clips": len(layout_clips),
+            },
             "source_probe": {k: probe.get(k) for k in ("width", "height", "fps", "duration", "bit_rate")},
             "warnings": ([probe.get("warning")] if probe.get("warning") else [])
-                        + list(sub_scale_warnings),
+                        + list(sub_scale_warnings) + list(layout_note),
             "dependency": {"ffmpeg": _dep("ffmpeg"), "ffprobe": _dep("ffprobe")},
         }
         asset = store.save_asset(

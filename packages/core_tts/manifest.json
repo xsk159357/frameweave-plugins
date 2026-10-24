@@ -5,7 +5,7 @@
   "title": "TTS 配音（多引擎）",
   "category": "音频",
   "description": "文字转语音：Edge免费 / IndexTTS2本地克隆 / OpenAI兼容 / 阿里NLS+CosyVoice / 豆包火山；支持长文本分块与分段批量合成",
-  "version": "2.2.2",
+  "version": "2.2.3",
   "kind": "python",
   "runtime": "python",
   "entrypoint": "node.py",
@@ -494,6 +494,15 @@
       "widget": "text",
       "options": [],
       "description": "留空自动探测（PATH / FRAMEWEAVE_FFMPEG / 默认安装位置）"
+    },
+    {
+      "name": "place_by_start",
+      "type": "BOOL",
+      "label": "按段起点摆放",
+      "required": false,
+      "default": false,
+      "widget": "toggle",
+      "description": "T1：按每段 start 放到绝对时间（空档静音），字幕用摆放后时间；关闭=首尾相接（与旧版逐位一致）"
     }
   ],
   "permission": {
@@ -524,7 +533,7 @@
   "signature": {
     "alg": "ed25519",
     "key_id": "a8998646b062c170",
-    "value": "Bn4qUfoYfPudUCkjUaDSxfVBNaC3/NerH062SFn8W074xxxBR2offJLA/8iMzsoNWk02YotXaqn2PT4STyndDw==",
+    "value": "wWmAetNlNmbdqHD2/ln73LRIaRjiiU+NcB8jCe0CdiBLYStl1UrB+WLnWcXLKeUZOK2tmcpihU/nPa5KKq6EDQ==",
     "over": "manifest"
   },
   "deps": [

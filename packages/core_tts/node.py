@@ -340,6 +340,44 @@ async def _ffmpeg_concat(ctx, ffmpeg_path: str, inputs: List[str], out_path: str
             pass
 
 
+async def _ffmpeg_place_at(ctx, ffmpeg_path: str, items: List[Dict[str, Any]], out_path: str,
+                           sample_rate: int = 24000, channel_layout: str = "mono") -> float:
+    """按每段的**绝对 start** 摆放音频（空档为静音），返回成片时长。
+
+    items: [{"path": ..., "start": 秒, "duration": 秒}, ...]
+
+    为什么不用 concat：concat 只能首尾相接，表达不了「第 3 段必须在 120 s」。
+    做法：anullsrc 静音底（长度 = max(start+dur)）+ 每段 adelay(start) + amix(normalize=0)。
+    normalize=0 很关键——amix 默认会把各输入按 1/n 衰减，那样旁白音量会随段数变化。
+    """
+    ffmpeg = _resolve_ffmpeg(ffmpeg_path)
+    total = 0.0
+    for it in items:
+        total = max(total, float(it["start"]) + float(it["duration"]))
+    if total <= 0:
+        raise RuntimeError("摆放失败：总时长为 0（start/duration 全为空）")
+    total = round(total, 3)
+    cmd = [ffmpeg, "-y", "-f", "lavfi", "-t", f"{total:.3f}",
+           "-i", f"anullsrc=r={sample_rate}:cl={channel_layout}"]
+    for it in items:
+        cmd += ["-i", it["path"]]
+    filters: List[str] = []
+    labels: List[str] = ["[0:a]"]
+    for idx, it in enumerate(items, start=1):
+        delay_ms = int(round(float(it["start"]) * 1000))
+        filters.append(
+            f"[{idx}:a]aformat=sample_fmts=fltp:sample_rates={sample_rate}"
+            f":channel_layouts={channel_layout},adelay={delay_ms}:all=1[a{idx}]")
+        labels.append(f"[a{idx}]")
+    filters.append("".join(labels) + f"amix=inputs={len(items) + 1}:normalize=0:duration=first[aout]")
+    cmd += ["-filter_complex", ";".join(filters), "-map", "[aout]", "-t", f"{total:.3f}", out_path]
+    out = await ctx["run_tracked"](cmd, timeout=1800)
+    if out.returncode != 0:
+        raise RuntimeError("ffmpeg 按时间摆放失败: %s"
+                           % out.stderr.decode("utf-8", "replace")[-500:])
+    return total
+
+
 def _read_script_text(store, asset: Asset) -> str:
     if asset is None:
         return ""
@@ -533,6 +571,10 @@ class TTSNode(NodeBase):
                          widget="number", description="网络/超时类错误指数退避重试"),
                 PortSpec(name="merge_audio", type=PortType.BOOL, label="批量合并音频", default=True,
                          widget="toggle", description="分段批量时是否合并为单个音频"),
+                PortSpec(name="place_by_start", type=PortType.BOOL, label="按段起点摆放", default=False,
+                         widget="toggle",
+                         description="T1：按每段 start 放到绝对时间（空档静音），字幕用摆放后时间；"
+                                     "关闭=首尾相接（与旧版逐位一致）"),
                 PortSpec(name="ffmpeg_path", type=PortType.STRING, label="ffmpeg 路径", default="",
                          widget="text", description="留空自动探测"),
             ],
@@ -1658,7 +1700,47 @@ class TTSNode(NodeBase):
             marks_items.append(rec)
 
         merge = bool(params.get("merge_audio", True))
-        if merge and len(succeeded) > 1:
+        # T1（2.2.3）：按每段 start 摆放到绝对时间（空档静音）。默认关 ⇒ 输出与旧版逐位一致。
+        place_by_start = bool(params.get("place_by_start", False))
+        place_warnings: List[str] = []
+        placed = False
+        seg_start_by_index: Dict[int, float] = {}
+        if merge and len(succeeded) > 1 and place_by_start:
+            place_items: List[Dict[str, Any]] = []
+            ok = True
+            for it in succeeded:
+                r = it.get("result") or {}
+                try:
+                    st = float(r.get("start"))
+                except (TypeError, ValueError):
+                    st = None
+                dur = float(r.get("duration") or 0.0)
+                if st is None or dur <= 0:
+                    place_warnings.append(
+                        "段 index=%s 缺 start 或 duration ⇒ place_by_start 整体退回首尾拼接"
+                        % (r.get("index"),))
+                    ok = False
+                    break
+                st = max(st, 0.0)
+                place_items.append({"path": r["path"], "start": st, "duration": dur})
+                seg_start_by_index[int(r.get("index") or 0)] = st
+                # 超窗：实测段长 > 窗口(end-start) ⇒ 只报警，不压缩、不拉伸
+                try:
+                    win = float(r.get("end")) - st
+                except (TypeError, ValueError):
+                    win = 0.0
+                if 0 < win < dur - 0.05:
+                    place_warnings.append(
+                        "段 index=%s 实测 %.3fs 超出窗口 %.3fs（超出 %.3fs），按实测摆放，未压缩"
+                        % (r.get("index"), dur, win, dur - win))
+            if ok:
+                final_path = self._uniq_path(out_dir, "seg_placed", ext)
+                total_dur = await _ffmpeg_place_at(ctx, p["ffmpeg_path"], place_items, final_path)
+                first_id = place_items[0]["path"]
+                placed = True
+        if placed:
+            pass    # final_path / total_dur / first_id 已在摆放分支内定好，这里不许再覆盖
+        elif merge and len(succeeded) > 1:
             final_path = self._uniq_path(out_dir, "seg_merged", ext)
             await _ffmpeg_concat(ctx, p["ffmpeg_path"], [i["result"]["path"] for i in succeeded], final_path)
             total_dur = await _probe_duration(ctx, p["ffmpeg_path"], final_path)
@@ -1683,8 +1765,23 @@ class TTSNode(NodeBase):
         # cue_tail_gap 自检暴露出来，而不是靠"大概对"）。
         text_by_index = {s["index"]: s["text"] for s in segs}
         sentence_rows = []
-        cursor = 0.0
-        for it in succeeded:
+        if placed:
+            # T1：摆放模式下 cue 用**摆放后的绝对时间**，不再 cursor 累加
+            for it in succeeded:
+                r = it.get("result") or {}
+                base = seg_start_by_index.get(int(r.get("index") or 0), 0.0)
+                seg_bounds = r.get("bounds") or []
+                if seg_bounds:
+                    for b in seg_bounds:
+                        sentence_rows.append((base + b["start"], base + b["end"], b["text"]))
+                else:
+                    sentence_rows.append((base, base + float(r.get("duration") or 0.0),
+                                          text_by_index.get(r.get("index"))))
+            sentence_rows.sort(key=lambda x: x[0])
+            cursor = 0.0
+        else:
+            cursor = 0.0
+        for it in ([] if placed else succeeded):
             r = it.get("result") or {}
             r_dur = float(r.get("duration") or 0.0)
             seg_bounds = r.get("bounds") or []
@@ -1715,9 +1812,10 @@ class TTSNode(NodeBase):
                   "cue_chunk": sum(1 for c in cues if c.get("granularity") == "chunk"),
                   "cue_merged": sum(1 for c in cues if c.get("granularity") == "sentence-merged"),
                   "cue_tail_gap": cue_tail_gap,
-                  "warnings": ([] if abs(cue_tail_gap) < 0.3 else
+                  "place_by_start": bool(placed),
+                  "warnings": (([] if abs(cue_tail_gap) < 0.3 else
                                ["cue 末端与合并音频总长相差 %.3fs（段间可能有静音/拼接间隙）"
-                                % cue_tail_gap])}
+                                % cue_tail_gap]) + place_warnings)}
         return {"audio": asset, "duration": total_dur, "marks": marks,
                 "subtitles": subtitles, "report": report}
 
