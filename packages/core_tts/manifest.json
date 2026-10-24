@@ -5,7 +5,7 @@
   "title": "TTS 配音（多引擎）",
   "category": "音频",
   "description": "文字转语音：Edge免费 / IndexTTS2本地克隆 / OpenAI兼容 / 阿里NLS+CosyVoice / 豆包火山；支持长文本分块与分段批量合成",
-  "version": "2.2.0",
+  "version": "2.2.1",
   "kind": "python",
   "runtime": "python",
   "entrypoint": "node.py",
@@ -524,7 +524,7 @@
   "signature": {
     "alg": "ed25519",
     "key_id": "a8998646b062c170",
-    "value": "b4RppmYJssD4DtusphzVfjwozbiH5T+16ptKZroR6drS02iMrl+u4JxXevrYT8ifzvcUSjzOUPUbfodc1C7sAw==",
+    "value": "4Cki8ZauovbcqJkJLlZ53WTYn3OkkqHBzGob64ADkLF1NRUlgosIZeKqOsSjTgHVeWB9R0OgfNEuqQ/gm1FrAQ==",
     "over": "manifest"
   }
 }

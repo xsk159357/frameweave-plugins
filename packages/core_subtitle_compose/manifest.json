@@ -5,7 +5,7 @@
   "title": "字幕装配",
   "category": "输出",
   "description": "字幕高级样式：花字/特效/逐句卡点动画",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "kind": "python",
   "runtime": "python",
   "entrypoint": "node.py",
@@ -42,6 +42,16 @@
       "widget": "text",
       "options": [],
       "description": ""
+    },
+    {
+      "name": "report",
+      "type": "JSON",
+      "label": "装配报告",
+      "required": false,
+      "default": null,
+      "widget": "text",
+      "options": [],
+      "description": "degraded/warnings/count（FW-DEV-58）"
     }
   ],
   "params": [
@@ -142,7 +152,7 @@
   "signature": {
     "alg": "ed25519",
     "key_id": "a8998646b062c170",
-    "value": "zU3abQtjlI6udzCmw/LQyG152UbnI3QjQg9fET3bhRUU8nbWVPTezsQNXQAnnK4hylQZed/SWCnuEvF3CSihDg==",
+    "value": "BBkWrqab3TUsCDmz32V2utXw9OWb46n70VqBtfSwXLsoRI6QKKDtz9TWtT0VYRr/S7kd1HlqBu+v20t+jqtsCQ==",
     "over": "manifest"
   }
 }

@@ -139,7 +139,10 @@ async def probe_media(ctx, path: str) -> Dict[str, Any]:
         })
     if a:
         out["has_audio"] = True
-    out["duration"] = _num(fmt.get("duration"), _num(v.get("duration")))
+    # FW-DEV-55：`_num(a, b)` 的第二个实参会**先求值**——纯音频（无视频流 ⇒ v=None）时
+    # `v.get("duration")` 在 _num 被调用之前就抛 AttributeError，即使 fmt.duration 有效。
+    # 必须用条件表达式把它挪到「v 存在」时才求值。
+    out["duration"] = _num(fmt.get("duration"), _num(v.get("duration")) if v else None)
     out["bit_rate"] = _num(fmt.get("bit_rate"))
     out["size"] = _num(fmt.get("size"))
     return out
@@ -247,7 +250,7 @@ class VideoRenderNode(NodeBase):
                 PortSpec(name="output_name", type=PortType.STRING, label="输出文件名",
                          default="chengpian", widget="text"),
             ],
-            version="1.2.0",
+            version="1.2.1",
         )
 
     async def run(self, ctx, inputs, params) -> Dict[str, Any]:

@@ -36,6 +36,16 @@ from typing import Any, Dict, List, Optional
 from app.assets import Asset
 from app.nodespec import NodeBase, NodeSpec, PortSpec, PortType
 
+
+def _pkg_version(default: str = "") -> str:
+    """包版本从同目录 manifest.json 取（FW-DEV-60：不许手写，避免 spec 与 manifest 漂移）。"""
+    try:
+        p = os.path.join(os.path.dirname(os.path.abspath(__file__)), "manifest.json")
+        with open(p, "r", encoding="utf-8") as f:
+            return str((json.load(f) or {}).get("version") or default)
+    except Exception:  # noqa: BLE001 —— 取不到就退回传入的默认值
+        return default
+
 # Edge-TTS 常用中文音色
 EDGE_VOICES = [
     "zh-CN-XiaoxiaoNeural", "zh-CN-XiaoyiNeural", "zh-CN-YunjianNeural",
@@ -526,7 +536,7 @@ class TTSNode(NodeBase):
                 PortSpec(name="ffmpeg_path", type=PortType.STRING, label="ffmpeg 路径", default="",
                          widget="text", description="留空自动探测"),
             ],
-            version="2.1.0",
+            version=_pkg_version("2.2.1"),
         )
 
     async def run(self, ctx, inputs, params) -> Dict[str, Any]:

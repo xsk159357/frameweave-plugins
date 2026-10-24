@@ -5,7 +5,7 @@
   "title": "MP4 渲染",
   "category": "输出",
   "description": "自动混剪出片：片段拼接 + 转场 + 配音/原声/背景乐混音 + 字幕烧录 + 可选覆盖视频轨 + 音画对齐 + 调色；带进度与成品 ffprobe 验证。",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "kind": "python",
   "runtime": "python",
   "entrypoint": "node.py",
@@ -306,7 +306,7 @@
   "signature": {
     "alg": "ed25519",
     "key_id": "a8998646b062c170",
-    "value": "NNkKaZJSecOmtJSEgtVQRTWbN2EVuDJBeh5jkTx0raxl+Kj9wmPNTU7X4M6huqCxc17Os2SF17dZUPHWeFL4BQ==",
+    "value": "9jEzlt0K7EC7dRR08q5zEWIL6JbirPfxz3wlDJ/t16WP4R+8qlF4rg2JfswPk5ZQQLW46I00EJUzFtRZSLdhAw==",
     "over": "manifest"
   }
 }
