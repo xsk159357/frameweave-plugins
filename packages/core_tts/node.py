@@ -340,7 +340,7 @@ def _stdout_text(out) -> str:
     两种执行模式返回类型不同，**这是本函数存在的唯一理由**：
       主进程 engine.run_tracked → CompletedProcess(..., out, err) 且 Popen 未开 text ⇒ **bytes**
       worker  WorkerContext.run_tracked → _WorkerProcResult，`.stdout` 是 **str**（诊断尾巴）
-    旧实现只做 `out.stdout.decode(...)`，在 worker 模式下抛 AttributeError，
+    旧实现只做 `out.stdout` 的直接 decode()，在 worker 模式下抛 AttributeError，
     又被外层的 `except Exception: return None` 静默吞掉 ⇒ duration 恒 None ⇒
     place_by_start 整体退回首尾拼接（2026-10-25 e2e 实测：cue 全挤在 0.1–34 s）。
     """

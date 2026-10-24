@@ -22,7 +22,7 @@ from difflib import SequenceMatcher
 from typing import Any, Dict, List, Optional, Tuple
 
 from app.assets import Asset
-from app.nodespec import NodeBase, NodeSpec, PortSpec, PortType
+from app.nodespec import NodeBase, NodeSpec, PortSpec, PortType, stdout_text
 
 _CJK_RE = re.compile(r"[\u4e00-\u9fff]")
 _PUNCT_RE = re.compile(r"[\s，。！？；：、,.!?;:'\"“”‘’（）()\[\]【】《》<>〈〉\-—_/\\|]+")
@@ -259,7 +259,7 @@ class AudioAlignNode(NodeBase):
                          widget="text",
                          description="装有 faster-whisper 的解释器；留空用当前进程（子进程隔离）"),
             ],
-            version="1.0.0",
+            version="1.0.1",
         )
 
     async def run(self, ctx, inputs, params) -> Dict[str, Any]:
@@ -366,7 +366,7 @@ async def _probe_duration(ctx, ffmpeg_path: str, media_path: str) -> Optional[fl
             [ffprobe, "-v", "quiet", "-print_format", "json", "-show_format", media_path], timeout=60)
         if out.returncode != 0 or not out.stdout:
             return None
-        data = _json.loads(out.stdout.decode("utf-8", "replace"))
+        data = _json.loads(stdout_text(out))
         d = float((data.get("format") or {}).get("duration", 0) or 0)
         return round(d, 3) if d > 0 else None
     except Exception:

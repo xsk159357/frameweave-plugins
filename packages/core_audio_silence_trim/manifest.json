@@ -5,7 +5,7 @@
   "title": "静音裁剪",
   "category": "音频",
   "description": "自适应阈值裁剪头尾静音 + 可选内部静音剪除（口播剪气口，trim_internal），保留语气停顿",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "kind": "python",
   "runtime": "python",
   "entrypoint": "node.py",
@@ -131,7 +131,7 @@
   "signature": {
     "alg": "ed25519",
     "key_id": "a8998646b062c170",
-    "value": "FcERsF5AIrufbLqH+ZibkIrN8BhUuAh8C6/9vAMZzYjbkIDZJkMs0WBDm27eHrxt9EsBvL8V9D4HRO3xaPudDQ==",
+    "value": "akiLK1V+Wu1zy7VhzUKVmv3wV9CyCxeeKTqwJgLhPwDroRyVndABpOFPi9qXkCGoXQUhv7ukOjZRrt2uZIQ9Dw==",
     "over": "manifest"
   }
 }

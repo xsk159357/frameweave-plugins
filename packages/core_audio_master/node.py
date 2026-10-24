@@ -15,7 +15,7 @@ import uuid
 from typing import Any, Dict, List, Optional
 
 from app.assets import Asset
-from app.nodespec import NodeBase, NodeSpec, PortSpec, PortType
+from app.nodespec import NodeBase, NodeSpec, PortSpec, PortType, stdout_text
 
 
 def _resolve_ffmpeg(ffmpeg_path: str = "") -> str:
@@ -48,7 +48,7 @@ async def _probe(ctx, ffmpeg_path: str, media_path: str) -> Dict[str, Any]:
     if out.returncode != 0 or not out.stdout:
         return {}
     try:
-        data = json.loads(out.stdout.decode("utf-8", "replace"))
+        data = json.loads(stdout_text(out))
     except json.JSONDecodeError:
         return {}
     fmt = data.get("format", {})
@@ -151,7 +151,7 @@ class AudioMasterNode(NodeBase):
                 PortSpec(name="ffmpeg_path", type=PortType.STRING, label="ffmpeg 路径", default="",
                          widget="text"),
             ],
-            version="1.0.0",
+            version="1.0.1",
         )
 
     async def run(self, ctx, inputs, params) -> Dict[str, Any]:

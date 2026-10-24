@@ -18,7 +18,7 @@ import uuid
 from typing import Any, Dict, List, Tuple
 
 from app.assets import Asset
-from app.nodespec import NodeBase, NodeSpec, PortSpec, PortType
+from app.nodespec import NodeBase, NodeSpec, PortSpec, PortType, stdout_text
 
 
 def _resolve_ffmpeg(ffmpeg_path: str = "") -> str:
@@ -48,7 +48,7 @@ async def _duration(ctx, ffmpeg_path: str, media_path: str) -> Optional[float]:
             [ffprobe, "-v", "quiet", "-print_format", "json", "-show_format", media_path], timeout=60)
         if out.returncode != 0 or not out.stdout:
             return None
-        data = json.loads(out.stdout.decode("utf-8", "replace"))
+        data = json.loads(stdout_text(out))
         d = float((data.get("format") or {}).get("duration", 0) or 0)
         return round(d, 3) if d > 0 else None
     except Exception:
@@ -143,7 +143,7 @@ class AudioTrimNode(NodeBase):
                 PortSpec(name="ffmpeg_path", type=PortType.STRING, label="ffmpeg 路径", default="",
                          widget="text"),
             ],
-            version="1.1.0",
+            version="1.1.1",
         )
 
     async def run(self, ctx, inputs, params) -> Dict[str, Any]:

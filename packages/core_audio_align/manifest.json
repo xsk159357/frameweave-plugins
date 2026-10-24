@@ -5,7 +5,7 @@
   "title": "配音-字幕对齐",
   "category": "音频",
   "description": "Whisper 词级转写（子进程隔离）+ difflib 字符级对齐；插值/尾pad/降级等分，逐条报告漏读/多读/置信度",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "kind": "python",
   "runtime": "python",
   "entrypoint": "node.py",
@@ -165,7 +165,7 @@
   "signature": {
     "alg": "ed25519",
     "key_id": "a8998646b062c170",
-    "value": "kHFqMgcsMWCh3mRQ5nS+tOG2tUOSGhZyzCmc3gmlrtXJm9dauO567jdwAOwP+yeSgr8E+uRVESdAW/9hO7l2BA==",
+    "value": "q8emWpLBUvWdggljSQBWq8bChPugCy1+CjdHF3m1h1qICHbtPKLJHLmSCmdPj66BrYpbDXfVEGtOQ3jBRfF4DA==",
     "over": "manifest"
   }
 }
