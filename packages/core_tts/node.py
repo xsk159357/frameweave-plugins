@@ -55,6 +55,8 @@ EDGE_VOICES = [
 ]
 
 _PUNCT_SPLIT = re.compile(r"(?<=[。！？；，、,.!?;:])")
+# 句末标点（用于判定「一条边界里塞了多句」——那说明服务端没切，必须降级标 estimated）
+_SENT_END = re.compile(r"[。！？；!?;]")
 
 # edge-tts 的 SentenceBoundary/WordBoundary 用 100ns tick 记时间（offset=1000000 即 0.1 s），不是秒。
 _EDGE_100NS = 10_000_000.0
@@ -393,8 +395,13 @@ def _cues_from_sentence_rows(rows: List[tuple], max_seconds: float = 8.0) -> Lis
         if dur <= 0:
             continue
         if max_seconds <= 0 or dur <= max_seconds:
-            cues.append({"start": round(start, 3), "end": round(end, 3), "text": text,
-                         "timing_source": "measured", "granularity": "sentence"})
+            # 一条边界里有多句 ⇒ 服务端没按句切，时间轴只对这一整块成立，不能标 measured。
+            if len(_SENT_END.findall(text)) >= 2:
+                cues.append({"start": round(start, 3), "end": round(end, 3), "text": text,
+                             "timing_source": "estimated", "granularity": "sentence-merged"})
+            else:
+                cues.append({"start": round(start, 3), "end": round(end, 3), "text": text,
+                             "timing_source": "measured", "granularity": "sentence"})
             continue
         n = int(dur // max_seconds) + 1          # 上限之内尽量少的份数
         step = dur / n
@@ -766,6 +773,7 @@ class TTSNode(NodeBase):
         report["cue_sentence"] = sum(1 for c in cues if c.get("granularity") == "sentence")
         report["cue_split"] = sum(1 for c in cues if c.get("granularity") == "sentence-split")
         report["cue_chunk"] = sum(1 for c in cues if c.get("granularity") == "chunk")
+        report["cue_merged"] = sum(1 for c in cues if c.get("granularity") == "sentence-merged")
         return {"audio": asset, "duration": total_dur, "marks": marks,
                 "subtitles": self._save_subtitles(ctx["store"], cues),
                 "report": report}
@@ -1602,7 +1610,10 @@ class TTSNode(NodeBase):
                                            inputs=inputs)
             return {"path": res["path"], "duration": res.get("duration"),
                     "segment_id": inp.get("item_id"), "index": inp.get("index"),
-                    "start": inp.get("start"), "end": inp.get("end")}
+                    "start": inp.get("start"), "end": inp.get("end"),
+                    # 边界必须跟着结果一起回去：批量出字幕靠它按句切；漏了这一项时
+                    # 上层只能退化成「一段一条 cue」，看似正常、其实句时间轴全丢（已踩过）。
+                    "bounds": res.get("bounds") or []}
 
         # batchlib 信封：条目 input = 分段字段（seg 自带 index/item_id 供结果引用）
         items = [dict(s) for s in segs]
@@ -1692,6 +1703,7 @@ class TTSNode(NodeBase):
                   "cue_sentence": sum(1 for c in cues if c.get("granularity") == "sentence"),
                   "cue_split": sum(1 for c in cues if c.get("granularity") == "sentence-split"),
                   "cue_chunk": sum(1 for c in cues if c.get("granularity") == "chunk"),
+                  "cue_merged": sum(1 for c in cues if c.get("granularity") == "sentence-merged"),
                   "cue_tail_gap": cue_tail_gap,
                   "warnings": ([] if abs(cue_tail_gap) < 0.3 else
                                ["cue 末端与合并音频总长相差 %.3fs（段间可能有静音/拼接间隙）"
