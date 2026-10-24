@@ -5,7 +5,7 @@
   "title": "语音转字幕",
   "category": "分析",
   "description": "ASR 字幕 + A5 对白提取（含 role）：faster-whisper 本地转录 / OpenAI 兼容远程 / Gemini input_audio 直听 60s 窗；输出 SUBTITLE 与 dialogue[{start,end,role,text}]；可选 sherpa-onnx 说话人区分（speaker 字段）",
-  "version": "3.1.4",
+  "version": "3.1.5",
   "kind": "python",
   "runtime": "python",
   "entrypoint": "node.py",
@@ -270,7 +270,7 @@
   "signature": {
     "alg": "ed25519",
     "key_id": "a8998646b062c170",
-    "value": "bD57uACGQ09L0UiX6gu1x1DeqEPDar24+Puu6mDWAE8BbjJqQQn0GaBs7d1lmcqjK4f+853ZATrG+evqK3oMDA==",
+    "value": "pij24PvuE48OtgqU76BBfwM1vJoZqeR/FYSnVffIihzmwAiOZyZuh0DunzWMSMFRp8sT05gMYDTSXD8p+nHQDA==",
     "over": "manifest"
   }
 }

@@ -320,40 +320,60 @@ def parse_silencedetect(text: str, duration: float = 0.0) -> List[Tuple[float, f
 
 
 def punch_silences(rows: List[Dict[str, Any]], silences: List[Tuple[float, float]],
-                   tol: float = 0.05, min_keep: float = 0.1) -> int:
-    """把静默从行区间里"挖掉"（FW-DEV-46），返回修正的行数。
+                   tol: float = 0.05, min_keep: float = 0.1) -> Tuple[int, int]:
+    """把静默从行区间里"挖掉"（FW-DEV-46）。返回 (修正行数, 存疑未动的行数)。
 
-    两种形态都处理（现场是①）：
-      ① 行**跨过**整段静默：vad_filter=True 时 faster-whisper 把语音拼成连续流再转写，
-         restore_speech_timestamps 只把边界吸附回原时间轴，实测边界正好落在静默**结束**处
-         （行 0→8.94，静默 3.8→8.94）⇒ 整段静默被这一行吞掉；
-      ② 边界落在静默内部。
-    两种都是「越过静默起点的行尾截到静默起点，落在静默内的行首推到静默终点」。
-    整行都落在静默内的（幻觉行）不碰——不做删行这种不可逆动作。
-    连续语音没有静默段 ⇒ 一行都不动（不凭空造间隙）。
+    **安全规则（3.1.5，由 RMS 独立校验逼出来的）**：只有当一个行区间内**恰好**包含
+    一段完整静默时，才把行尾截到该静默起点，并在必要时把下一行行首推到静默终点。
+    一行内含 ≥2 段静默 ⇒ **不碰**，计入"存疑"。
+
+    为什么必须这么保守：`vad_filter=True` 时一行可能装两句语音。实测 i=28 的文本是
+    「但他们要找的,不是那个女人,」+「他们要找的是男主自己。」，而
+    260.164→265.627 与 267.670→273.142 两段静默**都在这一行内部**。
+    旧规则（逐段静默扫全表）把行尾截到第一段静默起点、下一行行首推到第二段静默终点，
+    于是 265.7–267.7 那句真人声被当成"间隙"——**凭空造出一段假静默**。
+    用与 silencedetect 无关的 RMS 尺子（punched 区间 vs 相邻语音，要求 ≥15 dB）
+    一测就露：37 段里 2 段不合格，恰好都是这种"一行多句"的位置。
+
+    安全规则只删除检测器判定为静默的音频（行尾→静默起点、下一行行首前的那段），
+    永不删除可能含语音的部分；代价是含多句的行保持原样（该处间隙仍为 0，
+    但不会被谎报成静默）。连续语音没有静默段 ⇒ 一行都不动。
     """
     punched = 0
-    for s, e in silences:
-        for row in rows:
+    ambiguous = 0
+    for i, row in enumerate(rows):
+        try:
+            rs = float(row.get("start", 0.0))
+            re_ = float(row.get("end", 0.0))
+        except (TypeError, ValueError):
+            continue
+        # 切点只能是**行尾所在的那一段静默**。旧规则按"行内第一段静默"切，
+        # 一行多句时会切在更早的静默上，把中间的真人声一起删掉。
+        host = [(s, e) for (s, e) in silences if s - tol <= re_ <= e + tol and e > s]
+        if not host:
+            continue
+        s, e = host[0]
+        nxt = rows[i + 1] if i + 1 < len(rows) else None
+        nstart = nend = None
+        if nxt is not None:
             try:
-                rs = float(row.get("start", 0.0))
-                re_ = float(row.get("end", 0.0))
+                nstart = float(nxt.get("start", 0.0))
+                nend = float(nxt.get("end", 0.0))
             except (TypeError, ValueError):
                 continue
-            if re_ <= s + tol:            # 整行在静默起点之前
-                continue
-            if rs >= e - tol:             # 整行在静默终点之后（rows 按时间有序）
-                break
-            if rs >= s + tol:             # 行首落在静默内 → 推到静默终点
-                if re_ - e >= min_keep:
-                    row["start"] = round(e, 3)
-                    punched += 1
-                continue
-            # 行首在静默之前、行尾越过静默起点 → 行尾截到静默起点
-            if s - rs >= min_keep:
-                row["end"] = round(s, 3)
-                punched += 1
-    return punched
+        # 安全前提（不满足就不动，计入存疑）：
+        #   ① 下一行不能在这段静默之前开始——否则两者之间还有语音；
+        #   ② 下一行必须在静默内或静默之后开始——否则静默之后那段语音没人覆盖。
+        if nstart is not None and not (s - tol <= nstart <= e + tol):
+            ambiguous += 1
+            continue
+        if s - rs < min_keep:
+            continue
+        row["end"] = round(s, 3)
+        punched += 1
+        if nxt is not None and nstart < e and nend - e >= min_keep:
+            nxt["start"] = round(e, 3)
+    return punched, ambiguous
 
 
 def _ffmpeg_probe_duration(src_path: str) -> Optional[float]:
@@ -466,7 +486,7 @@ class ASRNode(NodeBase):
                          widget="text",
                          description="sherpa-onnx 说话人区分模型目录（含 model.onnx/segmentation 与 embedding 模型）；留空自动探测 models/diarization"),
             ],
-            version="3.1.4",
+            version="3.1.5",
         )
 
     async def run(self, ctx: dict, inputs: dict, params: dict) -> Dict[str, Any]:
@@ -560,10 +580,16 @@ class ASRNode(NodeBase):
         if rows:
             silences, silence_info = await self._detect_silences(ctx, src_path)
             if silences:
-                silence_info["punched"] = punch_silences(rows, silences)
-                if not silence_info["punched"]:
+                punched, ambiguous = punch_silences(rows, silences)
+                silence_info["punched"] = punched
+                silence_info["ambiguous_rows"] = ambiguous
+                if not punched:
                     warnings.append(
-                        "静默 %d 段但没有任何行越界——分段已对齐，未改动" % len(silences))
+                        "静默 %d 段但没有任何行恰好跨一段静默——未改动行边界" % len(silences))
+                elif ambiguous:
+                    warnings.append(
+                        "%d 行内含 ≥2 段静默（一行多句），按安全规则未改动，该处间隙保持原值"
+                        % ambiguous)
             elif silence_info.get("error"):
                 warnings.append("静默检测失败（%s），本次不改行边界"
                                 % silence_info["error"])
