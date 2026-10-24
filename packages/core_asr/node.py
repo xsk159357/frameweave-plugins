@@ -556,6 +556,12 @@ class ASRNode(NodeBase):
             "word_count": sum(len(r.get("words") or []) for r in rows),
             "vad": vad,
             "word_timestamps": word_ts,
+            # 运行期真实值（不是入参回显）：local 由 faster-whisper/ctranslate2 实测属性给出，
+            # 远程引擎没有本地设备，写 n/a 并标来源，避免把「没跑在本地」写成 cpu。
+            "device": lang_info.get("device") if engine_used == "local" else "n/a",
+            "compute_type": lang_info.get("compute_type") if engine_used == "local" else "n/a",
+            "device_source": (lang_info.get("device_source")
+                              if engine_used == "local" else "remote_engine"),
             "window_seconds": window_seconds if engine_used == "gemini" else None,
             "media": {"path": src_path, "kind": getattr(src_asset, "kind", "")},
             "warnings": warnings,
@@ -592,7 +598,7 @@ class ASRNode(NodeBase):
         import asyncio
         warnings: List[str] = []
 
-        def _load():
+        def _load(force_cpu: bool = False):
             try:
                 from faster_whisper import WhisperModel
             except ImportError as e:
@@ -606,6 +612,8 @@ class ASRNode(NodeBase):
             ct = compute_type
             if dev == "cuda" and ct == "int8":
                 ct = "int8_float16"
+            if force_cpu:
+                dev, ct = "cpu", "int8"
             # 统一模型解析：本地模型目录（DATA_DIR/models / env / HF 缓存）优先于默认下载
             resolved = model
             try:
@@ -619,20 +627,49 @@ class ASRNode(NodeBase):
             except Exception:  # noqa: BLE001  解析失败不阻断本地转写
                 pass
             try:
-                return WhisperModel(resolved, device=dev, compute_type=ct)
+                return WhisperModel(resolved, device=dev, compute_type=ct), dev, ct
             except Exception as e:  # noqa: BLE001
                 if dev != "cpu":
                     warnings.append(f"{dev} 加载失败（{e}），回退 cpu/int8")
-                    return WhisperModel(resolved, device="cpu", compute_type="int8")
+                    return WhisperModel(resolved, device="cpu", compute_type="int8"), "cpu", "int8"
                 raise
 
-        model_obj = await asyncio.to_thread(_load)
+        model_obj, used_dev, used_ct = await asyncio.to_thread(_load)
+
+        # 运行期真实设备/精度：参数是「想要什么」，这两项必须是「实际跑在哪」。
+        # device=auto 会被解析成 cpu，cuda+int8 会被改成 int8_float16，加载或推理失败还会回退
+        # cpu/int8——回显入参会把几种情况写成同一个值，验收判据就分不出来。
+        # 取值以 ctranslate2 的 Translator.device / .compute_type 属性为准，取不到才退回分支用值。
+        def _runtime_dev_ct(m):
+            inner = getattr(m, "model", None)
+            d = getattr(inner, "device", None) if inner is not None else None
+            c = getattr(inner, "compute_type", None) if inner is not None else None
+            d = str(d) if d else None
+            c = str(c) if c else None
+            return (d or used_dev, c or used_ct,
+                    "runtime" if (d and c) else "branch")
+
         lang = None if language == "auto" else language
-        segments_iter, info = model_obj.transcribe(
-            src_path, language=lang, vad_filter=vad, word_timestamps=word_ts,
-            beam_size=5, condition_on_previous_text=False)
+
+        def _run(m):
+            it, inf = m.transcribe(src_path, language=lang, vad_filter=vad,
+                                   word_timestamps=word_ts, beam_size=5,
+                                   condition_on_previous_text=False)
+            return list(it), inf
+
+        try:
+            segs, info = await asyncio.to_thread(_run, model_obj)
+        except Exception as e:  # noqa: BLE001
+            # 设备类故障往往只到**推理**才暴露（例：cuda 模型加载正常，跑到 encode 才报
+            # cublas64_12.dll 缺失）。只在加载处兜底会让用户看到一条裸 DLL 错误，
+            # 所以推理失败也回退一次 cpu/int8，并让 report 的 device 反映真正跑的设备。
+            if used_dev == "cpu":
+                raise
+            warnings.append(f"{used_dev} 推理失败（{type(e).__name__}: {e}），回退 cpu/int8 重跑")
+            model_obj, used_dev, used_ct = await asyncio.to_thread(_load, True)
+            segs, info = await asyncio.to_thread(_run, model_obj)
+
         rows: List[Dict[str, Any]] = []
-        segs = list(segments_iter)
         total = max(len(segs), 1)
         for i, seg in enumerate(segs):
             row: Dict[str, Any] = {
@@ -660,6 +697,10 @@ class ASRNode(NodeBase):
             if getattr(info, "language_probability", None) is not None else None,
             "duration": round(float(info.duration), 3) if getattr(info, "duration", None) else None,
         }
+        dev_rt, ct_rt, dev_src = _runtime_dev_ct(model_obj)
+        lang_info["device"] = dev_rt
+        lang_info["compute_type"] = ct_rt
+        lang_info["device_source"] = dev_src
         progress(1.0)
         return rows, lang_info, warnings
 
