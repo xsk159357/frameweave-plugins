@@ -5,7 +5,7 @@
   "title": "分块视觉分析（A4）",
   "category": "分析",
   "description": "chunks + video → descriptions JSON（shot_type/visual_description/audio_content）；并发≤5、解析重试 3、JSON schema 校验；接入 ai_narrate 零关键帧省 Token 路径",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "kind": "python",
   "runtime": "python",
   "entrypoint": "node.py",

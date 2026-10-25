@@ -104,7 +104,10 @@ def _resolve_secret(ctx: Any, raw: str) -> str:
     if not raw or not str(raw).startswith("@secret:"):
         return str(raw or "")
     ref = str(raw).split(":", 1)[1]
-    resolver = ctx.get("resolve_secret") if isinstance(ctx, dict) else None
+    # C 链根因②（2026-10-26）：isinstance(ctx, dict) 对 WorkerContext 恒 False
+    # （映射协议而非 dict）→ 恒走 fallback 直读 app.secrets（worker 进程）。
+    # 改鸭子类型：worker 侧命中 WorkerContext.resolve_secret（RPC 回宿主）。
+    resolver = ctx.get("resolve_secret") if hasattr(ctx, "get") else None
     if resolver is not None:
         return str(resolver(ref) or "")
     from app.secrets import read_secret
@@ -277,7 +280,7 @@ class AnalyzeChunksNode(NodeBase):
                 PortSpec("max_tokens", PortType.INT, label="最大 Token", default=1024, widget="number"),
                 PortSpec("json_schema", PortType.BOOL, label="JSON schema 校验", default=True, widget="toggle"),
             ],
-            version="1.0.0",
+            version="1.0.1",
         )
 
     async def _analyze_one(self, ctx: dict, chunk: Dict[str, Any], idx: int, total: int,
@@ -490,7 +493,7 @@ class AnalyzeChunksNode(NodeBase):
         report = {
             "ok": True,
             "tool": "core/analyze_chunks",
-            "version": "1.0.0",
+            "version": "1.0.1",
             "chunk_count": len(rows),
             "failed_chunks": failed_chunks,
             "params": {
