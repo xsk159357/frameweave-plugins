@@ -1,13 +1,12 @@
 {
   "tpl_id": "jsm_video_narration",
   "name": "视频解说 · 影视解说全链",
-  "description": "导入视频一键出片：场景检测→智能分块→分块分析→ASR→场景对白融合→AI解说→文案画面匹配→TTS→字幕→渲染→剪映/Premiere导出；可选原声穿插变体（保留原声决策→双轨混音布局→OST穿插）。items:JSON 批次信封（load_video.paths）与直连 video 单条双路。",
+  "description": "导入视频后按流程跑到成片：场景检测→智能分块→分块分析→ASR→场景对白融合→AI解说→文案画面匹配→TTS→字幕→渲染→剪映/Premiere导出；可选原声穿插变体（保留原声决策→双轨混音布局→OST穿插）。items:JSON 批次信封（load_video.paths）与直连 video 单条双路。",
   "version": "1.0.0",
   "kind": "workflow",
   "tags": [
     "解说猫复刻",
     "影视解说",
-    "一键出片",
     "官方"
   ],
   "nodes": [
@@ -238,11 +237,12 @@
         "max_concurrent": 5,
         "retries": 3,
         "merge_audio": true,
-        "ffmpeg_path": ""
+        "ffmpeg_path": "",
+        "place_by_start": true
       },
       "status": "pending",
       "inputs": {
-        "script": "n7"
+        "segments": "n7"
       }
     },
     {
@@ -273,13 +273,13 @@
       "y": 300,
       "params": {
         "aspect": "16:9",
-        "resolution": "1080p",
-        "fps": 30,
+        "resolution": "1280x544",
+        "fps": 24,
         "burn_subtitle": true,
-        "transition": "fade",
-        "transition_duration": 0.5,
+        "transition": "cut",
+        "transition_duration": 0,
         "scale_mode": "contain",
-        "audio_mix": "narration_only",
+        "audio_mix": "mix",
         "narration_volume": 1.0,
         "original_volume": 0.35,
         "bgm_volume": 0.3,
@@ -293,7 +293,8 @@
         "video": "n1",
         "segments": "n2",
         "audio": "n9",
-        "styled_subtitle": "n10"
+        "styled_subtitle": "n10",
+        "layout": "n14"
       }
     },
     {
@@ -474,12 +475,6 @@
       "targetHandle": "scenes"
     },
     {
-      "source": "n7",
-      "target": "n9",
-      "sourceHandle": "script",
-      "targetHandle": "script"
-    },
-    {
       "source": "n9",
       "target": "n10",
       "sourceHandle": "subtitles",
@@ -580,6 +575,18 @@
       "target": "n12",
       "sourceHandle": "mixed_timeline",
       "targetHandle": "timeline"
+    },
+    {
+      "source": "n7",
+      "sourceHandle": "narration",
+      "target": "n9",
+      "targetHandle": "segments"
+    },
+    {
+      "source": "n14",
+      "sourceHandle": "layout",
+      "target": "n11",
+      "targetHandle": "layout"
     }
   ]
 }
