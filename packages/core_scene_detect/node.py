@@ -188,36 +188,89 @@ def _transnet_blocker_error(supply: Dict[str, Any]) -> "Exception":
              f"warnings={supply.get('warnings')}"))
 
 
+_last_run_via: str = ""          # 最近一次 _run 走的路（日志用，不参与逻辑）
+
+
+def _sd_log(level: str, msg: str) -> None:
+    """按 UTF-8 **字节**写 stderr（冻结进程 stderr 跟控制台代码页 —— FW-DEV-63 同族）。"""
+    line = "[scene_detect] %s %s\n" % (level, msg)
+    try:
+        import sys as _sys
+        buf = getattr(_sys.stderr, "buffer", None)
+        if buf is not None:
+            buf.write(line.encode("utf-8"))
+            buf.flush()
+            return
+    except Exception:  # noqa: BLE001
+        pass
+    try:
+        print(line.rstrip("\n"))
+    except Exception:  # noqa: BLE001
+        pass
+
+
 async def _run(cmd: List[str], ctx: Any = None, timeout: float = 900.0) -> Any:
     """执行子进程并捕获输出；平台 run_tracked（dict 或 dict 风格 ctx）先短预算试探，失败回退 subprocess.run。
 
     参数序遵循平台迁移契约 _run(cmd, ctx)（T6.12g 回归校验托管路径）。
+
+    FW-DEV-72（同日）：**只加日志，不改逻辑**。历史上这里 `except Exception: pass` 之后
+    静默回落到本地 subprocess，本地在 worker 里同样跑不成时，异常又被 `_probe` 吞掉，
+    最终只剩一句「无法探测视频时长」——没人能回答"是找不到 ffprobe、还是被门控拒了"。
+    现在三条路都留一句话（走哪条 / run_tracked 抛了什么 / 本地失败原话）。
     """
     import asyncio
     import subprocess as _sp
+    global _last_run_via
     rt = None
     if ctx is not None:
         rt = ctx.get("run_tracked") if hasattr(ctx, "get") else getattr(ctx, "run_tracked", None)
     if rt is not None:
         try:
-            return await rt(cmd, timeout=min(float(timeout), 6.0), text=True,
-                            stdout=_sp.PIPE, stderr=_sp.PIPE)
-        except TypeError:
+            out = await rt(cmd, timeout=min(float(timeout), 6.0), text=True,
+                           stdout=_sp.PIPE, stderr=_sp.PIPE)
+            _last_run_via = "run_tracked"
+            return out
+        except TypeError as e:
             # 兼容不接受 stdout/stderr 的 run_tracked 实现（如平台迁移测试 mock）
+            _sd_log("WARN", "run_tracked 不接受 stdout/stderr（TypeError: %s），改用精简调用"
+                    % str(e)[:100])
             try:
-                return await rt(cmd, timeout=min(float(timeout), 6.0), text=True)
-            except Exception:  # noqa: BLE001
-                pass
-        except Exception:  # noqa: BLE001
-            pass
-    return await asyncio.to_thread(
-        lambda: _sp.run(cmd, capture_output=True, timeout=timeout))
+                out = await rt(cmd, timeout=min(float(timeout), 6.0), text=True)
+                _last_run_via = "run_tracked(no-pipe-kwargs)"
+                return out
+            except Exception as e2:  # noqa: BLE001
+                _sd_log("WARN", "run_tracked 精简调用也失败（%s: %s），回落本地执行"
+                        % (type(e2).__name__, str(e2)[:100]))
+        except Exception as e:  # noqa: BLE001
+            _sd_log("WARN", "run_tracked 失败（%s: %s），回落本地执行"
+                    % (type(e).__name__, str(e)[:100]))
+    else:
+        _sd_log("WARN", "ctx 里没有 run_tracked，直接本地执行（平台托管/门控/超时保护全部绕过）")
+
+    try:
+        out = await asyncio.to_thread(
+            lambda: _sp.run(cmd, capture_output=True, timeout=timeout))
+    except Exception as e:  # noqa: BLE001
+        _last_run_via = "local(失败)"
+        _sd_log("WARN", "本地执行也失败（%s: %s）；cmd=%r"
+                % (type(e).__name__, str(e)[:200], cmd[:3]))
+        raise
+    rc = int(getattr(out, "returncode", 0) or 0)
+    _last_run_via = "local(rc=%d)" % rc
+    if rc != 0:
+        err = getattr(out, "stderr", b"") or b""
+        if isinstance(err, (bytes, bytearray)):
+            err = bytes(err).decode("utf-8", "replace")
+        _sd_log("WARN", "本地执行返回 rc=%d；stderr 前 200 字节：%r" % (rc, str(err)[:200]))
+    return out
 
 
 async def _probe(video_path: str, ctx: Any) -> Tuple[float, float]:
-    """返回 (duration, fps)；探测失败返回 (0.0, 0.0)。"""
+    """返回 (duration, fps)；探测失败返回 (0.0, 0.0)（但必然留一条 WARN/INFO）。"""
     exe = find_ffprobe()
     if exe is None:
+        _sd_log("WARN", "找不到 ffprobe（deps.resolve_binary 未就绪），无法探测时长")
         return 0.0, 0.0
     try:
         out = await _run([exe, "-v", "quiet", "-print_format", "json",
@@ -245,8 +298,22 @@ async def _probe(video_path: str, ctx: Any) -> Tuple[float, float]:
                     except (TypeError, ValueError):
                         fps = 0.0
                 break
+        if dur > 0:
+            _sd_log("INFO", "时长探测成功 duration=%.3f fps=%.3f via=%s ffprobe=%r media=%r"
+                    % (dur, fps, _last_run_via or "?", exe, video_path))
+        else:
+            raw = out.stdout or ""
+            if isinstance(raw, (bytes, bytearray)):
+                raw = bytes(raw).decode("utf-8", "replace")
+            _sd_log("WARN", "时长探测得到 duration<=0：via=%s rc=%s stdout_len=%d stdout_head=%r "
+                            "stderr_head=%r ffprobe=%r media=%r"
+                    % (_last_run_via or "?", getattr(out, "returncode", None), len(str(raw)),
+                       str(raw)[:120], str(getattr(out, "stderr", ""))[:120], exe, video_path))
         return dur, fps
-    except Exception:  # noqa: BLE001
+    except Exception as e:  # noqa: BLE001 —— 失败返回 0，但必须说清原因
+        _sd_log("WARN", "时长探测异常 %s: %s via=%s ffprobe=%r media=%r exists=%s"
+                % (type(e).__name__, str(e)[:200], _last_run_via or "?", exe, video_path,
+                   os.path.isfile(str(video_path))))
         return 0.0, 0.0
 
 
@@ -628,7 +695,7 @@ class SceneDetectNode(NodeBase):
                                      "注意：仅有模型不够——PyTorch 变体还需要 torch（安装版不含），"
                                      "详见报告 dependency.transnetv2.blockers"),
             ],
-            version="2.1.0",
+            version="2.1.1",
         )
 
     async def run(self, ctx: dict, inputs: dict, params: dict) -> Dict[str, Any]:

@@ -5,7 +5,7 @@
   "title": "场景检测",
   "category": "分析",
   "description": "镜头/场景切分：ffmpeg 帧差（默认）+ 可选 TransNetV2；输出候选与后处理两级片段",
-  "version": "2.1.0",
+  "version": "2.1.1",
   "kind": "python",
   "runtime": "python",
   "entrypoint": "node.py",
@@ -179,7 +179,7 @@
   "signature": {
     "alg": "ed25519",
     "key_id": "a8998646b062c170",
-    "value": "urxD8LkzfiOCbGhIh4MsgiESa4yOpcnSwLB5VCBvU+MuEGpvJ/Rdji49Wwzsg2eAe71/+4YKoUn+34+FKWOCDg==",
+    "value": "p5n0+iX5Ta5QhGq4fKVIONxHYS1R0UwaErSzU5dUfvX0IiVg1Am8S0/ACs53TvOVCfVwOf6zULWcmuV1kZCjCQ==",
     "over": "manifest"
   }
 }
