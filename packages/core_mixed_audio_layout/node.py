@@ -149,9 +149,16 @@ def build_layout(rich_scenes: Any, narration_items: Any, padding_before: float,
     } for c in clips]
     narration_mute_ranges = merge_ranges([(c["start"], c["end"]) for c in clips])
     # 原声轨静音 = 旁白**发声**区间 [start, start+duration)，不是旁白窗口 [start, end)。
-    # 旧版用 (n["start"], n["end"]) ⇒ 窗口内没在说话的时段也把原声静掉（300 s 实测误静 94.46%）。
+    # 旧版用 (n["start"], n["end"]) ⇒ 窗口内没在说话的时段也把原声静掉（300 s 实测误静 100%）。
     original_mute_ranges = merge_ranges(
         [(n["start"], round(n["start"] + n["duration"], 3)) for n in narration])
+    # 统计口径（B6）：clips 之间会因 padding 自重叠，**原始相加 ≠ 真实原声长度**。
+    # 任何"被静音比例"的分母必须是 merged，否则比例系统性偏小
+    # （300 s 实测：raw 56.900 / merged 53.750，同一件事算出 94.46% 与 100% 两个数）。
+    _clip_ranges = [(c["start"], c["end"]) for c in clips]
+    _merged_clip_ranges = merge_ranges(_clip_ranges)
+    _raw_original = round(sum(e - s for s, e in _clip_ranges), 3)
+    _merged_original = round(sum(e - s for s, e in _merged_clip_ranges), 3)
     stats = {
         "narration_count": len(narration),
         "original_count": len(clips),
@@ -159,7 +166,11 @@ def build_layout(rich_scenes: Any, narration_items: Any, padding_before: float,
         "total_narration_duration": round(sum(n["duration"] for n in narration), 3),
         "total_narration_window_duration": round(
             sum(n.get("window_duration", n["end"] - n["start"]) for n in narration), 3),
-        "total_original_duration": round(sum(c["end"] - c["start"] for c in clips), 3),
+        # 旧字段保持 raw 语义（向后兼容），比例请用 total_original_duration_merged
+        "total_original_duration": _raw_original,
+        "total_original_duration_raw": _raw_original,
+        "total_original_duration_merged": _merged_original,
+        "original_self_overlap": round(_raw_original - _merged_original, 3),
         "narration_mute_ranges": len(narration_mute_ranges),
         "original_mute_ranges": len(original_mute_ranges),
     }
@@ -206,7 +217,7 @@ class MixedAudioLayoutNode(NodeBase):
                 PortSpec(name="fade", type=PortType.FLOAT, label="原声淡入淡出(秒)", default=0.1,
                          widget="number"),
             ],
-            version="1.0.1",
+            version="1.0.2",
         )
 
     async def run(self, ctx, inputs, params) -> Dict[str, Any]:
@@ -297,8 +308,19 @@ def _run_selftest() -> int:
     assert l3["narration_track"][1]["duration_source"] == "window"
     assert l3["stats"]["total_narration_duration"] == 8.436, l3["stats"]
     assert l3["stats"]["total_narration_window_duration"] == 138.791, l3["stats"]
+    # 统计口径（B6）：clips 自重叠时 raw ≠ merged，比例必须用 merged
+    rich_ov = {"schema_version": 1, "scenes": [{"index": 0, "dialogues": [
+        {"id": 0, "text": "a", "start": 1.0, "end": 2.0, "keep": True},
+        {"id": 1, "text": "b", "start": 1.5, "end": 2.5, "keep": True},
+    ]}]}
+    l4 = build_layout(rich_ov, [], 0.05, 0.1, 50, 0.1)
+    # clips = [0.95,2.1] 与 [1.45,2.6] → raw 2.300 / merged 1.650 / 自重叠 0.650
+    assert l4["stats"]["total_original_duration_raw"] == 2.3, l4["stats"]
+    assert l4["stats"]["total_original_duration_merged"] == 1.65, l4["stats"]
+    assert l4["stats"]["original_self_overlap"] == 0.65, l4["stats"]
+    assert l4["stats"]["total_original_duration"] == 2.3, l4["stats"]  # 旧字段保持 raw
     print("[B7 selftest] OK: 原声裁剪 padding/互斥区间/斜坡字段/无 keep 语义/"
-          "发声区间(tts_duration 优先, 缺失回退窗口) 均通过")
+          "发声区间(tts_duration 优先, 缺失回退窗口)/统计口径(raw vs merged) 均通过")
     return 0
 
 
