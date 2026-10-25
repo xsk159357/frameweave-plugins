@@ -4,7 +4,10 @@
 - 原声裁剪（calculate_all_original_clips）：入点=对话 start - padding_before（默认 0.05），
   出点=end + padding_after（默认 0.1）；fade_in/fade_out=0.1（OriginalAudioClip 契约）。
 - 互斥静音规则（r2 §5.2 实测）：原声播→解说轨静音（narration_mute_ranges=原声时间区间）；
-  解说播→原声轨静音（original_mute_ranges=解说时间区间）。
+  解说播→原声轨静音（original_mute_ranges=**旁白发声区间**，不是旁白窗口）。
+  发声区间 = [start, start + tts_duration)；只有拿不到 tts_duration 时才回退窗口 end-start。
+  为什么：窗口是"这一段属于哪个叙事单元"，不是"这段一直在说话"——300 s 实测
+  segment 0 窗口 137.291 s 只发声 6.936 s，用窗口会让 56.900 s 原声被静掉 53.750 s（94.46%）。
 - 斜坡：每静音区间 4 帧 ±ramp_ms（默认 50ms），与 core_draft_export jy_builder._volume_keyframes
   完全一致（r4 §2.13：t-50ms→1.0, t→0.0, t_end→0.0, t_end+50ms→1.0）。
 - 纯确定性：无 LLM；输出 layout 供 draft_export（layout 输入）/ 渲染层消费。
@@ -23,6 +26,26 @@ def _num(v: Any, dflt: float = 0.0) -> float:
         return float(v)
     except (TypeError, ValueError):
         return dflt
+
+
+# 发声时长的字段优先级：TTS 实测 > 通用 duration > 回退窗口长度
+_VOICED_KEYS = ("tts_duration", "voiced_duration", "duration")
+
+
+def _voiced_duration(raw: Dict[str, Any], st: float, en: float) -> Tuple[float, str]:
+    """取这一段旁白**真正发声**的时长，返回 (时长, 来源字段名)。
+
+    why：narration 的 ``start``/``end`` 是**叙事窗口**，不是"这段一直在说话"。
+    优先 ``tts_duration``（core/ai_narrate 逐条产出，或 TTS ``marks.segments[i].duration``
+    实测值），其次 ``duration``；两者都没有才回退窗口长度 ``en - st``（旧语义，逐位不变）。
+    """
+    for key in _VOICED_KEYS:
+        if raw.get(key) is None:
+            continue
+        v = _num(raw.get(key), -1.0)
+        if v > 0:
+            return round(v, 3), key
+    return round(max(en - st, 0.0), 3), "window"
 
 
 def merge_ranges(ranges: List[Tuple[float, float]], gap: float = 0.0) -> List[List[float]]:
@@ -76,7 +99,11 @@ def calculate_original_clips(rich_scenes: Any, padding_before: float = 0.05,
 
 
 def normalize_narration_items(items: Any) -> List[Dict[str, Any]]:
-    """归一化解说时间线：[{segment_index, text, start, end}] → narration_track 条目。"""
+    """归一化解说时间线：[{segment_index, text, start, end, tts_duration?}] → narration_track 条目。
+
+    ``start``/``end`` 保留为**窗口**，``duration`` 是**发声时长**（优先 tts_duration），
+    ``window_duration`` 另存窗口长度供对账。两者不一致时以 duration 为准去静音。
+    """
     out: List[Dict[str, Any]] = []
     if items is None:
         return out
@@ -90,13 +117,17 @@ def normalize_narration_items(items: Any) -> List[Dict[str, Any]]:
         st, en = _num(raw.get("start")), _num(raw.get("end"))
         if en <= st:
             continue
+        voiced, source = _voiced_duration(raw, st, en)
         out.append({
             "type": "narration",
             "segment_index": int(raw.get("segment_index", raw.get("index", i))),
             "text": str(raw.get("text") or ""),
             "start": round(st, 3),
             "end": round(en, 3),
-            "duration": round(en - st, 3),
+            # 发声时长（旧版这里是 en-st，会把 tts_duration 吞掉）
+            "duration": voiced,
+            "duration_source": source,
+            "window_duration": round(en - st, 3),
         })
     out.sort(key=lambda x: (x["start"], x["end"]))
     return out
@@ -117,11 +148,17 @@ def build_layout(rich_scenes: Any, narration_items: Any, padding_before: float,
         "fade_in": c["fade_in"], "fade_out": c["fade_out"],
     } for c in clips]
     narration_mute_ranges = merge_ranges([(c["start"], c["end"]) for c in clips])
-    original_mute_ranges = merge_ranges([(n["start"], n["end"]) for n in narration])
+    # 原声轨静音 = 旁白**发声**区间 [start, start+duration)，不是旁白窗口 [start, end)。
+    # 旧版用 (n["start"], n["end"]) ⇒ 窗口内没在说话的时段也把原声静掉（300 s 实测误静 94.46%）。
+    original_mute_ranges = merge_ranges(
+        [(n["start"], round(n["start"] + n["duration"], 3)) for n in narration])
     stats = {
         "narration_count": len(narration),
         "original_count": len(clips),
+        # 发声总长（旧版此处 = 窗口总长，因为 duration 被重算过）
         "total_narration_duration": round(sum(n["duration"] for n in narration), 3),
+        "total_narration_window_duration": round(
+            sum(n.get("window_duration", n["end"] - n["start"]) for n in narration), 3),
         "total_original_duration": round(sum(c["end"] - c["start"] for c in clips), 3),
         "narration_mute_ranges": len(narration_mute_ranges),
         "original_mute_ranges": len(original_mute_ranges),
@@ -169,7 +206,7 @@ class MixedAudioLayoutNode(NodeBase):
                 PortSpec(name="fade", type=PortType.FLOAT, label="原声淡入淡出(秒)", default=0.1,
                          widget="number"),
             ],
-            version="1.0.0",
+            version="1.0.1",
         )
 
     async def run(self, ctx, inputs, params) -> Dict[str, Any]:
@@ -204,8 +241,10 @@ class MixedAudioLayoutNode(NodeBase):
             "ramp_ms": layout["ramp_ms"],
             "padding": {"before": padding_before, "after": padding_after},
             "stats": layout["stats"],
-            "note": "互斥静音：原声播→解说轨静音(narration_mute_ranges)；解说播→原声轨静音(original_mute_ranges)；"
-                    "斜坡 ±%dms 与 jy_builder 语义一致" % layout["ramp_ms"],
+            "note": "互斥静音：原声播→解说轨静音(narration_mute_ranges)；解说播→原声轨静音"
+                    "(original_mute_ranges=旁白**发声**区间 [start, start+duration))；"
+                    "斜坡 ±%dms（jy_builder._volume_keyframes 当前硬编码 50 ms，"
+                    "ramp_ms≠50 时草稿侧不生效，见立项②）" % layout["ramp_ms"],
             "finished_at": time.time(),
         }
         report_asset = store.save_asset(
@@ -244,7 +283,22 @@ def _run_selftest() -> int:
         {"index": 0, "dialogues": [{"id": 0, "text": "x", "start": 1.0, "end": 2.0, "keep": False}]}]}
     l2 = build_layout(rich2, narr, 0.05, 0.1, 50, 0.1)
     assert l2["original_track"] == [] and l2["narration_mute_ranges"] == []
-    print("[B7 selftest] OK: 原声裁剪 padding/互斥区间/斜坡字段/无 keep 语义 均通过")
+    # 发声口径（1.0.1）：window=137.291 / tts_duration=6.936 时，静音只覆盖 [2.167, 9.103)
+    narration_long = [
+        {"segment_index": 0, "text": "长窗口", "start": 2.167, "end": 139.458,
+         "tts_duration": 6.936},
+        {"segment_index": 1, "text": "无 tts，回退窗口", "start": 140.0, "end": 141.5},
+    ]
+    l3 = build_layout({"scenes": []}, narration_long, 0.05, 0.1, 50, 0.1)
+    assert l3["original_mute_ranges"] == [[2.167, 9.103], [140.0, 141.5]], l3["original_mute_ranges"]
+    assert l3["narration_track"][0]["duration"] == 6.936
+    assert l3["narration_track"][0]["duration_source"] == "tts_duration"
+    assert l3["narration_track"][0]["window_duration"] == 137.291
+    assert l3["narration_track"][1]["duration_source"] == "window"
+    assert l3["stats"]["total_narration_duration"] == 8.436, l3["stats"]
+    assert l3["stats"]["total_narration_window_duration"] == 138.791, l3["stats"]
+    print("[B7 selftest] OK: 原声裁剪 padding/互斥区间/斜坡字段/无 keep 语义/"
+          "发声区间(tts_duration 优先, 缺失回退窗口) 均通过")
     return 0
 
 

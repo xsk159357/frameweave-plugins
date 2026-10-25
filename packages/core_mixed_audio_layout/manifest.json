@@ -5,7 +5,7 @@
   "title": "双轨混音布局",
   "category": "剪辑",
   "description": "B7：解说轨+原声轨互斥静音布局（±50ms 斜坡），原声裁剪（padding 0.05/0.1），输出可导入剪映/渲染",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "kind": "python",
   "runtime": "python",
   "entrypoint": "node.py",
