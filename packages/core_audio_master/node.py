@@ -37,19 +37,52 @@ def _ffprobe_bin(ffmpeg: str) -> str:
     return r["path"] if r["ready"] else "ffprobe"
 
 
+def _am_warn(msg: str) -> None:
+    """UTF-8 字节写 stderr（冻结进程 stderr 跟控制台代码页 —— FW-DEV-63 同族）。"""
+    line = "[audio_master] WARN " + str(msg) + chr(10)
+    try:
+        import sys as _sys
+        buf = getattr(_sys.stderr, "buffer", None)
+        if buf is not None:
+            buf.write(line.encode("utf-8"))
+            buf.flush()
+            return
+    except Exception:  # noqa: BLE001
+        pass
+    try:
+        print(line.rstrip())
+    except Exception:  # noqa: BLE001
+        pass
+
+
 async def _probe(ctx, ffmpeg_path: str, media_path: str) -> Dict[str, Any]:
-    """ffprobe 元数据（run_tracked 默认继承 stdout，须显式 PIPE 捕获）。"""
+    """ffprobe 元数据（run_tracked 默认继承 stdout，须显式 PIPE 捕获）。
+
+    FW-DEV-72 变体 B：`-show_streams` 的输出实测 5,031 B > worker 的 4,000 字符诊断尾巴
+    （app/worker/supervisor.py:95 `_TAIL_LIMIT=4000`）⇒ 只拿尾巴时 `json.loads` 报
+    「Extra data」，旧代码 `except JSONDecodeError: return {}` 又把原因吞了。
+    有 `run_tracked_full` 就走全文；拿不到时至少说清"被截断了"。
+    """
     import subprocess as _sp
     ffmpeg = _resolve_ffmpeg(ffmpeg_path)
     ffprobe = _ffprobe_bin(ffmpeg)
-    out = await ctx["run_tracked"](
-        [ffprobe, "-v", "quiet", "-print_format", "json", "-show_format", "-show_streams", media_path],
-        timeout=60, stdout=_sp.PIPE, stderr=_sp.PIPE)
+    cmd = [ffprobe, "-v", "quiet", "-print_format", "json",
+           "-show_format", "-show_streams", media_path]
+    full = ctx.get("run_tracked_full") if isinstance(ctx, dict) else None
+    if full is not None:
+        out = await full(cmd, timeout=60)
+    else:
+        out = await ctx["run_tracked"](cmd, timeout=60, stdout=_sp.PIPE, stderr=_sp.PIPE)
+    if getattr(out, "truncated", False):
+        _am_warn("ffprobe 输出被截断（worker 诊断尾巴 raw_len=%r），元数据可能不完整；"
+                 "平台未提供 run_tracked_full" % (getattr(out, "raw_length", None),))
     if out.returncode != 0 or not out.stdout:
         return {}
     try:
         data = json.loads(stdout_text(out))
-    except json.JSONDecodeError:
+    except json.JSONDecodeError as e:
+        _am_warn("ffprobe 输出解析失败（%s）；stdout_len=%d head=%r"
+                 % (e, len(stdout_text(out)), stdout_text(out)[:120]))
         return {}
     fmt = data.get("format", {})
     meta: Dict[str, Any] = {"duration": None, "bitrate": fmt.get("bit_rate", "")}
@@ -151,7 +184,7 @@ class AudioMasterNode(NodeBase):
                 PortSpec(name="ffmpeg_path", type=PortType.STRING, label="ffmpeg 路径", default="",
                          widget="text"),
             ],
-            version="1.0.1",
+            version="1.0.2",
         )
 
     async def run(self, ctx, inputs, params) -> Dict[str, Any]:

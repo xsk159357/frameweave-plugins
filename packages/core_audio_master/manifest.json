@@ -5,7 +5,7 @@
   "title": "音频母带",
   "category": "音频",
   "description": "响度/音量/限幅/静音缩短/边缘静音裁剪 FFmpeg 滤镜链，输出前/后量测报告（峰值/RMS/LUFS）",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "kind": "python",
   "runtime": "python",
   "entrypoint": "node.py",
@@ -183,7 +183,7 @@
   "signature": {
     "alg": "ed25519",
     "key_id": "a8998646b062c170",
-    "value": "Qpx9e/FNMf8QbOlTyJ/+gmGPhXKLb1b1g0yK6UbKCBnLFTatifvU++kmmWUgIpZ3gaJtjPICSVwdqrhYewkWDQ==",
+    "value": "TFx/4L79eImcYHcpztzMsZMrV1Jjko21hCjM1/g79AfvtoyUMAM8rzuGiWKQVX82paHtvXp7XA9iSsmgVODUBg==",
     "over": "manifest"
   }
 }

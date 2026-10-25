@@ -209,7 +209,8 @@ def _sd_log(level: str, msg: str) -> None:
         pass
 
 
-async def _run(cmd: List[str], ctx: Any = None, timeout: float = 900.0) -> Any:
+async def _run(cmd: List[str], ctx: Any = None, timeout: float = 900.0,
+                   full: bool = False) -> Any:
     """执行子进程并捕获输出；平台 run_tracked（dict 或 dict 风格 ctx）先短预算试探，失败回退 subprocess.run。
 
     参数序遵循平台迁移契约 _run(cmd, ctx)（T6.12g 回归校验托管路径）。
@@ -223,8 +224,22 @@ async def _run(cmd: List[str], ctx: Any = None, timeout: float = 900.0) -> Any:
     import subprocess as _sp
     global _last_run_via
     rt = None
+    rt_full = None
     if ctx is not None:
         rt = ctx.get("run_tracked") if hasattr(ctx, "get") else getattr(ctx, "run_tracked", None)
+        rt_full = (ctx.get("run_tracked_full") if hasattr(ctx, "get")
+                   else getattr(ctx, "run_tracked_full", None))
+    # FW-DEV-72 变体 B：worker 的 run_tracked 只回 4,000 字符**诊断尾巴**
+    # （app/worker/supervisor.py:95 _TAIL_LIMIT=4000）；ffprobe -show_streams 实测 5,031 B
+    # ⇒ json.loads 报 Extra data ⇒ 旧代码吞掉 ⇒ duration=0。要不截断就必须走 full。
+    if full and rt_full is not None:
+        try:
+            out = await rt_full(cmd, timeout=min(float(timeout), 60.0))
+            _last_run_via = "run_tracked_full"
+            return out
+        except Exception as e:  # noqa: BLE001
+            _sd_log("WARN", "run_tracked_full 失败（%s: %s），退回 run_tracked/本地"
+                    % (type(e).__name__, str(e)[:100]))
     if rt is not None:
         try:
             out = await rt(cmd, timeout=min(float(timeout), 6.0), text=True,
@@ -274,7 +289,13 @@ async def _probe(video_path: str, ctx: Any) -> Tuple[float, float]:
         return 0.0, 0.0
     try:
         out = await _run([exe, "-v", "quiet", "-print_format", "json",
-                          "-show_entries", "format=duration", "-show_streams", video_path], ctx)
+                          "-show_entries", "format=duration", "-show_streams", video_path], ctx,
+                         full=True)
+        if getattr(out, "truncated", False):
+            # 只有在拿不到 run_tracked_full 时才会走到这里：尾巴被截 ⇒ 明确说清，不再静默
+            _sd_log("WARN", "ffprobe 输出被截断（worker 诊断尾巴，raw_len=%r），"
+                            "本次解析可能失败；请确认平台提供 run_tracked_full"
+                    % (getattr(out, "raw_length", None),))
         data = json.loads(out.stdout or "{}")
         dur = 0.0
         try:
@@ -695,7 +716,7 @@ class SceneDetectNode(NodeBase):
                                      "注意：仅有模型不够——PyTorch 变体还需要 torch（安装版不含），"
                                      "详见报告 dependency.transnetv2.blockers"),
             ],
-            version="2.1.1",
+            version="2.1.2",
         )
 
     async def run(self, ctx: dict, inputs: dict, params: dict) -> Dict[str, Any]:
