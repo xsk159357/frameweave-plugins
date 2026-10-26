@@ -1,0 +1,45 @@
+{
+  "schema_version": 2,
+  "engine_api": "1.0",
+  "kind": "python",
+  "runtime": "python",
+  "entrypoint": "node.py",
+  "type_id": "core/text_length",
+  "title": "文本长度",
+  "category": "控制",
+  "description": "内置基础节点：统计文本长度（离线可用）",
+  "version": "1.0.0",
+  "class_name": "TextLengthNode",
+  "inputs": [
+    {
+      "name": "text",
+      "type": "STRING",
+      "label": "文本",
+      "required": false,
+      "default": null,
+      "widget": "text",
+      "options": [],
+      "description": ""
+    }
+  ],
+  "outputs": [
+    {
+      "name": "length",
+      "type": "INT",
+      "label": "长度",
+      "required": true,
+      "default": null,
+      "widget": "text",
+      "options": [],
+      "description": ""
+    }
+  ],
+  "params": [],
+  "permission": {},
+  "signature": {
+    "alg": "ed25519",
+    "key_id": "a8998646b062c170",
+    "value": "GUOShbyY9znCgqnR6hXwFTmXaQ9HmnZVhv4P9Ya0FG9zJcpq4PNHZkrzlF3ysmhPsXLTNgewOsixaiVL28hrAQ==",
+    "over": "manifest"
+  }
+}

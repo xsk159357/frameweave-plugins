@@ -1,0 +1,45 @@
+{
+  "schema_version": 2,
+  "engine_api": "1.0",
+  "kind": "python",
+  "runtime": "python",
+  "entrypoint": "node.py",
+  "type_id": "core/path_input",
+  "title": "路径输入",
+  "category": "输入",
+  "description": "内置基础节点：选择一个本地路径（离线可用）",
+  "version": "1.0.0",
+  "class_name": "PathInputNode",
+  "inputs": [],
+  "outputs": [
+    {
+      "name": "path",
+      "type": "STRING",
+      "label": "路径",
+      "required": true,
+      "default": null,
+      "widget": "text",
+      "options": [],
+      "description": ""
+    }
+  ],
+  "params": [
+    {
+      "name": "path",
+      "type": "STRING",
+      "label": "路径",
+      "required": true,
+      "default": "",
+      "widget": "file",
+      "options": [],
+      "description": ""
+    }
+  ],
+  "permission": {},
+  "signature": {
+    "alg": "ed25519",
+    "key_id": "a8998646b062c170",
+    "value": "xnGy7MibXPVsXSh7PcttErGlGDIVZvnKhAsDrVUirUZBdRsCf2pcSoCBX9AzBD6tXPWNvhVGFphwt8byi525CQ==",
+    "over": "manifest"
+  }
+}

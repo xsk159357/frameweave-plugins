@@ -1,0 +1,55 @@
+{
+  "schema_version": 2,
+  "engine_api": "1.0",
+  "kind": "python",
+  "runtime": "python",
+  "entrypoint": "node.py",
+  "type_id": "core/json_merge",
+  "title": "JSON 合并",
+  "category": "语义",
+  "description": "内置基础节点：合并两个 JSON 对象（离线可用）",
+  "version": "1.0.0",
+  "class_name": "JsonMergeNode",
+  "inputs": [
+    {
+      "name": "a",
+      "type": "JSON",
+      "label": "对象A",
+      "required": false,
+      "default": null,
+      "widget": "text",
+      "options": [],
+      "description": ""
+    },
+    {
+      "name": "b",
+      "type": "JSON",
+      "label": "对象B",
+      "required": false,
+      "default": null,
+      "widget": "text",
+      "options": [],
+      "description": ""
+    }
+  ],
+  "outputs": [
+    {
+      "name": "json",
+      "type": "JSON",
+      "label": "合并结果",
+      "required": true,
+      "default": null,
+      "widget": "text",
+      "options": [],
+      "description": ""
+    }
+  ],
+  "params": [],
+  "permission": {},
+  "signature": {
+    "alg": "ed25519",
+    "key_id": "a8998646b062c170",
+    "value": "ZMvPrCGF66SZg+DtxatqDFyJi0ys2L4aULcItTA9ngLqKzS18H7DH6OWjYjs492OaTWjj3XG4b97OpeLMac2AA==",
+    "over": "manifest"
+  }
+}

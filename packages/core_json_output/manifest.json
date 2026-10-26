@@ -1,0 +1,75 @@
+{
+  "schema_version": 2,
+  "engine_api": "1.0",
+  "kind": "python",
+  "runtime": "python",
+  "entrypoint": "node.py",
+  "type_id": "core/json_output",
+  "title": "JSON 输出",
+  "category": "输出",
+  "description": "内置基础节点：把任意值包成 JSON 资产（离线可用；多别名输入适配平台同名连线）",
+  "version": "1.0.0",
+  "class_name": "JsonOutputNode",
+  "inputs": [
+    {
+      "name": "data",
+      "type": "ANY",
+      "label": "输入",
+      "required": false,
+      "default": null,
+      "widget": "text",
+      "options": [],
+      "description": ""
+    },
+    {
+      "name": "text",
+      "type": "ANY",
+      "label": "文本",
+      "required": false,
+      "default": null,
+      "widget": "text",
+      "options": [],
+      "description": ""
+    },
+    {
+      "name": "value",
+      "type": "ANY",
+      "label": "值",
+      "required": false,
+      "default": null,
+      "widget": "text",
+      "options": [],
+      "description": ""
+    },
+    {
+      "name": "length",
+      "type": "ANY",
+      "label": "长度",
+      "required": false,
+      "default": null,
+      "widget": "text",
+      "options": [],
+      "description": ""
+    }
+  ],
+  "outputs": [
+    {
+      "name": "json",
+      "type": "JSON",
+      "label": "JSON",
+      "required": true,
+      "default": null,
+      "widget": "text",
+      "options": [],
+      "description": ""
+    }
+  ],
+  "params": [],
+  "permission": {},
+  "signature": {
+    "alg": "ed25519",
+    "key_id": "a8998646b062c170",
+    "value": "6J2LgHI2CKSMon2GfQ5D0bogFrycpmAmqFPNRACjpG2pSUQttJbeSipxBJgT/GTK/+5Ex+g2hFliDsz7NyqpAA==",
+    "over": "manifest"
+  }
+}

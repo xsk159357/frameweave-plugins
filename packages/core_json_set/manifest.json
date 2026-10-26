@@ -1,0 +1,66 @@
+{
+  "schema_version": 2,
+  "engine_api": "1.0",
+  "kind": "python",
+  "runtime": "python",
+  "entrypoint": "node.py",
+  "type_id": "core/json_set",
+  "title": "JSON 设值",
+  "category": "语义",
+  "description": "内置基础节点：写入一个键值并返回新 JSON（离线可用）",
+  "version": "1.0.0",
+  "class_name": "JsonSetNode",
+  "inputs": [
+    {
+      "name": "json",
+      "type": "JSON",
+      "label": "JSON",
+      "required": false,
+      "default": null,
+      "widget": "text",
+      "options": [],
+      "description": ""
+    }
+  ],
+  "outputs": [
+    {
+      "name": "result",
+      "type": "JSON",
+      "label": "新 JSON",
+      "required": true,
+      "default": null,
+      "widget": "text",
+      "options": [],
+      "description": ""
+    }
+  ],
+  "params": [
+    {
+      "name": "key",
+      "type": "STRING",
+      "label": "键",
+      "required": true,
+      "default": "",
+      "widget": "text",
+      "options": [],
+      "description": ""
+    },
+    {
+      "name": "value",
+      "type": "STRING",
+      "label": "值(JSON 解析优先)",
+      "required": false,
+      "default": "",
+      "widget": "text",
+      "options": [],
+      "description": ""
+    }
+  ],
+  "permission": {},
+  "signature": {
+    "alg": "ed25519",
+    "key_id": "a8998646b062c170",
+    "value": "wos9tXMXS/JWSi2uvS5Up8TPRdb9BgYOjXi1nIsBCr5+rrKgz9zK1GBSZVPKfZfDeIeKdZV8KNn4lnfsP5hlAw==",
+    "over": "manifest"
+  }
+}

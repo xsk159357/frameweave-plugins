@@ -1,0 +1,45 @@
+{
+  "schema_version": 2,
+  "engine_api": "1.0",
+  "kind": "python",
+  "runtime": "python",
+  "entrypoint": "node.py",
+  "type_id": "core/asset_ref",
+  "title": "资产引用",
+  "category": "控制",
+  "description": "内置基础节点：按资产 ID 引用素材库资产（子图输入种子节点，离线可用）",
+  "version": "1.0.0",
+  "class_name": "AssetRefNode",
+  "inputs": [],
+  "outputs": [
+    {
+      "name": "out",
+      "type": "ANY",
+      "label": "资产",
+      "required": false,
+      "default": null,
+      "widget": "text",
+      "options": [],
+      "description": "引用的素材库资产"
+    }
+  ],
+  "params": [
+    {
+      "name": "asset_id",
+      "type": "STRING",
+      "label": "资产ID",
+      "required": false,
+      "default": "",
+      "widget": "text",
+      "options": [],
+      "description": "素材库资产 ID（空 = 无值）"
+    }
+  ],
+  "permission": {},
+  "signature": {
+    "alg": "ed25519",
+    "key_id": "a8998646b062c170",
+    "value": "0dPjczVlFs/+2VIg0AE22xkQqetdcGwaZqx4EurwsCAxXINedcFjwrlWtQXDTMsS5Wc1BDAGbk2w0qintF35Ag==",
+    "over": "manifest"
+  }
+}

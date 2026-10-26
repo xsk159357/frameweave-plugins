@@ -1,0 +1,45 @@
+{
+  "schema_version": 2,
+  "engine_api": "1.0",
+  "kind": "python",
+  "runtime": "python",
+  "entrypoint": "node.py",
+  "type_id": "core/bool_input",
+  "title": "布尔输入",
+  "category": "输入",
+  "description": "内置基础节点：输入一个布尔值（离线可用）",
+  "version": "1.0.0",
+  "class_name": "BoolInputNode",
+  "inputs": [],
+  "outputs": [
+    {
+      "name": "value",
+      "type": "BOOL",
+      "label": "布尔",
+      "required": true,
+      "default": null,
+      "widget": "text",
+      "options": [],
+      "description": ""
+    }
+  ],
+  "params": [
+    {
+      "name": "value",
+      "type": "BOOL",
+      "label": "布尔值",
+      "required": true,
+      "default": false,
+      "widget": "toggle",
+      "options": [],
+      "description": ""
+    }
+  ],
+  "permission": {},
+  "signature": {
+    "alg": "ed25519",
+    "key_id": "a8998646b062c170",
+    "value": "vA3I3PDOIFntCiY7wIKhq5tFUriuQIxPAN1JVfBSUSgXhT+IFCNDzSaf8iWz67a6jJN66IXtwqVEBYq8F2K0AQ==",
+    "over": "manifest"
+  }
+}

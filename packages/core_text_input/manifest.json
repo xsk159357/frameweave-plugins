@@ -1,0 +1,45 @@
+{
+  "schema_version": 2,
+  "engine_api": "1.0",
+  "kind": "python",
+  "runtime": "python",
+  "entrypoint": "node.py",
+  "type_id": "core/text_input",
+  "title": "文本输入",
+  "category": "输入",
+  "description": "内置基础节点：输入一段文本（离线可用）",
+  "version": "1.0.0",
+  "class_name": "TextInputNode",
+  "inputs": [],
+  "outputs": [
+    {
+      "name": "text",
+      "type": "STRING",
+      "label": "文本",
+      "required": true,
+      "default": null,
+      "widget": "text",
+      "options": [],
+      "description": ""
+    }
+  ],
+  "params": [
+    {
+      "name": "value",
+      "type": "STRING",
+      "label": "文本值",
+      "required": true,
+      "default": "",
+      "widget": "text",
+      "options": [],
+      "description": "输出文本内容"
+    }
+  ],
+  "permission": {},
+  "signature": {
+    "alg": "ed25519",
+    "key_id": "a8998646b062c170",
+    "value": "J2spaB1+/SQZEYedoSbIsNlvuovggYhrYGsCxgSTP8gY0rxDyynn3b5kms+BhYUgHGGtDa13EkhKt5/CfPgGDw==",
+    "over": "manifest"
+  }
+}

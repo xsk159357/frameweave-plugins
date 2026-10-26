@@ -84,10 +84,11 @@
       ]
     }
   },
+  "deps": [],
   "signature": {
     "alg": "ed25519",
     "key_id": "a8998646b062c170",
-    "value": "Hk+L3XAVfJCIeM5N0fRPsXjrMrz/ZTy7vzao2LND7JGHtH3zMmeYfc4AYTWPK3ptIKCp07I15+75v+o/9vGiBQ==",
+    "value": "IDXh+X8zWz/ZEDfHr7ypgO8XwRLbqSOW24kfM8YatzftM7RELjj++oihrMoWb3st6dciktH+Ppkm2oC5uCZuAQ==",
     "over": "manifest"
   }
 }

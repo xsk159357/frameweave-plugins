@@ -1,0 +1,66 @@
+{
+  "schema_version": 2,
+  "engine_api": "1.0",
+  "kind": "python",
+  "runtime": "python",
+  "entrypoint": "node.py",
+  "type_id": "core/text_concat",
+  "title": "文本拼接",
+  "category": "控制",
+  "description": "内置基础节点：拼接两段文本（离线可用）",
+  "version": "1.0.0",
+  "class_name": "TextConcatNode",
+  "inputs": [
+    {
+      "name": "a",
+      "type": "STRING",
+      "label": "文本A",
+      "required": false,
+      "default": null,
+      "widget": "text",
+      "options": [],
+      "description": ""
+    },
+    {
+      "name": "b",
+      "type": "STRING",
+      "label": "文本B",
+      "required": false,
+      "default": null,
+      "widget": "text",
+      "options": [],
+      "description": ""
+    }
+  ],
+  "outputs": [
+    {
+      "name": "text",
+      "type": "STRING",
+      "label": "拼接结果",
+      "required": true,
+      "default": null,
+      "widget": "text",
+      "options": [],
+      "description": ""
+    }
+  ],
+  "params": [
+    {
+      "name": "sep",
+      "type": "STRING",
+      "label": "分隔符",
+      "required": false,
+      "default": "",
+      "widget": "text",
+      "options": [],
+      "description": ""
+    }
+  ],
+  "permission": {},
+  "signature": {
+    "alg": "ed25519",
+    "key_id": "a8998646b062c170",
+    "value": "YyLN85f9MEn1claFZmJTmVqLJvYOqdI3I8tvxjOEYv2RmYpPr3uwXY8izsHns3k9aM3QuWAQGTaKVWqDsN2TCQ==",
+    "over": "manifest"
+  }
+}

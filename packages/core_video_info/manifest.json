@@ -1,0 +1,45 @@
+{
+  "schema_version": 2,
+  "engine_api": "1.0",
+  "kind": "python",
+  "runtime": "python",
+  "entrypoint": "node.py",
+  "type_id": "core/video_info",
+  "title": "视频信息",
+  "category": "分析",
+  "description": "内置基础节点：读取视频资产元数据（离线可用）",
+  "version": "1.0.0",
+  "class_name": "VideoInfoNode",
+  "inputs": [
+    {
+      "name": "video",
+      "type": "VIDEO",
+      "label": "视频",
+      "required": true,
+      "default": null,
+      "widget": "text",
+      "options": [],
+      "description": ""
+    }
+  ],
+  "outputs": [
+    {
+      "name": "info",
+      "type": "JSON",
+      "label": "信息",
+      "required": true,
+      "default": null,
+      "widget": "text",
+      "options": [],
+      "description": ""
+    }
+  ],
+  "params": [],
+  "permission": {},
+  "signature": {
+    "alg": "ed25519",
+    "key_id": "a8998646b062c170",
+    "value": "t426wVL937rvzTKFDz3sbIET8yzANcFZkhhi6Sr4ot4b6c14DswBw1IwI853DvY4KXHcBApnZ+N7fwknXjT9Cw==",
+    "over": "manifest"
+  }
+}

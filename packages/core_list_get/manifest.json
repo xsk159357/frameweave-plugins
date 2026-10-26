@@ -1,0 +1,56 @@
+{
+  "schema_version": 2,
+  "engine_api": "1.0",
+  "kind": "python",
+  "runtime": "python",
+  "entrypoint": "node.py",
+  "type_id": "core/list_get",
+  "title": "列表取值",
+  "category": "语义",
+  "description": "内置基础节点：按索引取列表元素（离线可用）",
+  "version": "1.0.0",
+  "class_name": "ListGetNode",
+  "inputs": [
+    {
+      "name": "list",
+      "type": "JSON",
+      "label": "列表",
+      "required": true,
+      "default": null,
+      "widget": "text",
+      "options": [],
+      "description": ""
+    }
+  ],
+  "outputs": [
+    {
+      "name": "value",
+      "type": "ANY",
+      "label": "元素",
+      "required": false,
+      "default": null,
+      "widget": "text",
+      "options": [],
+      "description": ""
+    }
+  ],
+  "params": [
+    {
+      "name": "index",
+      "type": "INT",
+      "label": "索引",
+      "required": true,
+      "default": 0,
+      "widget": "number",
+      "options": [],
+      "description": ""
+    }
+  ],
+  "permission": {},
+  "signature": {
+    "alg": "ed25519",
+    "key_id": "a8998646b062c170",
+    "value": "LvQe4k4DIXYzcEtVGwDi02GERfEcjXOsNZjLOfXlgJfP1LUwkmHwJ0W2Je3kcEUCeiVymRvAjK92YBuI9jD3BA==",
+    "over": "manifest"
+  }
+}

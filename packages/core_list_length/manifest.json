@@ -1,0 +1,45 @@
+{
+  "schema_version": 2,
+  "engine_api": "1.0",
+  "kind": "python",
+  "runtime": "python",
+  "entrypoint": "node.py",
+  "type_id": "core/list_length",
+  "title": "列表长度",
+  "category": "语义",
+  "description": "内置基础节点：统计列表长度（离线可用）",
+  "version": "1.0.0",
+  "class_name": "ListLengthNode",
+  "inputs": [
+    {
+      "name": "list",
+      "type": "JSON",
+      "label": "列表",
+      "required": false,
+      "default": null,
+      "widget": "text",
+      "options": [],
+      "description": ""
+    }
+  ],
+  "outputs": [
+    {
+      "name": "length",
+      "type": "INT",
+      "label": "长度",
+      "required": true,
+      "default": null,
+      "widget": "text",
+      "options": [],
+      "description": ""
+    }
+  ],
+  "params": [],
+  "permission": {},
+  "signature": {
+    "alg": "ed25519",
+    "key_id": "a8998646b062c170",
+    "value": "ujY/djHi9v0L0G5EP2P6E3u0A9Emr3+U2F1KZSwsyULlM0pO2Q2ku08snmnlc2Ay8pC35vIrSMvSHui49uUcBw==",
+    "over": "manifest"
+  }
+}

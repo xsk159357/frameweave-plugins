@@ -1,0 +1,45 @@
+{
+  "schema_version": 2,
+  "engine_api": "1.0",
+  "kind": "python",
+  "runtime": "python",
+  "entrypoint": "node.py",
+  "type_id": "core/audio_info",
+  "title": "音频信息",
+  "category": "分析",
+  "description": "内置基础节点：读取音频资产元数据（离线可用）",
+  "version": "1.0.0",
+  "class_name": "AudioInfoNode",
+  "inputs": [
+    {
+      "name": "audio",
+      "type": "AUDIO",
+      "label": "音频",
+      "required": true,
+      "default": null,
+      "widget": "text",
+      "options": [],
+      "description": ""
+    }
+  ],
+  "outputs": [
+    {
+      "name": "info",
+      "type": "JSON",
+      "label": "信息",
+      "required": true,
+      "default": null,
+      "widget": "text",
+      "options": [],
+      "description": ""
+    }
+  ],
+  "params": [],
+  "permission": {},
+  "signature": {
+    "alg": "ed25519",
+    "key_id": "a8998646b062c170",
+    "value": "YMj4dRAzHamTflUbL3XSyCSYlsac2AYaPVkE3Lh+4AduQwbTpTHs4HghMmM1okcDjVOE739c/HjGFwDy8oSUCw==",
+    "over": "manifest"
+  }
+}

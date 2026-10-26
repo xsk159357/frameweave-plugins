@@ -1,0 +1,75 @@
+{
+  "schema_version": 2,
+  "engine_api": "1.0",
+  "kind": "python",
+  "runtime": "python",
+  "entrypoint": "node.py",
+  "type_id": "core/json_array",
+  "title": "JSON 数组",
+  "category": "语义",
+  "description": "内置基础节点：把若干输入收集为数组（离线可用）",
+  "version": "1.0.0",
+  "class_name": "JsonArrayNode",
+  "inputs": [
+    {
+      "name": "v1",
+      "type": "ANY",
+      "label": "元素1",
+      "required": false,
+      "default": null,
+      "widget": "text",
+      "options": [],
+      "description": ""
+    },
+    {
+      "name": "v2",
+      "type": "ANY",
+      "label": "元素2",
+      "required": false,
+      "default": null,
+      "widget": "text",
+      "options": [],
+      "description": ""
+    },
+    {
+      "name": "v3",
+      "type": "ANY",
+      "label": "元素3",
+      "required": false,
+      "default": null,
+      "widget": "text",
+      "options": [],
+      "description": ""
+    },
+    {
+      "name": "v4",
+      "type": "ANY",
+      "label": "元素4",
+      "required": false,
+      "default": null,
+      "widget": "text",
+      "options": [],
+      "description": ""
+    }
+  ],
+  "outputs": [
+    {
+      "name": "array",
+      "type": "JSON",
+      "label": "数组",
+      "required": true,
+      "default": null,
+      "widget": "text",
+      "options": [],
+      "description": ""
+    }
+  ],
+  "params": [],
+  "permission": {},
+  "signature": {
+    "alg": "ed25519",
+    "key_id": "a8998646b062c170",
+    "value": "KiejX5pU9NDrcHJlljEr+qznHLfyK8EooSWDMHeypaBxFQTsAJhRDldWtrgUIUeO0LE+cqUEqc3+1y3S13HyBQ==",
+    "over": "manifest"
+  }
+}

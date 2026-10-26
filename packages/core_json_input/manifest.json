@@ -1,0 +1,45 @@
+{
+  "schema_version": 2,
+  "engine_api": "1.0",
+  "kind": "python",
+  "runtime": "python",
+  "entrypoint": "node.py",
+  "type_id": "core/json_input",
+  "title": "JSON 输入",
+  "category": "输入",
+  "description": "内置基础节点：手动输入一段 JSON（离线可用）",
+  "version": "1.0.0",
+  "class_name": "JsonInputNode",
+  "inputs": [],
+  "outputs": [
+    {
+      "name": "value",
+      "type": "JSON",
+      "label": "JSON",
+      "required": true,
+      "default": null,
+      "widget": "text",
+      "options": [],
+      "description": ""
+    }
+  ],
+  "params": [
+    {
+      "name": "value",
+      "type": "STRING",
+      "label": "JSON 文本",
+      "required": true,
+      "default": "{}",
+      "widget": "text",
+      "options": [],
+      "description": "按 json.loads 解析"
+    }
+  ],
+  "permission": {},
+  "signature": {
+    "alg": "ed25519",
+    "key_id": "a8998646b062c170",
+    "value": "3jmI5kUX8UdjAcTWuRTmkwfJIbd53vNfz4o4x2Q2ut3FcwiOGE01OgZVm9kYkxZFSZTvSwhZXL4T1F/yxUfqBg==",
+    "over": "manifest"
+  }
+}

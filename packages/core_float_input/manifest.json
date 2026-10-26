@@ -1,0 +1,45 @@
+{
+  "schema_version": 2,
+  "engine_api": "1.0",
+  "kind": "python",
+  "runtime": "python",
+  "entrypoint": "node.py",
+  "type_id": "core/float_input",
+  "title": "浮点输入",
+  "category": "输入",
+  "description": "内置基础节点：输入一个浮点数（离线可用）",
+  "version": "1.0.0",
+  "class_name": "FloatInputNode",
+  "inputs": [],
+  "outputs": [
+    {
+      "name": "value",
+      "type": "FLOAT",
+      "label": "浮点数",
+      "required": true,
+      "default": null,
+      "widget": "text",
+      "options": [],
+      "description": ""
+    }
+  ],
+  "params": [
+    {
+      "name": "value",
+      "type": "FLOAT",
+      "label": "浮点值",
+      "required": true,
+      "default": 0.0,
+      "widget": "number",
+      "options": [],
+      "description": ""
+    }
+  ],
+  "permission": {},
+  "signature": {
+    "alg": "ed25519",
+    "key_id": "a8998646b062c170",
+    "value": "eVIrYuh0Ym3WEvvqMuFI9xvw3PbsDzmrVMSdKt1aI6TgdcLOBYHFxVjrH82Af80Qv0PqWNWVMj1SRCjip52vCg==",
+    "over": "manifest"
+  }
+}

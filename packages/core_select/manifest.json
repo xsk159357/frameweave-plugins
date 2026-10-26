@@ -1,0 +1,66 @@
+{
+  "schema_version": 2,
+  "engine_api": "1.0",
+  "kind": "python",
+  "runtime": "python",
+  "entrypoint": "node.py",
+  "type_id": "core/select",
+  "title": "条件选择",
+  "category": "控制",
+  "description": "内置基础节点：按条件选择 a 或 b（离线可用）",
+  "version": "1.0.0",
+  "class_name": "SelectNode",
+  "inputs": [
+    {
+      "name": "a",
+      "type": "ANY",
+      "label": "条件真值",
+      "required": false,
+      "default": null,
+      "widget": "text",
+      "options": [],
+      "description": ""
+    },
+    {
+      "name": "b",
+      "type": "ANY",
+      "label": "条件假值",
+      "required": false,
+      "default": null,
+      "widget": "text",
+      "options": [],
+      "description": ""
+    }
+  ],
+  "outputs": [
+    {
+      "name": "out",
+      "type": "ANY",
+      "label": "选中值",
+      "required": false,
+      "default": null,
+      "widget": "text",
+      "options": [],
+      "description": ""
+    }
+  ],
+  "params": [
+    {
+      "name": "condition",
+      "type": "BOOL",
+      "label": "条件",
+      "required": true,
+      "default": true,
+      "widget": "toggle",
+      "options": [],
+      "description": ""
+    }
+  ],
+  "permission": {},
+  "signature": {
+    "alg": "ed25519",
+    "key_id": "a8998646b062c170",
+    "value": "391clUJ6aqUVyl0Yyua/Dxgjl9PrniYbZIr+Y2wH3cSeBt5vKFNQBvV9NzypPTEy6hPK8t1vSWs+/AfzLOa6CQ==",
+    "over": "manifest"
+  }
+}

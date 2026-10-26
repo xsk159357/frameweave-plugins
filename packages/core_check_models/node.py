@@ -180,7 +180,7 @@ def _download_guidance(mid: str, info: Optional[Dict[str, Any]], mdir: str) -> L
             d.append(f"下载(备选)：hf download {fb} --local-dir \"{mdir}\"")
     else:
         d.append(f"下载：按 dep-matrix §依赖表获取 {mid} 权重文件（models_registry 未登记 repo）")
-    d.append(f"放置：{mdir}（DATA_DIR/models 约定）")
+    d.append(f"放置：{mdir}（模型存储目录）")
     d.append(f"接线：{env_key} 指向该目录" if env_key else "接线：在节点参数 model_dir 中指定该目录")
     size = info.get("size_mb")
     if size:

@@ -1,0 +1,56 @@
+{
+  "schema_version": 2,
+  "engine_api": "1.0",
+  "kind": "python",
+  "runtime": "python",
+  "entrypoint": "node.py",
+  "type_id": "core/gate",
+  "title": "门开关",
+  "category": "控制",
+  "description": "内置基础节点：enabled 为真时透传输入，否则输出空（离线可用）",
+  "version": "1.0.0",
+  "class_name": "GateNode",
+  "inputs": [
+    {
+      "name": "data",
+      "type": "ANY",
+      "label": "输入",
+      "required": true,
+      "default": null,
+      "widget": "text",
+      "options": [],
+      "description": ""
+    }
+  ],
+  "outputs": [
+    {
+      "name": "out",
+      "type": "ANY",
+      "label": "输出",
+      "required": false,
+      "default": null,
+      "widget": "text",
+      "options": [],
+      "description": ""
+    }
+  ],
+  "params": [
+    {
+      "name": "enabled",
+      "type": "BOOL",
+      "label": "启用",
+      "required": true,
+      "default": true,
+      "widget": "toggle",
+      "options": [],
+      "description": ""
+    }
+  ],
+  "permission": {},
+  "signature": {
+    "alg": "ed25519",
+    "key_id": "a8998646b062c170",
+    "value": "scNEa4H3GVsUDBXZttOopfhzDeL2G39W6IOCMqI/eHgOlnyRuKg0A2yPTwiM/Z5D9Hht2VJMDdHbXGBsbq0FBQ==",
+    "over": "manifest"
+  }
+}

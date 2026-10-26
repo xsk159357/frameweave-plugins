@@ -1,0 +1,96 @@
+{
+  "schema_version": 2,
+  "engine_api": "1.0",
+  "kind": "python",
+  "runtime": "python",
+  "entrypoint": "node.py",
+  "type_id": "core/console_output",
+  "title": "控制台输出",
+  "category": "输出",
+  "description": "内置基础节点：查看任意端口值（离线可用；多别名输入适配平台同名连线）",
+  "version": "1.0.0",
+  "class_name": "ConsoleOutputNode",
+  "inputs": [
+    {
+      "name": "data",
+      "type": "ANY",
+      "label": "输入",
+      "required": false,
+      "default": null,
+      "widget": "text",
+      "options": [],
+      "description": ""
+    },
+    {
+      "name": "text",
+      "type": "ANY",
+      "label": "文本",
+      "required": false,
+      "default": null,
+      "widget": "text",
+      "options": [],
+      "description": ""
+    },
+    {
+      "name": "value",
+      "type": "ANY",
+      "label": "值",
+      "required": false,
+      "default": null,
+      "widget": "text",
+      "options": [],
+      "description": ""
+    },
+    {
+      "name": "length",
+      "type": "ANY",
+      "label": "长度",
+      "required": false,
+      "default": null,
+      "widget": "text",
+      "options": [],
+      "description": ""
+    },
+    {
+      "name": "json",
+      "type": "ANY",
+      "label": "JSON",
+      "required": false,
+      "default": null,
+      "widget": "text",
+      "options": [],
+      "description": ""
+    }
+  ],
+  "outputs": [
+    {
+      "name": "result",
+      "type": "JSON",
+      "label": "结果",
+      "required": true,
+      "default": null,
+      "widget": "text",
+      "options": [],
+      "description": ""
+    }
+  ],
+  "params": [
+    {
+      "name": "note",
+      "type": "STRING",
+      "label": "备注",
+      "required": false,
+      "default": "",
+      "widget": "text",
+      "options": [],
+      "description": "便于在画布上标注"
+    }
+  ],
+  "permission": {},
+  "signature": {
+    "alg": "ed25519",
+    "key_id": "a8998646b062c170",
+    "value": "5FAhgjG7tf9wNfZo66V/fhF1UnnA1+SjTBZqYrFCQLB2q3XkoVU9wYM82G0gtRgN3b9b3PNmifD9sHkLCzlrCA==",
+    "over": "manifest"
+  }
+}

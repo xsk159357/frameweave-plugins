@@ -1,0 +1,45 @@
+{
+  "schema_version": 2,
+  "engine_api": "1.0",
+  "kind": "python",
+  "runtime": "python",
+  "entrypoint": "node.py",
+  "type_id": "core/image_info",
+  "title": "图片信息",
+  "category": "分析",
+  "description": "内置基础节点：读取图片资产元数据（离线可用）",
+  "version": "1.0.0",
+  "class_name": "ImageInfoNode",
+  "inputs": [
+    {
+      "name": "image",
+      "type": "IMAGE",
+      "label": "图片",
+      "required": true,
+      "default": null,
+      "widget": "text",
+      "options": [],
+      "description": ""
+    }
+  ],
+  "outputs": [
+    {
+      "name": "info",
+      "type": "JSON",
+      "label": "信息",
+      "required": true,
+      "default": null,
+      "widget": "text",
+      "options": [],
+      "description": ""
+    }
+  ],
+  "params": [],
+  "permission": {},
+  "signature": {
+    "alg": "ed25519",
+    "key_id": "a8998646b062c170",
+    "value": "qf8H8J3JhlGF/jhMZ23nchPBeIJOPXqoVwGzCv3HAkNJgpoavnQpw7XcIKgbkirkRcXiSx42ooV7jEJlQNnvCg==",
+    "over": "manifest"
+  }
+}

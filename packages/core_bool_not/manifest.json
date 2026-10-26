@@ -1,0 +1,45 @@
+{
+  "schema_version": 2,
+  "engine_api": "1.0",
+  "kind": "python",
+  "runtime": "python",
+  "entrypoint": "node.py",
+  "type_id": "core/bool_not",
+  "title": "布尔取反",
+  "category": "控制",
+  "description": "内置基础节点：布尔取反（离线可用）",
+  "version": "1.0.0",
+  "class_name": "BoolNotNode",
+  "inputs": [
+    {
+      "name": "value",
+      "type": "BOOL",
+      "label": "输入",
+      "required": false,
+      "default": null,
+      "widget": "text",
+      "options": [],
+      "description": ""
+    }
+  ],
+  "outputs": [
+    {
+      "name": "out",
+      "type": "BOOL",
+      "label": "取反结果",
+      "required": true,
+      "default": null,
+      "widget": "text",
+      "options": [],
+      "description": ""
+    }
+  ],
+  "params": [],
+  "permission": {},
+  "signature": {
+    "alg": "ed25519",
+    "key_id": "a8998646b062c170",
+    "value": "tfS18jtA5ijf4XyJpxbUrlY8/gud2djC1o6YkqooPl4M6hSOg0FX51WhCRXfXhwSB5lRz9/7RK0YkFeGxIL2Dw==",
+    "over": "manifest"
+  }
+}
