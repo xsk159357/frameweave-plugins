@@ -407,7 +407,6 @@ class AINarrateNode(NodeBase):
             ],
             version="2.3.0",
         )
-
     # ------------------------------------------------------------ 工具
     async def _extract_keyframes(self, ctx: dict, video_path: str, count: int) -> List[str]:
         from app.plugin import deps
@@ -731,27 +730,106 @@ class AINarrateNode(NodeBase):
             if json_mode:
                 prompt += _out_protocol_json()
             progress(0.4)
-            msgs = [{"role": "user", "content": prompt}]
-            raw = await self._llm(ctx, msgs, provider, api_key, base_url, model,
-                                  temperature, max_tokens, json_mode, retries, images)
-            llm_calls += 1
-            data = _extract_json(raw) if json_mode else None
-            if isinstance(data, list) and data:
-                for i, it in enumerate(data):
-                    if not isinstance(it, dict) or not it.get("text"):
-                        continue
-                    narration_segments.append({
-                        "index": i, "text": str(it.get("text")).strip(),
-                        "start": _num(it.get("start"), None),
-                        "end": _num(it.get("end"), None),
-                    })
-                result_text = "".join(s["text"] for s in narration_segments)
-                strategy_used = "llm"
-            else:
-                if json_mode:
-                    warnings.append("LLM 未返回可解析 JSON，回退纯文本并本地匹配")
-                result_text = raw.strip()
-                strategy_used = "llm+local" if local_match_on else "llm"
+            # ---- 解说猫迁移优化（批2）：覆盖度审计-重试闭环 ----
+            # 原版 _audit_narration_coverage 三指标（字数/段数/最大空隙）不达标 →
+            # _build_narration_coverage_retry_instruction 带指令重试（限次）。
+            # FW 此前只算 coverage+warning（长视频短解说静默缺料）。
+            def _coverage_retry_instruction(cov: Dict[str, Any], attempt_no: int) -> str:
+                """按缺口构造重试纠偏指令（语义对齐解说猫：指出缺口，要求补齐而非重写）。"""
+                chars_gap = max(0, int(cov.get("target_chars") or 0) - int(cov.get("chars") or 0))
+                seg_gap = max(0, int(cov.get("target_segments") or 0) - int(cov.get("segment_count") or 0))
+                lines = [f"【第 {attempt_no} 次重试纠偏】上一稿未达篇幅目标，问题与要求："]
+                if chars_gap > 0:
+                    lines.append(f"- 正文总字数 {cov.get('chars')}，低于目标 {cov.get('target_chars')}，"
+                                 f"至少再补 {chars_gap} 字（把已有段落展开细节与因果，不要注水凑字）")
+                if seg_gap > 0:
+                    lines.append(f"- 段数 {cov.get('segment_count')}，低于目标 {cov.get('target_segments')}，"
+                                 f"按语义补足到目标段数（每段仍是完整句子，不得拆碎凑数）")
+                if float(cov.get("max_gap") or 0) > 120.0:
+                    lines.append(f"- 存在 {cov.get('max_gap')}s 的无解说空隙，用相邻时间段补一条过渡解说")
+                lines.append("- 只输出补齐后的完整成品（覆盖上一稿），输出协议不变；"
+                             "除补齐与扩写外不得改动已有段落的既有事实。")
+                return "\n".join(lines) + "\n"
+
+            def _coverage_ok(cov: Dict[str, Any]) -> bool:
+                tc = int(cov.get("target_chars") or 0)
+                ts = int(cov.get("target_segments") or 0)
+                if tc > 0 and int(cov.get("chars") or 0) < tc * 0.5:
+                    return False
+                if ts > 0 and int(cov.get("segment_count") or 0) < max(1, ts // 2):
+                    return False
+                return True
+
+            def _coverage_ok(cov: Dict[str, Any]) -> bool:
+                tc = int(cov.get("target_chars") or 0)
+                ts = int(cov.get("target_segments") or 0)
+                if tc > 0 and int(cov.get("chars") or 0) < tc * 0.5:
+                    return False
+                if ts > 0 and int(cov.get("segment_count") or 0) < max(1, ts // 2):
+                    return False
+                return True
+
+            # 循环内即时计算当前稿的 coverage（不依赖函数尾部那次统一计算）
+            def _live_coverage() -> Dict[str, Any]:
+                c = sum(len(sg.get("text", "")) for sg in narration_segments)
+                g = 0.0
+                for i in range(1, len(narration_segments)):
+                    gap = (float(narration_segments[i].get("start") or 0)
+                           - float(narration_segments[i - 1].get("end") or 0))
+                    if gap > g:
+                        g = gap
+                return {"chars": c, "target_chars": target_chars,
+                        "segment_count": len(narration_segments),
+                        "target_segments": target_segments, "max_gap": round(g, 3)}
+
+            max_retry_rounds = max(0, min(2, retries))     # 解说猫语义：限次重试
+            retry_instruction = ""
+            for _round in range(max_retry_rounds + 1):
+                if _round > 0:
+                    prompt = _base_prompt("分析视频内容并撰写完整解说文案。") + retry_instruction
+                    if descriptions:
+                        prompt += "\n【场景描述】\n" + scene_lines(scenes_sorted, descriptions, language) + "\n"
+                        prompt += "时间点只能取场景记录中的边界；每个时间段一条记录；不要发明或合并时间点。\n"
+                    elif scenes_sorted:
+                        prompt += "\n【场景时间轴】\n" + scene_lines(scenes_sorted, None, language) + "\n"
+                        prompt += "时间点只能取场景记录中的边界；每个时间段一条记录。\n"
+                    if json_mode:
+                        prompt += _out_protocol_json()
+                msgs = [{"role": "user", "content": prompt}]
+                raw = await self._llm(ctx, msgs, provider, api_key, base_url, model,
+                                      temperature, max_tokens, json_mode, retries, images)
+                llm_calls += 1
+                data = _extract_json(raw) if json_mode else None
+                narration_segments = []
+                if isinstance(data, list) and data:
+                    for i, it in enumerate(data):
+                        if not isinstance(it, dict) or not it.get("text"):
+                            continue
+                        narration_segments.append({
+                            "index": i, "text": str(it.get("text")).strip(),
+                            "start": _num(it.get("start"), None),
+                            "end": _num(it.get("end"), None),
+                        })
+                    result_text = "".join(s["text"] for s in narration_segments)
+                    strategy_used = "llm"
+                else:
+                    if json_mode and _round == 0:
+                        warnings.append("LLM 未返回可解析 JSON，回退纯文本并本地匹配")
+                    result_text = raw.strip()
+                    strategy_used = "llm+local" if local_match_on else "llm"
+                # 即时 coverage 审计；不达标且还有名额 → 构造指令重试
+                coverage = _live_coverage()
+                if _coverage_ok(coverage):
+                    break
+                if _round < max_retry_rounds:
+                    retry_instruction = _coverage_retry_instruction(coverage, _round + 1)
+                    warnings.append(f"覆盖度不足（第 {_round + 1} 轮），带纠偏指令重试")
+                else:
+                    warnings.append(f"覆盖度不足已达重试上限（{max_retry_rounds} 次），保留当前结果")
+            if not _coverage_ok(coverage):
+                warnings.append(
+                    f"coverage: 字数 {coverage['chars']}/{coverage['target_chars']}，"
+                    f"段数 {coverage['segment_count']}/{coverage['target_segments']}")
         elif mode == "扩写":
             draft = self._read_text(ctx, script_asset)
             if not draft:
@@ -919,7 +997,8 @@ class AINarrateNode(NodeBase):
             "segment_count": len(narration_segments), "target_segments": target_segments,
             "max_gap": round(max_gap, 3),
         }
-        if chars < target_chars * 0.5:
+        if chars < target_chars * 0.5 and mode != "上帝视角":
+            # 上帝视角的缺口已由批2 重试闭环处理（警告在那里发）；其他模式保持原警告
             warnings.append(f"输出字数 {chars} 明显低于目标 {target_chars}（请检查模型/配额）")
 
         progress(0.9)
