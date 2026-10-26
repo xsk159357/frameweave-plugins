@@ -404,8 +404,10 @@ class AINarrateNode(NodeBase):
                          description="抖音投放向：最劲爆片段放开头+倒叙悬念可选（解说猫完播率三板斧）；默认关=事实优先路线"),
                 PortSpec("filter_intro_outro", PortType.BOOL, label="过滤片头片尾", default=False, widget="toggle",
                          description="不为片头动画/Logo/演职员表/预告片/黑屏过渡生成解说（解说猫 intro_outro_filter 契约）"),
+                PortSpec("ost_ratio", PortType.FLOAT, label="原片穿插占比(0=关)", default=0.0, widget="number",
+                         description="OST 层1：>0 时生成端直接输出【原片:开始秒数-结束秒数】标记（解说猫 ratio 语义化指令；下游 gemini_matcher ost stage 已能消费）"),
             ],
-            version="2.3.0",
+            version="2.3.1",
         )
     # ------------------------------------------------------------ 工具
     async def _extract_keyframes(self, ctx: dict, video_path: str, count: int) -> List[str]:
@@ -561,6 +563,11 @@ class AINarrateNode(NodeBase):
         # 解说猫迁移优化（2026-10-26）：完播率工具箱开关（默认关=零行为变化）
         hook_first = bool(params.get("hook_first", False))
         filter_intro_outro = bool(params.get("filter_intro_outro", False))
+        try:
+            ost_ratio = float(params.get("ost_ratio", 0.0) or 0.0)
+        except (TypeError, ValueError):
+            ost_ratio = 0.0
+        ost_ratio = min(max(ost_ratio, 0.0), 0.6)   # 解说猫语义：0-0.6 夹取
 
         # LLM 通道配置化：显式参数 > 全局配置 > provider 默认
         api_key = _resolve_secret(ctx, api_key_raw)
@@ -664,6 +671,68 @@ class AINarrateNode(NodeBase):
                 p += _INTRO_OUTRO_FILTER_BLOCK
             return p
 
+        # ---- 解说猫迁移优化（批3）：V2 结构化模板接线 ----
+        # data/narration_prompt_v2.json（与解说猫主仓 sha256 同源）此前全仓零引用（休眠资产）。
+        # FW_PROMPT_V2=0 回退旧 _base_prompt；默认走 V2（规则优先级栈/篇幅上浮 10% 上限/
+        # 时间戳唯一性约束全部生效）。OST 层1（批3 第二项）经 ORIGINAL_CLIP_STRATEGY 槽进入。
+        _V2_RESOURCE: Optional[Dict[str, Any]] = None
+        if os.environ.get("FW_PROMPT_V2", "1") != "0":
+            try:
+                _v2_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data",
+                                        "narration_prompt_v2.json")
+                with open(_v2_path, "r", encoding="utf-8") as _vf:
+                    _V2_RESOURCE = json.load(_vf)
+            except (OSError, ValueError):
+                _V2_RESOURCE = None
+                warnings.append("narration_prompt_v2.json 读取失败，回退 V1 拼接路径")
+
+        def _v2_slot_ost_strategy() -> str:
+            """OST 层1（解说猫 get_original_sound_instruction 语义迁移）：ratio → 语义化指令。"""
+            if not ost_ratio or ost_ratio <= 0:
+                return "关闭原片：不输出任何【原片:开始秒数-结束秒数】标记，全部内容为解说正文。"
+            level = ("偏高" if ost_ratio >= 0.45 else
+                     "适中" if ost_ratio >= 0.2 else "少量")
+            return (f"开启原片：目标原片占比约 {ost_ratio:.0%}（{level}）。"
+                    f"在叙事自然停顿处输出【原片:开始秒数-结束秒数】标记——只选关键对白或情绪峰值，"
+                    f"原片数量是软目标，不按固定间隔机械插入，不能替换或删除必要的解说正文。")
+
+        def _v2_fill(job: str, scene_data_text: str, retry_section: str = "") -> str:
+            """按 V2 模板填充 17 slots。job（本次任务语）并入 ACTIVE_STYLE 前的任务行。"""
+            tpl = str(_V2_RESOURCE.get("template") or "")
+            style_body = "\n".join(filter(None, [
+                f"任务：{job}",
+                f"角色：{style_desc or '资深影视解说博主'}（{perspective}）",
+                f"语气：{style_pack.get('tone', '')}" if style_pack.get("tone") else "",
+                f"禁词：{forbidden}" if forbidden else "",
+                f"钩子参考：{hooks}" if hooks else "",
+                _HOOK_FIRST_BLOCK if hook_first else "",
+                _INTRO_OUTRO_FILTER_BLOCK if filter_intro_outro else "",
+            ]))
+            seg_lo, seg_hi = max(1, target_segments - 3), target_segments + 3
+            fills = {
+                "LANG_INSTRUCTION": f"【语言】{LANG_HINTS.get(language, LANG_HINTS['中文'])}\n",
+                "NARRATION_LANGUAGE": language,
+                "NARRATION_PERSPECTIVE": perspective,
+                "TARGET_DURATION": f"{target_duration:g} 秒",
+                "TARGET_CHARACTERS": str(target_chars),
+                "TARGET_SEGMENTS": str(target_segments),
+                "SEGMENT_RANGE": f"{seg_lo}-{seg_hi}",
+                "SEGMENT_CHAR_RANGE": f"每段建议不超过 {min(avg_seg + 5, 30)} 字",
+                "VIDEO_TYPE_CONTEXT": style_pack.get("tone", "") or "通用影视内容",
+                "ACTIVE_STYLE": style_body or _V2_RESOURCE.get("default_base_style", ""),
+                "ACTIVE_STYLE_SOURCE": style or "default",
+                "COVERAGE_SECTION": "",
+                "RETRY_SECTION": retry_section,
+                "REWRITE_REFERENCE_SECTION": "",
+                "ORIGINAL_CLIP_STRATEGY": _v2_slot_ost_strategy(),
+                "SCENE_DATA": scene_data_text,
+                "LANG_FINAL_REMINDER": "",
+            }
+            out = tpl
+            for k, v in fills.items():
+                out = out.replace("{{" + k + "}}", str(v))
+            return out
+
         def _out_protocol_json(extra: str = "") -> str:
             return ("\n【输出格式】只输出 JSON，不要任何解释或额外文字。\n"
                     f"JSON 结构：[{{\"text\": \"解说句\", \"start\": 秒数(可选), \"end\": 秒数(可选), "
@@ -709,25 +778,29 @@ class AINarrateNode(NodeBase):
             result_text = "\n".join(sg["text"] for sg in narration_segments)  # 行数 = items 数
             strategy_used = "passthrough"
         elif mode == "上帝视角":
-            prompt = _base_prompt("分析视频内容并撰写完整解说文案。")
+            _scene_text = ""
             if descriptions:
-                prompt += "\n【场景描述】\n" + scene_lines(scenes_sorted, descriptions, language) + "\n"
-                prompt += "时间点只能取场景记录中的边界；每个时间段一条记录；不要发明或合并时间点。\n"
+                _scene_text = "\n【场景描述】\n" + scene_lines(scenes_sorted, descriptions, language) + "\n"
                 images: Optional[List[str]] = None
             elif scenes_sorted:
-                prompt += "\n【场景时间轴】\n" + scene_lines(scenes_sorted, None, language) + "\n"
-                prompt += "时间点只能取场景记录中的边界；每个时间段一条记录。\n"
+                _scene_text = "\n【场景时间轴】\n" + scene_lines(scenes_sorted, None, language) + "\n"
                 images = None
             else:
                 if video_asset is None or not getattr(video_asset, "path", "") or not os.path.exists(video_asset.path):
                     raise RuntimeError("invalid: 上帝视角需要 video / scenes / descriptions 至少一项输入")
-                prompt += "\n请先观察关键帧画面，理解内容后撰写解说词。\n"
+                _scene_text = "\n请先观察关键帧画面，理解内容后撰写解说词。\n"
                 progress(0.15)
                 images = await self._extract_keyframes(ctx, video_asset.path, keyframes_n)
                 if not images:
                     warnings.append("关键帧抽取失败（ffmpeg 不可用），仅按提示词生成")
                     images = None
-            if json_mode:
+            if _V2_RESOURCE is not None:
+                # 批3：V2 结构化模板（规则优先级栈 + 篇幅上浮 10% 上限 + 时间戳唯一性约束生效）
+                prompt = _v2_fill("分析视频内容并撰写完整解说文案。", _scene_text)
+            else:
+                prompt = _base_prompt("分析视频内容并撰写完整解说文案。") + _scene_text
+            if json_mode and _V2_RESOURCE is None:
+                # V2 模板自带输出协议（文本行时间戳格式）；仅 V1 路径追加 JSON 协议
                 prompt += _out_protocol_json()
             progress(0.4)
             # ---- 解说猫迁移优化（批2）：覆盖度审计-重试闭环 ----
@@ -760,15 +833,6 @@ class AINarrateNode(NodeBase):
                     return False
                 return True
 
-            def _coverage_ok(cov: Dict[str, Any]) -> bool:
-                tc = int(cov.get("target_chars") or 0)
-                ts = int(cov.get("target_segments") or 0)
-                if tc > 0 and int(cov.get("chars") or 0) < tc * 0.5:
-                    return False
-                if ts > 0 and int(cov.get("segment_count") or 0) < max(1, ts // 2):
-                    return False
-                return True
-
             # 循环内即时计算当前稿的 coverage（不依赖函数尾部那次统一计算）
             def _live_coverage() -> Dict[str, Any]:
                 c = sum(len(sg.get("text", "")) for sg in narration_segments)
@@ -786,15 +850,20 @@ class AINarrateNode(NodeBase):
             retry_instruction = ""
             for _round in range(max_retry_rounds + 1):
                 if _round > 0:
-                    prompt = _base_prompt("分析视频内容并撰写完整解说文案。") + retry_instruction
-                    if descriptions:
-                        prompt += "\n【场景描述】\n" + scene_lines(scenes_sorted, descriptions, language) + "\n"
-                        prompt += "时间点只能取场景记录中的边界；每个时间段一条记录；不要发明或合并时间点。\n"
-                    elif scenes_sorted:
-                        prompt += "\n【场景时间轴】\n" + scene_lines(scenes_sorted, None, language) + "\n"
-                        prompt += "时间点只能取场景记录中的边界；每个时间段一条记录。\n"
-                    if json_mode:
-                        prompt += _out_protocol_json()
+                    # 批2+批3：重试 prompt 按当前模板路径重建（V2 走 RETRY_SECTION 槽）
+                    if _V2_RESOURCE is not None:
+                        prompt = _v2_fill("分析视频内容并撰写完整解说文案。", _scene_text,
+                                          retry_section=retry_instruction)
+                    else:
+                        prompt = _base_prompt("分析视频内容并撰写完整解说文案。") + retry_instruction
+                        if descriptions:
+                            prompt += "\n【场景描述】\n" + scene_lines(scenes_sorted, descriptions, language) + "\n"
+                            prompt += "时间点只能取场景记录中的边界；每个时间段一条记录；不要发明或合并时间点。\n"
+                        elif scenes_sorted:
+                            prompt += "\n【场景时间轴】\n" + scene_lines(scenes_sorted, None, language) + "\n"
+                            prompt += "时间点只能取场景记录中的边界；每个时间段一条记录。\n"
+                        if json_mode:
+                            prompt += _out_protocol_json()
                 msgs = [{"role": "user", "content": prompt}]
                 raw = await self._llm(ctx, msgs, provider, api_key, base_url, model,
                                       temperature, max_tokens, json_mode, retries, images)

@@ -5,7 +5,7 @@
   "title": "AI 文案生成",
   "category": "语义",
   "description": "解说文案：上帝视角（视频/场景/描述）· 扩写 · 配画面 · 仿写 · 神回复；OpenAI/Gemini 兼容",
-  "version": "2.3.0",
+  "version": "2.3.1",
   "kind": "python",
   "runtime": "python",
   "entrypoint": "node.py",
@@ -313,6 +313,36 @@
         "internal"
       ],
       "description": "llm_call=经 core/llm_call 注册表复用（统一退避/回退，S3-T2）；internal=原内嵌调用（零回归）"
+    },
+    {
+      "name": "hook_first",
+      "type": "BOOL",
+      "label": "黄金3秒钩子前置",
+      "required": false,
+      "default": false,
+      "widget": "toggle",
+      "options": [],
+      "description": "抖音投放向：最劲爆片段放开头+倒叙悬念可选（解说猫完播率三板斧）；默认关=事实优先路线"
+    },
+    {
+      "name": "filter_intro_outro",
+      "type": "BOOL",
+      "label": "过滤片头片尾",
+      "required": false,
+      "default": false,
+      "widget": "toggle",
+      "options": [],
+      "description": "不为片头动画/Logo/演职员表/预告片/黑屏过渡生成解说（解说猫 intro_outro_filter 契约）"
+    },
+    {
+      "name": "ost_ratio",
+      "type": "FLOAT",
+      "label": "原片穿插占比(0=关)",
+      "required": false,
+      "default": 0.0,
+      "widget": "number",
+      "options": [],
+      "description": "OST 层1：>0 时生成端直接输出【原片:开始秒数-结束秒数】标记（解说猫 ratio 语义化指令）"
     }
   ],
   "permission": {
@@ -332,7 +362,7 @@
   "signature": {
     "alg": "ed25519",
     "key_id": "a8998646b062c170",
-    "value": "THZrDsclATNq7awHsjw9RLLQk5fGDuEEAITnNow8wqj428l8hZEdbStvCZ+sMjyAad1BWc7O5rdyaLFbW5YqCQ==",
+    "value": "WM9cpH2vRulzgHZZOFhngm+vGreV1mV2ZDpPyTKOGLcmOlvoXQT/4tnL1hT0oQ+kNIRgZSDWl3jAJUeQTvLKBg==",
     "over": "manifest"
   }
 }
