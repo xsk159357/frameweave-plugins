@@ -102,6 +102,7 @@ frameweave-plugins/
 ```bash
 cd frameweave-plugins
 python sdk/check_all.py --with-workflows --with-signature   # 三门全绿：G1-G10（96 包）+ meta（M1-M5）+ 官方锚验签
+python sdk/check_signature.py --only-dist                   # dist/*.zip 的 archive 签名（75 个，~0.4s）
 python sdk/check_port_consistency.py                        # 端口声明与 spec() 一致（需平台 venv）
 ```
 
@@ -109,6 +110,25 @@ python sdk/check_port_consistency.py                        # 端口声明与 sp
 > 而验签门在只有节点仓、没有平台仓公钥锚的机器上会 exit 2（环境缺失 ≠ 通过）。
 > **改/加节点包必须带 `--with-signature`**；动了 `workflows/` 必须带 `--with-workflows`。
 > CI / 本地钩子建议直接钉死：`python sdk/check_all.py --with-workflows --with-signature`。
+
+### 3.1 一键自检入口（推荐启用）
+
+上面三条命令已封成一键入口，**启用一次**即可让每次 `git commit` 自动跑：
+
+```bash
+git config core.hooksPath .githooks      # 启用（仓库级配置，只影响本机）
+git config --unset core.hooksPath        # 随时关闭
+```
+
+| 入口 | 用途 | 内容 |
+|---|---|---|
+| `.githooks/pre-commit` | git 提交钩子（sh，兼容 Git for Windows） | `check_all.py --with-workflows --with-signature` + `check_signature.py --only-dist` |
+| `sdk/precommit.cmd` | Windows 双击 / 计划任务 / CI 调用（cmd） | 同上 |
+
+- 两入口都是**三态退出码**：`0` 全绿 / `1` 有未登记失败 / `2` 环境缺失（缺锚、缺 python，**不是通过**）；失败会打印「下一步看哪份文档」。
+- `dist` 归档验签实测 ~0.4 s（75 个 zip 共 956 KB），**已纳入默认门**；只想跳过它：`SKIP_DIST=1 git commit ...`。
+- 紧急放行：`git commit --no-verify`（确认风险后）。
+- 行尾约定见仓根 `.gitattributes`：`.githooks/**` 强制 LF、`*.cmd` 强制 CRLF（`cmd.exe` 对 LF-only 批处理会把中文行当命令执行，t12 实测）。
 
 ## 4. 与平台仓的拉取约定
 

@@ -1,7 +1,9 @@
 # FrameWeave 插件开发 SDK
 
 独立插件项目 `frameweave-plugins` 的第三方插件开发脚手架。
-完整契约与指南见 `docs/plugin-development-spec.md`（《插件开发规范 v3》，`FrameWeave/docs` 有镜像）。
+完整契约与指南见本仓 `docs/plugin-development-spec.md`（《节点插件开发规范 **v4**》，约 300 行，**唯一正本**）。
+平台仓 `FrameWeave/docs/specs/plugin-development-spec.md` 自 2026-10-26 起只是一份 **6 行跨仓指针**（**不是镜像**，正文只在本仓维护）。
+验签门：`python sdk/check_signature.py`（官方锚 ed25519，只读公钥；**改包必跑**；商城分发产物用 `--only-dist`）。
 
 ## 快速开始（一条龙）
 

@@ -1,0 +1,68 @@
+#!/bin/sh
+# 节点仓 pre-commit 一键自检（被 git 调用，也可直接执行）。
+#
+# 启用一次即可（本仓约定）：
+#     git config core.hooksPath .githooks
+# 临时跳过：git commit --no-verify   ／  只想跳过 dist 归档验签：SKIP_DIST=1 git commit ...
+#
+# 内容（与 README「提交前自检」一致）：
+#   1) sdk/check_all.py --with-workflows --with-signature
+#      包 G1-G10（96）+ workflows meta M1-M5（25）+ 官方锚验签（96，含允许清单）
+#   2) sdk/check_signature.py --only-dist
+#      dist/*.zip 的 archive 签名（75，over=archive；实测 ~0.4s，故纳入默认门）
+#
+# 退出码原样透传：1 = 有未登记失败；2 = 环境缺失（例如缺平台仓公钥锚，≠ 通过）。
+
+set -u
+
+ROOT=$(git rev-parse --show-toplevel 2>/dev/null) || {
+    echo "[pre-commit] 不在 git 工作区内，无法定位仓库根" >&2
+    exit 2
+}
+cd "$ROOT" || exit 2
+
+PY=${PYTHON:-python}
+if ! command -v "$PY" >/dev/null 2>&1; then
+    echo "[pre-commit] 找不到 python（可用 PYTHON=/path/to/python 指定）" >&2
+    exit 2
+fi
+
+print_hints() {
+    echo ""
+    echo "[pre-commit] 被拦下（exit $1）—— 下一步看："
+    echo "  · 包 manifest / G1-G10        → frameweave-plugins/docs/plugin-development-spec.md"
+    echo "  · workflows meta（M1-M5）     → frameweave-plugins/docs/元数据治理报告_workflows_meta_20261026.md"
+    echo "  · 验签（含允许清单/归档）     → frameweave-plugins/docs/验签门报告_20261026.md"
+    echo "  · 双仓流程与必跑门            → docs/双仓分工与开发流程_20261026.md"
+    if [ "$1" -eq 2 ]; then
+        echo "  · exit 2 = 环境缺失（多半缺平台仓公钥锚"
+        echo "    FrameWeave/backend/app/fw_official_pubkey.json，或 python 不在 PATH）—— 不是通过"
+    fi
+    echo ""
+    echo "  紧急放行（确认风险后）：git commit --no-verify"
+}
+
+echo "[pre-commit] 1/2 包 + workflows meta + 官方锚验签"
+echo "             python sdk/check_all.py --with-workflows --with-signature"
+"$PY" sdk/check_all.py --with-workflows --with-signature
+rc=$?
+if [ "$rc" -ne 0 ]; then
+    print_hints "$rc"
+    exit "$rc"
+fi
+
+if [ "${SKIP_DIST:-0}" = "1" ]; then
+    echo "[pre-commit] 2/2 已跳过（SKIP_DIST=1）：dist 归档验签"
+else
+    echo "[pre-commit] 2/2 dist 归档验签"
+    echo "             python sdk/check_signature.py --only-dist"
+    "$PY" sdk/check_signature.py --only-dist
+    rc=$?
+    if [ "$rc" -ne 0 ]; then
+        print_hints "$rc"
+        exit "$rc"
+    fi
+fi
+
+echo "[pre-commit] PASS：节点仓自检全绿"
+exit 0

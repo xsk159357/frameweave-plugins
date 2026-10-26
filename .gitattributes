@@ -1,0 +1,6 @@
+# 行尾约定（2026-10-26 引入，配合 core.autocrlf=true）
+# - .githooks/** 必须 LF：git 用 sh 执行 hook，CRLF 会让 shebang/命令解析出错
+# - *.cmd 必须 CRLF：cmd.exe 对 LF-only 批处理会把行拼错（t12 实测：中文行被当命令执行）
+# 只声明这两个窄范围，不改动其余文件既有的 autocrlf 行为。
+.githooks/** text eol=lf
+*.cmd text eol=crlf
