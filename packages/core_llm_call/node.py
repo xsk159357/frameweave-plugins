@@ -19,6 +19,7 @@
 from __future__ import annotations
 
 import json
+import os
 import time
 import urllib.error
 import urllib.request
@@ -417,11 +418,36 @@ class LLMCallNode(NodeBase):
         store = ctx["store"]
         progress = ctx.get("progress") or (lambda p: None)
 
+        def _read_json_asset(asset: Any) -> Any:
+            """读 JSON 资产：优先 path 直读，id 读法回退。
+
+            why（C 链 c-final3 实测根因）：worker 内跨节点直调时，上游 save_asset
+            落盘的新资产 id 恒为空串（WorkerStoreProxy 语义），read_json('') 走
+            input_index/library 双双落空 → messages 丢空 → 「需要 prompt/messages/
+            system」假错。path（out/aN.json）在 worker/宿主两侧都真实可读。
+            """
+            if asset is None:
+                return None
+            p = getattr(asset, "path", "") or ""
+            if p and os.path.isfile(p):
+                try:
+                    with open(p, "r", encoding="utf-8") as f:
+                        return json.load(f)
+                except (OSError, ValueError):
+                    pass
+            aid = getattr(asset, "id", "") or ""
+            if aid:
+                try:
+                    return store.read_json(aid)
+                except Exception:  # noqa: BLE001
+                    return None
+            return None
+
         messages: List[Dict[str, Any]] = []
         sys_asset = inputs.get("system")
         if sys_asset is not None:
             try:
-                p = store.read_json(sys_asset.id)
+                p = _read_json_asset(sys_asset)
                 sys_txt = str(p.get("text", "") or "") if isinstance(p, dict) else str(p or "")
             except Exception:  # noqa: BLE001
                 sys_txt = ""
@@ -430,7 +456,7 @@ class LLMCallNode(NodeBase):
         msgs_asset = inputs.get("messages")
         if msgs_asset is not None:
             try:
-                data = store.read_json(msgs_asset.id)
+                data = _read_json_asset(msgs_asset)
             except Exception:  # noqa: BLE001
                 data = None
             if isinstance(data, list):
@@ -439,7 +465,7 @@ class LLMCallNode(NodeBase):
         prompt_txt = ""
         if prompt_asset is not None:
             try:
-                p = store.read_json(prompt_asset.id)
+                p = _read_json_asset(prompt_asset)
                 prompt_txt = str(p.get("text", "") or "") if isinstance(p, dict) else str(p or "")
             except Exception:  # noqa: BLE001
                 prompt_txt = ""

@@ -5,7 +5,7 @@
   "title": "统一 LLM 调用",
   "category": "语义",
   "description": "prompt+model→响应；统一超时/退避[2,5,10]/fallback_models/JSON mode/schema 校验；OpenAI/Gemini 双协议",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "kind": "python",
   "runtime": "python",
   "entrypoint": "node.py",
@@ -200,7 +200,7 @@
   "signature": {
     "alg": "ed25519",
     "key_id": "a8998646b062c170",
-    "value": "hZtzTA/3qDIwhKmuTFvYCI4xTnlhG1+cOl35fO6Hw/AOR0z6FIVZeLKOJouud5j1FHBJGPlty5L7U7Zh3mzLAQ==",
+    "value": "TbKGMleTolZJDWmHm7mkqeOuHr3M4IC+bLaAxhHycD9PhcpEfWI+RkoCcXW6upsd70I6l+YTefip0+AJi2ZODQ==",
     "over": "manifest"
   }
 }
