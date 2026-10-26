@@ -2,7 +2,7 @@
 
 > **状态**：现行权威规范（2026）　**契约**：manifest v2（`schema_version: 2`）
 > **适用代码**：`backend/app/plugin/manifest_v2.py`、`backend/schemas/manifest_v2.json`、`backend/app/plugin/errors.py`、`backend/app/worker/limits.py`、`backend/app/declarative.py`、`backend/app/plugin_registry.py`、`backend/app/market.py`。
-> **SDK**：`frameweave-plugins/sdk/`。旧版 `docs/node-plugin-spec.md` 仅作历史参考；新插件必须写 v2。
+> **SDK**：`frameweave-plugins/sdk/`。旧版 平台仓 `FrameWeave/docs/specs/node-plugin-spec.md` 仅作历史参考；新插件必须写 v2。本文是**唯一正本**（平台仓同路径文件 `FrameWeave/docs/specs/plugin-development-spec.md` 自 2026-10-26 起降为跨仓指针，内容只在本仓维护）。
 
 ## 0. 五分钟读懂
 
