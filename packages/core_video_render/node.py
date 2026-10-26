@@ -698,7 +698,16 @@ class VideoRenderNode(NodeBase):
             cmd += ["-i", extra.path]
         if has_overlay:
             cmd += ["-i", overlay.path]
-        cmd += ["-filter_complex", expr, "-map", f"[{final_label}]"]
+        # Windows 命令行 8191 字符上限（c-final13 实测 WinError 206：31 段 × 长 filter_complex
+        # 超限 → spawn FileNotFoundError → 退出码 -1）。filter_complex 走脚本文件规避。
+        if len(expr) > 6000:
+            fc_script = os.path.join(workdir, "filter_complex.txt")
+            with open(fc_script, "w", encoding="utf-8") as _fcf:
+                _fcf.write(expr)
+            cmd += ["-filter_complex_script", fc_script]
+        else:
+            cmd += ["-filter_complex", expr]
+        cmd += ["-map", f"[{final_label}]"]
         if audio_label:
             cmd += ["-map", f"[{audio_label}]"]
         cmd += ["-r", str(fps), "-c:v", "libx264", "-preset", "medium", "-crf", "20",

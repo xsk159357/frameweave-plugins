@@ -508,7 +508,21 @@ class AINarrateNode(NodeBase):
                 "json_mode": json_mode, "schema": "", "timeout": 600,
                 "backoff": "[2,5,10]",
             })
-            payload = ctx["store"].read_json(out["text"].id)
+            # 批3 协议收口补充（c-final8 实测）：读 llm_call 输出同样优先 path 直读——
+            # worker 内 save_asset 落盘的输出资产 id 恒空（WorkerStoreProxy 语义），
+            # read_json("") 落空 → raw="" → V2 文本行解析器空转。
+            _txt_asset = out.get("text")
+            payload = None
+            if _txt_asset is not None:
+                _tp = getattr(_txt_asset, "path", "") or ""
+                if _tp and os.path.isfile(_tp):
+                    try:
+                        with open(_tp, "r", encoding="utf-8") as _tf:
+                            payload = json.load(_tf)
+                    except (OSError, ValueError):
+                        payload = None
+                if payload is None and getattr(_txt_asset, "id", ""):
+                    payload = ctx["store"].read_json(_txt_asset.id)
             return str(payload.get("text", "") or "") if isinstance(payload, dict) else str(payload or "")
         for attempt in range(max(1, retries + 1)):
             try:
@@ -848,6 +862,10 @@ class AINarrateNode(NodeBase):
 
             max_retry_rounds = max(0, min(2, retries))     # 解说猫语义：限次重试
             retry_instruction = ""
+            # 批3 协议口径：V2 模板自带文本行时间戳协议 → 本路径强制 json_mode=False
+            # （c-final6 实测：V2 prompt + json_mode=True → LLM 按模板输出文本行，
+            #  解析端却等 JSON → "JSON 解析失败" 假错。协议必须与解析端一致。）
+            _use_json = bool(json_mode) and _V2_RESOURCE is None
             for _round in range(max_retry_rounds + 1):
                 if _round > 0:
                     # 批2+批3：重试 prompt 按当前模板路径重建（V2 走 RETRY_SECTION 槽）
@@ -866,9 +884,9 @@ class AINarrateNode(NodeBase):
                             prompt += _out_protocol_json()
                 msgs = [{"role": "user", "content": prompt}]
                 raw = await self._llm(ctx, msgs, provider, api_key, base_url, model,
-                                      temperature, max_tokens, json_mode, retries, images)
+                                      temperature, max_tokens, _use_json, retries, images)
                 llm_calls += 1
-                data = _extract_json(raw) if json_mode else None
+                data = _extract_json(raw) if _use_json else None
                 narration_segments = []
                 if isinstance(data, list) and data:
                     for i, it in enumerate(data):
@@ -882,10 +900,38 @@ class AINarrateNode(NodeBase):
                     result_text = "".join(s["text"] for s in narration_segments)
                     strategy_used = "llm"
                 else:
-                    if json_mode and _round == 0:
+                    if _use_json and _round == 0:
                         warnings.append("LLM 未返回可解析 JSON，回退纯文本并本地匹配")
                     result_text = raw.strip()
-                    strategy_used = "llm+local" if local_match_on else "llm"
+                    # 批3 协议收口：V2 文本行协议 `[s-e] 正文` → segments 结构化
+                    # （c-final7 实测：LLM 按 V2 输出完美时间戳文本行，但解析端只有
+                    #  JSON 分支 → segments=0 → 下游 tts/match 断。解析器对齐解说猫
+                    #  _parse_timeline_lines 语义：[开始-结束] 文本，开始必须唯一。）
+                    if _V2_RESOURCE is not None and result_text:
+                        import re as _re
+                        seg_rows: List[Dict[str, Any]] = []
+                        _seen_starts: set = set()
+                        for _ln in result_text.split("\n"):
+                            _ln = _ln.strip()
+                            if not _ln:
+                                continue
+                            _m = _re.match(r"^[\[【]\s*([\d.]+)\s*[-–—]\s*([\d.]+)\s*[\]】]\s*(.*)$", _ln)
+                            if not _m:
+                                continue
+                            _st, _en, _tx = float(_m.group(1)), float(_m.group(2)), _m.group(3).strip()
+                            if _en <= _st or not _tx or _st in _seen_starts:
+                                continue     # 开始时间必须唯一（V2 输出协议约束）
+                            _seen_starts.add(_st)
+                            seg_rows.append({"text": _tx, "start": _st, "end": _en})
+                        if seg_rows:
+                            narration_segments = [
+                                {"index": i, "text": r["text"], "start": r["start"], "end": r["end"]}
+                                for i, r in enumerate(seg_rows)]
+                            result_text = "".join(r["text"] for r in seg_rows)
+                            strategy_used = "llm"
+                            warnings.append(f"V2 文本行协议解析：{len(seg_rows)} 段")
+                    strategy_used = strategy_used if narration_segments else (
+                        "llm+local" if local_match_on else "llm")
                 # 即时 coverage 审计；不达标且还有名额 → 构造指令重试
                 coverage = _live_coverage()
                 if _coverage_ok(coverage):

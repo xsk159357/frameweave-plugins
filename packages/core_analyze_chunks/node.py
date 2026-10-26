@@ -402,7 +402,18 @@ class AnalyzeChunksNode(NodeBase):
         provider = str(params.get("provider", "auto") or "auto")
         api_key_raw = str(params.get("api_key", "") or "").strip()
         base_url = str(params.get("base_url", "") or "").strip()
-        model = str(params.get("model", "gemini-1.5-flash") or "gemini-1.5-flash").strip() or "gemini-1.5-flash"
+        # 模型解析（2026-10-26 对齐 llm_call 语义）：参数空 → 全局 settings.llm.model
+        # （出厂模板 n4.model 已置空——硬编码 gemini-1.5-flash 在 wb2api 网关 400
+        #  model_unavailable，c-final4 实测）。仍无全局 → 保底 gemini-1.5-flash。
+        model = str(params.get("model", "") or "").strip()
+        if not model:
+            try:
+                from app.llm_config import resolve_global as _rg
+                model = str((_rg() or {}).get("model") or "").strip()
+            except Exception:  # noqa: BLE001
+                model = ""
+        if not model:
+            model = "gemini-1.5-flash"
         concurrency = max(1, min(5, int(params.get("concurrency", 3) or 3)))  # 硬上限 5
         retries = max(0, int(params.get("retries", 3) or 3))
         frames_per_chunk = max(1, int(params.get("frames_per_chunk", 3) or 3))
@@ -414,6 +425,14 @@ class AnalyzeChunksNode(NodeBase):
         if not api_key:
             raise RuntimeError("contract: 请填写 API Key 或用 @secret:名称 引用保险箱")
         provider = _resolve_provider(base_url, provider)
+        if not base_url:
+            # 2026-10-26 对齐 llm_call 语义：base_url 空 → 全局 settings.llm.base_url
+            # （c-final5 实测：wb2api key + 官方默认端点 = 401）
+            try:
+                from app.llm_config import resolve_global as _rgb
+                base_url = str((_rgb() or {}).get("base_url") or "").strip()
+            except Exception:  # noqa: BLE001
+                base_url = ""
         if not base_url:
             base_url = _default_base_url(provider)
 

@@ -5,7 +5,7 @@
   "title": "分块视觉分析（A4）",
   "category": "分析",
   "description": "chunks + video → descriptions JSON（shot_type/visual_description/audio_content）；并发≤5、解析重试 3、JSON schema 校验；接入 ai_narrate 零关键帧省 Token 路径",
-  "version": "1.0.1",
+  "version": "1.0.3",
   "kind": "python",
   "runtime": "python",
   "entrypoint": "node.py",
@@ -87,17 +87,17 @@
       "default": "",
       "widget": "text",
       "options": [],
-      "description": "留空按 provider 默认（OpenAI / Gemini）"
+      "description": "API 地址（空=走全局 settings.llm.base_url）"
     },
     {
       "name": "model",
       "type": "STRING",
       "label": "视觉模型",
       "required": true,
-      "default": "gemini-1.5-flash",
+      "default": "",
       "widget": "text",
       "options": [],
-      "description": "支持视觉输入的模型"
+      "description": "视觉模型（空=走全局 settings.llm.model）"
     },
     {
       "name": "concurrency",
@@ -189,7 +189,7 @@
   "signature": {
     "alg": "ed25519",
     "key_id": "a8998646b062c170",
-    "value": "Wf8JyzsZCr7yzBH3DGyvq8TaGFWfavNABjfI3nDXEMNoQ33e1za+jpSLAS8UohD8kRgMZq+oJuUeUQoh9jrMDg==",
+    "value": "MlVO/uf1ie7zNgo1Dq3SJITS0D65LDsFQjHnfGwPbDsfxaFPYneJD8SAuFB3+RC5dxzgAntmQcQGPx93Lj1oCw==",
     "over": "manifest"
   }
 }
