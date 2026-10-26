@@ -4,7 +4,7 @@
   "version": "1.0.0",
   "kind": "workflow",
   "source": "builtin-template",
-  "updated_at": 1792262478.2178814,
+  "updated_at": 1792844058,
   "aligned_to": "t3 优化节点口径（packages 70 包 + dev user_nodes 33 包，2026-10-17）",
-  "workflow_sha256": "0aa7b741d1ec8142bed1770987a2762bb7abf7c98a393f0bd682dc0c06630443"
+  "workflow_sha256": "ffe033a8390f2e59a2d18e58f437e57275581233c1bdd273be65c673337ba5d8"
 }

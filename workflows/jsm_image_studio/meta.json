@@ -4,7 +4,7 @@
   "version": "1.0.0",
   "kind": "workflow",
   "source": "official",
-  "updated_at": 1792265081.4008715,
+  "updated_at": 1792844058,
   "aligned_to": "t3 优化节点口径（packages 70 包 + dev user_nodes 33 包，2026-10-17）",
   "workflow_sha256": "0672b426b41f6b615aea57abc14723e16c1d0d52eccbe13f14391b439e707f77"
 }

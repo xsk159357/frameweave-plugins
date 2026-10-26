@@ -54,9 +54,19 @@ frameweave-plugins/
 | 文件 | 内容 |
 |---|---|
 | `workflow.json` | 干净的模板式工作流定义（节点 + 边 + 参数，无运行时状态、无绝对路径、无资产 id） |
-| `meta.json` | 版本受控元数据：`version` / `source` / `updated_at` / `aligned_to` / `sha256` |
+| `meta.json` | 版本受控元数据：`id` / `name` / `version` / `kind` / `source` / `updated_at` / `aligned_to` / `workflow_sha256` |
 
 分享/上架的工作流一律先落这里，再导出 zip；平台侧模板只是本仓内容的构建输入，不在平台仓单独维护副本。
+
+**`meta.json` 两条硬不变量**（2026-10-26 起由 `sdk/check_workflow_meta.py` 强制，M1–M5）：
+
+- `workflow_sha256` = 同目录 `workflow.json` **原样字节**的 sha256（不是「解析后重新序列化」的哈希）；
+- `updated_at` = 该 `workflow.json` **最后一次提交的 committer 时间**（Unix 秒）—— 用 `git log -1 --format=%ct -- workflows/<id>/workflow.json` 取值，不是手写时间。
+
+改完 `workflow.json` 就要同步这两项（`python sdk/check_workflow_meta.py --print-desired` 只打印应有值、不写盘；本仓不提供自动改写入口，避免"闸门自己改绿"）。`meta.id/name/version/kind` 必须与 `workflow.json` 顶层一致（模板型看 `tpl_id`，实例型看 `id`；workflow 未声明 `version`/`kind` 时跳过对应项）。
+
+> 语义说明：`updated_at` 采用 git 提交时刻，是可被机器复核的确定性来源；旧值（2026-10-17 的生成器时间）无法从本仓历史验证，已在 `docs/元数据治理报告_workflows_meta_20261026.md` 全文留档。若要保留"创作时间"语义，应另加 `authored_at` 字段，而不是让 `updated_at` 同时承担两种含义。
+
 
 ### 2.3 `dist/` 是发布产物，不是源码
 
@@ -68,7 +78,9 @@ frameweave-plugins/
 | 命令 | 用途 | 退出码 |
 |---|---|---|
 | `python sdk/check_manifest.py <pkg_dir>` | 单包 G1-G10 校验（含 v1 兼容通道告警） | 0 = 过 |
-| `python sdk/check_all.py [packages_dir]` | 全仓逐包 G1-G10 + schema/签名状态汇总（**提交前必跑**） | 0 = 全过 |
+| `python sdk/check_all.py [packages_dir]` | 全仓逐包 G1-G10 + schema/签名状态汇总（默认只查包，兼容旧调用） | 0 = 全过 |
+| `python sdk/check_all.py --with-workflows` | 包 + `workflows/` meta 一致性（M1–M5），**提交前必跑这条** | 0 = 全过 |
+| `python sdk/check_workflow_meta.py [--workflows DIR] [--no-git] [--json] [--print-desired]` | 只读核对 `workflows/<id>/meta.json` ↔ `workflow.json`：文件/字段齐备、`workflow_sha256`、`updated_at` vs git 提交时间、基本字段 | 0 = 全一致 / 1 = 有不一致 / 2 = 环境缺失 |
 | `python sdk/check_port_consistency.py [packages_dir]` | manifest 端口声明 ↔ `node.py spec()` 逐端口对拍（需平台 venv） | 0 = 全一致 |
 | `python sdk/package_plugin.py <pkg_dir> [-o dist]` | 校验通过后打 `<pkg>.zip`（拒绝路径穿越 / 超大 / `__pycache__`） | 0 = 成功 |
 | `python sdk/backfill_core_manifests.py [--write]` | 从 `node.py spec()` 回填 manifest v2 端口声明（默认 dry-run） | 0 = 无差异 |
@@ -81,10 +93,14 @@ frameweave-plugins/
 
 ```bash
 cd frameweave-plugins
-python sdk/check_all.py                       # G1-G10 全绿
-python sdk/check_port_consistency.py          # 端口声明与 spec() 一致（需平台 venv）
+python sdk/check_all.py --with-workflows    # G1-G10（96 包）+ workflows meta（M1-M5）全绿
+python sdk/check_port_consistency.py        # 端口声明与 spec() 一致（需平台 venv）
 FrameWeave/backend/.venv/Scripts/python.exe ../.tmp/t2-inventory/verify_sigs.py   # 验签（示例工具，见迁移报告）
 ```
+
+> 只跑 `python sdk/check_all.py`（不带 `--with-workflows`）**不会**校验 workflows meta —— 该开关是显式的，
+> 因为旧调用方（含文档示例）按「只校验包」理解本脚本。动了 `workflows/` 就必须带开关。
+> CI / 本地钩子建议直接钉死：`python sdk/check_all.py --with-workflows`。
 
 ## 4. 与平台仓的拉取约定
 
@@ -107,6 +123,7 @@ FrameWeave/backend/.venv/Scripts/python.exe ../.tmp/t2-inventory/verify_sigs.py 
 ## 5. 现状基线（2026-10-26）
 
 - `packages/` **96 包**：67 个 `core_*` + 28 个 `user_*` + `hello`；G1-G10 **96/96 OK**；端口一致性 **96/96 对齐**；官方锚验签 **92 SIG_OK / 4 FAILED**（4 个 `user_*` 为历史失效签名，按私钥纪律未重签，见迁移报告 §4.2）。
+- `workflows/` **25 个工作流**：`meta.json` 的 `workflow_sha256` 与 `updated_at` **25/25 与实测一致**（2026-10-26 治理，治理前 16 条哈希过期、25 条时间戳与 git 不符）；`python sdk/check_all.py --with-workflows` 实跑 exit 0。见 `docs/元数据治理报告_workflows_meta_20261026.md`。
 - `workflows/` 25 个 `<id>/`；`docs/` 索引见 [docs/README.md](docs/README.md)。
 - 平台运行目录 `FrameWeave/backend/user_nodes/` 的 58 个包，本仓全部有正本（平台独占 = 0）；其中 53 个字节一致，5 个有判定（正本一律在本仓）。
 - 历史：本仓首次入库为 2026-10-24 的全量快照，`packages/` 当时取自 2026-10-18 08:35 的 `dist/*.zip` 构建产物 —— 这也是本轮 7 个"漂移包"的成因（zip 冻结后，平台运行目录继续被热修、插件仓继续被提交）。逐包判定与证据见 `docs/迁移报告_平台独占节点入库_20261026.md`。

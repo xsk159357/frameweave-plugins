@@ -4,7 +4,7 @@
   "version": "1.0.0",
   "kind": "workflow",
   "source": "backend-data-workflow(cleaned)",
-  "updated_at": 1792262478.2201817,
+  "updated_at": 1792844058,
   "aligned_to": "t3 优化节点口径（packages 70 包 + dev user_nodes 33 包，2026-10-17）",
-  "workflow_sha256": "dd6f2b334ea160314bec6f5f11f1db105c3e8cc387823141124e6ad6421e1112"
+  "workflow_sha256": "8487e0f984fa601c9b70c2a3a34dd150a554677c3c6b619c7fa780069849047b"
 }
