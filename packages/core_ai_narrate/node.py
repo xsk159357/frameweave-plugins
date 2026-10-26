@@ -137,14 +137,12 @@ STYLE_PACKS: Dict[str, Dict[str, Any]] = {**_BUILTIN_STYLE_PACKS, **_load_extra_
 
 # 原版 13 语 narration 配置（中文等语言指令仍以内置为准，其余取资源）
 LANG_HINTS: Dict[str, str] = {
-    "中文": "请用简体中文撰写解说词，口语化，每句不超过30字。",
-    "英语": "Write the narration in English, conversational, each sentence under 20 words.",
-    "日语": "日本語でナレーションを書いてください。口語的に、一文20語以内で。",
-    "韩语": "한국어로 내레이션을 작성하세요. 구어체로, 문장당 20단어 이내로.",
-    "泰语": "เขียนบทบรรยายเป็นภาษาไทย แบบภาษาพูด ประโยคละไม่เกิน 20 คำ",
-    "越南语": "Viết lời bình bằng tiếng Việt, khẩu ngữ, mỗi câu dưới 20 từ.",
     "自动": "Use the language of the source video/content; conversational.",
 }
+# 解说猫迁移优化（2026-10-26）：语言单一来源化——13 语全部来自 data/lang_config.json
+# （display_name + format_note/role/hook_example 组装），消除旧内置 7 项与资源 13 项的
+# 重复别名（英语/English、日语/日本語、韩语/한국어、泰语/ไทย、越南语/Tiếng Việt 同语言
+# 两个下拉项、两套 hint 文案）。"自动" 保留为内置兜底。
 LANG_HINTS.update(_load_extra_lang_hints())
 
 
@@ -402,8 +400,12 @@ class AINarrateNode(NodeBase):
                 PortSpec("llm_channel", PortType.STRING, label="LLM 通道", default="llm_call",
                          widget="select", options=["llm_call", "internal"],
                          description="llm_call=经 core/llm_call 注册表复用（统一退避/回退，S3-T2）；internal=原内嵌调用（零回归）"),
+                PortSpec("hook_first", PortType.BOOL, label="黄金3秒钩子前置", default=False, widget="toggle",
+                         description="抖音投放向：最劲爆片段放开头+倒叙悬念可选（解说猫完播率三板斧）；默认关=事实优先路线"),
+                PortSpec("filter_intro_outro", PortType.BOOL, label="过滤片头片尾", default=False, widget="toggle",
+                         description="不为片头动画/Logo/演职员表/预告片/黑屏过渡生成解说（解说猫 intro_outro_filter 契约）"),
             ],
-            version="2.2.0",
+            version="2.3.0",
         )
 
     # ------------------------------------------------------------ 工具
@@ -557,6 +559,9 @@ class AINarrateNode(NodeBase):
         local_match_on = bool(params.get("local_match", True))
         retries = max(0, int(params.get("retries", 2) or 2))
         self._llm_channel = str(params.get("llm_channel", "llm_call") or "llm_call")
+        # 解说猫迁移优化（2026-10-26）：完播率工具箱开关（默认关=零行为变化）
+        hook_first = bool(params.get("hook_first", False))
+        filter_intro_outro = bool(params.get("filter_intro_outro", False))
 
         # LLM 通道配置化：显式参数 > 全局配置 > provider 默认
         api_key = _resolve_secret(ctx, api_key_raw)
@@ -625,6 +630,22 @@ class AINarrateNode(NodeBase):
         strategy_used = "llm"
         llm_calls = 0
 
+        # ---- 解说猫迁移优化（2026-10-26）：完播率工具箱（默认关，参数开启才注入）
+        _HOOK_FIRST_BLOCK = (
+            "【黄金3秒·完播率钩子】（本次开启）：\n"
+            "1. 把最劲爆、最反转、最抓人的片段放在最开头（黄金3秒）——"
+            "必要时可从结局或高潮讲起，再回到开头（倒叙悬念）；\n"
+            "2. 开头必须有强烈的悬念钩子，让用户停下滑动；\n"
+            "3. 只讲精彩片段，跳过无聊过渡；打乱原始顺序重构一条全新故事线"
+            "（只重排讲述顺序，时间戳仍须对应真实场景边界）。\n"
+        )
+        _INTRO_OUTRO_FILTER_BLOCK = (
+            "【内容过滤】以下非叙事内容一律不为其生成解说词，直接跳过：\n"
+            "片头动画、制作公司 Logo、出品方/发行商信息；主题曲/片头曲/片尾曲"
+            "（除非歌词包含关键剧情）；演职员表、字幕滚动、制作人员名单；"
+            "预告片、下集预告、\"敬请期待\"等宣传内容；黑屏、静态画面、无剧情过渡镜头。\n"
+        )
+
         def _base_prompt(job: str) -> str:
             p = f"你是一名{style_desc or '资深影视解说博主'}。请用{perspective}完成以下任务：{job}\n"
             p += f"【语言】{LANG_HINTS.get(language, LANG_HINTS['中文'])}\n"
@@ -637,6 +658,11 @@ class AINarrateNode(NodeBase):
             if style_pack.get("tone"):
                 p += f"【语气】{style_pack['tone']}。\n"
             p += "【创作方式】事实优先，先理顺故事再表达观点；口语化，避免书面语和套路化开头。\n"
+            # 解说猫迁移优化：参数开关注入（默认关，不改变既有输出形态）
+            if hook_first:
+                p += _HOOK_FIRST_BLOCK
+            if filter_intro_outro:
+                p += _INTRO_OUTRO_FILTER_BLOCK
             return p
 
         def _out_protocol_json(extra: str = "") -> str:

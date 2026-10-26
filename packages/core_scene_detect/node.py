@@ -703,7 +703,9 @@ class SceneDetectNode(NodeBase):
                                      "选了但不可用会直接报结构化错误而不是静默降级"),
                 PortSpec("sample_fps", PortType.FLOAT, label="抽样帧率", default=1.0, widget="number"),
                 PortSpec("diff_threshold", PortType.FLOAT, label="帧差阈值", default=0.10, widget="number"),
-                PortSpec("threshold", PortType.FLOAT, label="模型阈值(TransNet)", default=0.5, widget="number"),
+                PortSpec("threshold", PortType.FLOAT, label="模型阈值(TransNet)", default=0.8,
+                         widget="number",
+                         description="0.8=解说猫经验值（产剧情级场景）；0.5=TransNet 官方参考（产碎片镜头），影响下游分块与填空条数"),
                 PortSpec("min_duration", PortType.FLOAT, label="最小片段(秒)", default=1.0, widget="number"),
                 PortSpec("max_duration", PortType.FLOAT, label="最大片段(秒)", default=30.0, widget="number"),
                 PortSpec("merge_policy", PortType.STRING, label="短片段合并", default="previous",
@@ -730,7 +732,7 @@ class SceneDetectNode(NodeBase):
         if sample_fps <= 0:
             sample_fps = 1.0
         diff_threshold = float(params.get("diff_threshold", 0.10) or 0.10)
-        model_threshold = float(params.get("threshold", 0.5) or 0.5)
+        model_threshold = float(params.get("threshold", 0.8) or 0.8)
         min_duration = float(params.get("min_duration", 1.0) or 1.0)
         max_duration = float(params.get("max_duration", 30.0) or 30.0)
         merge_policy = str(params.get("merge_policy", "previous") or "previous")

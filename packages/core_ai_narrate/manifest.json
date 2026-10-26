@@ -5,7 +5,7 @@
   "title": "AI 文案生成",
   "category": "语义",
   "description": "解说文案：上帝视角（视频/场景/描述）· 扩写 · 配画面 · 仿写 · 神回复；OpenAI/Gemini 兼容",
-  "version": "2.2.1",
+  "version": "2.3.0",
   "kind": "python",
   "runtime": "python",
   "entrypoint": "node.py",
@@ -332,7 +332,7 @@
   "signature": {
     "alg": "ed25519",
     "key_id": "a8998646b062c170",
-    "value": "kytEpXrLSMGiwjr+UyuXWjvR81WZUW9qcG+GTh+PoPjHMe7Jc5gOjsSKrZBEmwnjPJbHABX+rOcMAh2E/sj5BQ==",
+    "value": "THZrDsclATNq7awHsjw9RLLQk5fGDuEEAITnNow8wqj428l8hZEdbStvCZ+sMjyAad1BWc7O5rdyaLFbW5YqCQ==",
     "over": "manifest"
   }
 }

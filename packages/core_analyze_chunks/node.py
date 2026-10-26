@@ -104,9 +104,11 @@ def _resolve_secret(ctx: Any, raw: str) -> str:
     if not raw or not str(raw).startswith("@secret:"):
         return str(raw or "")
     ref = str(raw).split(":", 1)[1]
-    # C 链根因②（2026-10-26）：isinstance(ctx, dict) 对 WorkerContext 恒 False
-    # （映射协议而非 dict）→ 恒走 fallback 直读 app.secrets（worker 进程）。
-    # 改鸭子类型：worker 侧命中 WorkerContext.resolve_secret（RPC 回宿主）。
+    # C 链根因②（2026-10-26）：旧判定 isinstance(ctx, dict) 对 WorkerContext 恒 False
+    # （它有 keys()/get() 映射协议但不是 dict）→ 永远走 fallback 直读 app.secrets
+    # （worker 进程）。改鸭子类型：有 get 即按映射协议取 resolve_secret——worker 侧
+    # 命中 WorkerContext.resolve_secret（RPC 回宿主，宿主 DATA_DIR 生效），隔离 key
+    # 才能读到；inprocess 侧行为不变（to_dict 本就含 resolve_secret）。
     resolver = ctx.get("resolve_secret") if hasattr(ctx, "get") else None
     if resolver is not None:
         return str(resolver(ref) or "")
@@ -312,10 +314,14 @@ class AnalyzeChunksNode(NodeBase):
                 f"你是一名视频分镜分析师。这是视频第 {idx + 1}/{total} 段"
                 f"（{start:.1f}s-{float(end_) if end_ is not None else start:.1f}s），"
                 f"下面给出 {len(images_b64)} 帧采样画面。\n"
-                "请综合这些画面输出该分段的 JSON 分析（只输出 JSON，不要解释）：\n"
+                "请综合这些画面与关联音频输出该分段的 JSON 分析（只输出 JSON，不要解释）：\n"
                 '{"shot_type": "wide|medium|closeup|action|dialogue|transition|other 之一",\n'
-                ' "visual_description": "一段 40-80 字中文画面描述（人物/场景/动作/构图）",\n'
-                ' "audio_content": "根据画面能推断的听觉内容（对话/音效/静音/音乐），无法判断填空字符串"}'
+                ' "visual_description": "一段 40-80 字中文画面描述（像讲故事一样：人物身份特征/'
+                '具体动作/表情神态/环境氛围/关键道具）",\n'
+                ' "audio_content": "听觉信息——音频分析与画面同等重要，必须认真聆听：'
+                '对白写作 角色名(情绪副词):\\"完整台词\\"（逐字转录，不能概括）；'
+                '背景音乐写作【音乐情绪描述】；音效写作【具体音效描述】；'
+                '多种声音直接并列书写；仅当完全无声时写【静音】"}'
             )
             warnings: List[str] = []
             last_err = "无画面帧可用" if not images_b64 else ""
