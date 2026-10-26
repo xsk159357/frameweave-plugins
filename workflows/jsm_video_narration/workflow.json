@@ -99,7 +99,7 @@
         "provider": "auto",
         "api_key": "@secret:llm_api_key",
         "base_url": "",
-        "model": "gemini-1.5-flash",
+        "model": "",
         "concurrency": 3,
         "retries": 3,
         "frames_per_chunk": 3,
@@ -587,6 +587,12 @@
       "sourceHandle": "layout",
       "target": "n11",
       "targetHandle": "layout"
+    },
+    {
+      "source": "n9",
+      "target": "n14",
+      "sourceHandle": "marks",
+      "targetHandle": "narration_items"
     }
   ]
 }
