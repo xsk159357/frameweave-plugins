@@ -7,52 +7,8 @@
     "只减不增：新增失败一律不许加进来（加条目属变更契约，需用户/队长裁定）；条目删除同样需用户裁定。",
     "只豁免 SIG_FAIL：NO_SIG（manifest 丢 signature）永不豁免 —— 丢签名不等于豁免。",
     "条目钉住 manifest_sha256：登记的包一旦被改动（哪怕只是改一行），豁免立即失效、门变红，逼人先看内容再决定。",
-    "包恢复有效签名后，本脚本会把它报为「允许清单过期」，届时经用户裁定删除条目。"
+    "包恢复有效签名后，本脚本会把它报为「允许清单过期」，届时经用户裁定删除条目。",
+    "2026-10-26 用户裁决 A（重签）：4 个 user_* 包已重签（manifest + dist zip + archive 三处同步），4 条豁免据此删除；entries 现为空。清单规则不变：只减不增，新增条目需用户/队长裁定。"
   ],
-  "entries": [
-    {
-      "pkg": "user_jsm_highlight_plan",
-      "type_id": "user/jsm_highlight_plan",
-      "version": "1.1.0",
-      "manifest_sha256": "8a01a3b43167f04503b42e0f3549606566c99814226603d9455b048f7f483786",
-      "failure": "SIG_FAIL",
-      "since": "2026-10-18（dist/user_jsm_highlight_plan.zip 构建产物里签名即已失效）",
-      "source_commit": "144b513（节点仓 2026-10-24 首次入库，带入 10-18 构建快照）",
-      "evidence": ".tmp/t2-inventory/verify_all_final.txt；本包 manifest 与 dist/user_jsm_highlight_plan.zip 内同名文件逐字节相同，均为 SIG_FAIL；.tmp/t6|t7|t8_nodes_union 与 _archive 下同名副本同样 SIG_FAIL ⇒ 工作区内不存在有效签名副本",
-      "reason": "2026-10-18 构建即失效，工作区无有效签名副本；待用户裁定 A 授权重签 / B 商城下架。不在 BASIC_NODE_DIRS，不影响出厂种子与安装包。"
-    },
-    {
-      "pkg": "user_jsm_portrait_matte",
-      "type_id": "user/jsm_portrait_matte",
-      "version": "1.1.0",
-      "manifest_sha256": "3d2c23ead1da0e754eb031b60e60baa3bf661a0655c720b8983e5ebbb3208fb5",
-      "failure": "SIG_FAIL",
-      "since": "2026-10-18（dist/user_jsm_portrait_matte.zip 构建产物里签名即已失效）",
-      "source_commit": "144b513（节点仓 2026-10-24 首次入库，带入 10-18 构建快照）",
-      "evidence": ".tmp/t2-inventory/verify_all_final.txt；与 dist 内同名 manifest 逐字节相同且同样 SIG_FAIL；10-08 之后所有并集副本均 SIG_FAIL",
-      "reason": "2026-10-18 构建即失效，工作区无有效签名副本；待用户裁定 A 授权重签 / B 商城下架。不在 BASIC_NODE_DIRS，不影响出厂种子与安装包。"
-    },
-    {
-      "pkg": "user_jsm_translate_batch",
-      "type_id": "user/jsm_translate_batch",
-      "version": "1.1.0",
-      "manifest_sha256": "1c4a8e5ec63308177f504ac15ffeb537a6ae845035b8a98dc904dfb622f650ef",
-      "failure": "SIG_FAIL",
-      "since": "2026-10-18（dist/user_jsm_translate_batch.zip 构建产物里签名即已失效；平台运行目录副本同样验不过）",
-      "source_commit": "144b513（节点仓 2026-10-24 首次入库，带入 10-18 构建快照）",
-      "evidence": ".tmp/t2-inventory/verify_all_final.txt 与 drift 分析：t2 已判「插件仓侧为正本」（含 llm_config 配置化），但两侧签名均无效；dist 内同名 manifest 同样 SIG_FAIL",
-      "reason": "2026-10-18 构建即失效，工作区无有效签名副本；待用户裁定 A 授权重签 / B 商城下架。不在 BASIC_NODE_DIRS，不影响出厂种子与安装包。"
-    },
-    {
-      "pkg": "user_jsm_video_compress",
-      "type_id": "user/jsm_video_compress",
-      "version": "1.0.0",
-      "manifest_sha256": "2536e6e30b5568303a20da757886f6fbe8d256600677ab92485384c7aa5da086",
-      "failure": "SIG_FAIL",
-      "since": "2026-10-18（dist/user_jsm_video_compress.zip 构建产物里签名即已失效）",
-      "source_commit": "144b513（节点仓 2026-10-24 首次入库，带入 10-18 构建快照）",
-      "evidence": ".tmp/t2-inventory/verify_all_final.txt；与 dist 内同名 manifest 逐字节相同且同样 SIG_FAIL；t6/t7/t8_nodes_union 副本同样 SIG_FAIL",
-      "reason": "2026-10-18 构建即失效，工作区无有效签名副本；待用户裁定 A 授权重签 / B 商城下架。不在 BASIC_NODE_DIRS，不影响出厂种子与安装包。"
-    }
-  ]
+  "entries": []
 }
