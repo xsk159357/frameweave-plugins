@@ -78,8 +78,9 @@ frameweave-plugins/
 | 命令 | 用途 | 退出码 |
 |---|---|---|
 | `python sdk/check_manifest.py <pkg_dir>` | 单包 G1-G10 校验（含 v1 兼容通道告警） | 0 = 过 |
-| `python sdk/check_all.py [packages_dir]` | 全仓逐包 G1-G10 + schema/签名状态汇总（默认只查包，兼容旧调用） | 0 = 全过 |
-| `python sdk/check_all.py --with-workflows` | 包 + `workflows/` meta 一致性（M1–M5），**提交前必跑这条** | 0 = 全过 |
+| `python sdk/check_all.py [packages_dir]` | 全仓逐包 G1-G10 + schema/签名状态汇总（默认只查包，兼容旧调用；`signed=True` **不代表验签通过**） | 0 = 全过 |
+| `python sdk/check_all.py --with-workflows --with-signature` | 包 + `workflows/` meta（M1–M5）+ 官方锚验签，**提交前必跑这条；改包必带 `--with-signature`** | 0 = 全过 |
+| `python sdk/check_signature.py [--pkg NAME] [--json] [--no-allowlist] [--anchor PATH]` | 官方锚 ed25519 逐包验签（纯标准库、只读公钥）。允许清单命中与未登记失败**分开报**；丢签名（NO_SIG）不豁免 | 0 = 全 OK 或失败全在允许清单内 / 1 = 有未登记失败 / 2 = 环境缺失（缺官方锚等） |
 | `python sdk/check_workflow_meta.py [--workflows DIR] [--no-git] [--json] [--print-desired]` | 只读核对 `workflows/<id>/meta.json` ↔ `workflow.json`：文件/字段齐备、`workflow_sha256`、`updated_at` vs git 提交时间、基本字段 | 0 = 全一致 / 1 = 有不一致 / 2 = 环境缺失 |
 | `python sdk/check_port_consistency.py [packages_dir]` | manifest 端口声明 ↔ `node.py spec()` 逐端口对拍（需平台 venv） | 0 = 全一致 |
 | `python sdk/package_plugin.py <pkg_dir> [-o dist]` | 校验通过后打 `<pkg>.zip`（拒绝路径穿越 / 超大 / `__pycache__`） | 0 = 成功 |
@@ -89,18 +90,25 @@ frameweave-plugins/
 
 **签名纪律**：私钥只在平台仓 `backend/data/sign-keys/` 下、只在平台 venv 里使用；验签只用公钥锚。日常开发**不要**为了让门禁变绿去重签 —— 先确认 manifest 内容是否本来就该改。
 
+**已知例外清单** `sdk/signature_allowlist.json`（当前 4 条 `user_*`，2026-10-18 构建即失效、待用户裁定 A 重签 / B 下架）：
+
+- **只减不增**：新增失败**不许**往清单里加（加条目属改契约，需用户/队长裁定）；删条目同样需用户裁定。
+- 条目逐个钉 `manifest_sha256`：登记的包一旦被改动（哪怕一行），豁免立即失效、门变红，逼人先看内容。
+- **只豁免 `SIG_FAIL`**：`NO_SIG`（manifest 丢了 `signature`）永不豁免 —— 丢签名不等于豁免。
+- 包恢复有效签名后，门会把它报成「允许清单过期」，届时经用户裁定删除条目。
+
 典型提交前自检：
 
 ```bash
 cd frameweave-plugins
-python sdk/check_all.py --with-workflows    # G1-G10（96 包）+ workflows meta（M1-M5）全绿
-python sdk/check_port_consistency.py        # 端口声明与 spec() 一致（需平台 venv）
-FrameWeave/backend/.venv/Scripts/python.exe ../.tmp/t2-inventory/verify_sigs.py   # 验签（示例工具，见迁移报告）
+python sdk/check_all.py --with-workflows --with-signature   # 三门全绿：G1-G10（96 包）+ meta（M1-M5）+ 官方锚验签
+python sdk/check_port_consistency.py                        # 端口声明与 spec() 一致（需平台 venv）
 ```
 
-> 只跑 `python sdk/check_all.py`（不带 `--with-workflows`）**不会**校验 workflows meta —— 该开关是显式的，
-> 因为旧调用方（含文档示例）按「只校验包」理解本脚本。动了 `workflows/` 就必须带开关。
-> CI / 本地钩子建议直接钉死：`python sdk/check_all.py --with-workflows`。
+> 三个开关都是**显式**的（`--with-workflows` / `--with-signature`）：旧调用方按「只校验包」理解本脚本，
+> 而验签门在只有节点仓、没有平台仓公钥锚的机器上会 exit 2（环境缺失 ≠ 通过）。
+> **改/加节点包必须带 `--with-signature`**；动了 `workflows/` 必须带 `--with-workflows`。
+> CI / 本地钩子建议直接钉死：`python sdk/check_all.py --with-workflows --with-signature`。
 
 ## 4. 与平台仓的拉取约定
 
@@ -122,7 +130,7 @@ FrameWeave/backend/.venv/Scripts/python.exe ../.tmp/t2-inventory/verify_sigs.py 
 
 ## 5. 现状基线（2026-10-26）
 
-- `packages/` **96 包**：67 个 `core_*` + 28 个 `user_*` + `hello`；G1-G10 **96/96 OK**；端口一致性 **96/96 对齐**；官方锚验签 **92 SIG_OK / 4 FAILED**（4 个 `user_*` 为历史失效签名，按私钥纪律未重签，见迁移报告 §4.2）。
+- `packages/` **96 包**：67 个 `core_*` + 28 个 `user_*` + `hello`；G1-G10 **96/96 OK**；端口一致性 **96/96 对齐**；官方锚验签 **92 SIG_OK / 4 失败（全部命中已知例外清单）**，`python sdk/check_all.py --with-signature` → exit 0（未登记失败 0）。4 个 `user_*` 为历史失效签名，按私钥纪律未重签，见 `docs/验签门报告_20261026.md` 与 `docs/迁移报告_平台独占节点入库_20261026.md` §4.2。
 - `workflows/` **25 个工作流**：`meta.json` 的 `workflow_sha256` 与 `updated_at` **25/25 与实测一致**（2026-10-26 治理，治理前 16 条哈希过期、25 条时间戳与 git 不符）；`python sdk/check_all.py --with-workflows` 实跑 exit 0。见 `docs/元数据治理报告_workflows_meta_20261026.md`。
 - `workflows/` 25 个 `<id>/`；`docs/` 索引见 [docs/README.md](docs/README.md)。
 - 平台运行目录 `FrameWeave/backend/user_nodes/` 的 58 个包，本仓全部有正本（平台独占 = 0）；其中 53 个字节一致，5 个有判定（正本一律在本仓）。
