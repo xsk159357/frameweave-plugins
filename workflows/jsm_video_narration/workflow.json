@@ -2,7 +2,7 @@
   "tpl_id": "jsm_video_narration",
   "name": "视频解说 · 影视解说全链",
   "description": "导入视频后按流程跑到成片：场景检测→智能分块→分块分析→ASR→场景对白融合→AI解说→文案画面匹配→TTS→字幕→渲染→剪映/Premiere导出；可选原声穿插变体（保留原声决策→双轨混音布局→OST穿插）。items:JSON 批次信封（load_video.paths）与直连 video 单条双路。",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "kind": "workflow",
   "tags": [
     "解说猫复刻",
@@ -360,7 +360,8 @@
       "status": "pending",
       "inputs": {
         "rich_scenes": "n13",
-        "narration_items": "n7"
+        "narration_items": "n7",
+        "narration_marks": "n9"
       }
     },
     {
@@ -592,7 +593,7 @@
       "source": "n9",
       "target": "n14",
       "sourceHandle": "marks",
-      "targetHandle": "narration_items"
+      "targetHandle": "narration_marks"
     }
   ]
 }

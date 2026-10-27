@@ -11,6 +11,9 @@
 - 斜坡：每静音区间 4 帧 ±ramp_ms（默认 50ms），与 core_draft_export jy_builder._volume_keyframes
   完全一致（r4 §2.13：t-50ms→1.0, t→0.0, t_end→0.0, t_end+50ms→1.0）。
 - 纯确定性：无 LLM；输出 layout 供 draft_export（layout 输入）/ 渲染层消费。
+- 发声时长来源优先级（1.0.3）：narration_marks（TTS marks 实测，按窗口重叠匹配）>
+  条目自带 tts_duration > duration > 窗口回退。marks 口新增解决工作流层
+  "同端口双来源靠边序"的语义债（规范 §3.3），n7.narration 与 n9.marks 现在走两个端口。
 """
 from __future__ import annotations
 
@@ -98,11 +101,16 @@ def calculate_original_clips(rich_scenes: Any, padding_before: float = 0.05,
     return clips
 
 
-def normalize_narration_items(items: Any) -> List[Dict[str, Any]]:
+def normalize_narration_items(items: Any, marks: Any = None,
+                              fusion: Dict[str, int] | None = None) -> List[Dict[str, Any]]:
     """归一化解说时间线：[{segment_index, text, start, end, tts_duration?}] → narration_track 条目。
 
     ``start``/``end`` 保留为**窗口**，``duration`` 是**发声时长**（优先 tts_duration），
     ``window_duration`` 另存窗口长度供对账。两者不一致时以 duration 为准去静音。
+
+    2026-10-27：可选 ``marks``（core/tts 的 marks 输出，{segments:[{start,duration,...}]}）。
+    匹配规则：tts segment 与 narration 条目窗口重叠比例最大者，取其 ``duration`` 覆写发声时长
+    （duration_source="marks"）。marks 里任何段最多消费一次，防多 narration 命中同段。
     """
     out: List[Dict[str, Any]] = []
     if items is None:
@@ -129,15 +137,57 @@ def normalize_narration_items(items: Any) -> List[Dict[str, Any]]:
             "duration_source": source,
             "window_duration": round(en - st, 3),
         })
+    if marks:
+        out = _apply_marks_durations(out, marks, fusion)
     out.sort(key=lambda x: (x["start"], x["end"]))
     return out
 
 
+def _apply_marks_durations(narration: List[Dict[str, Any]], marks: Any,
+                           fusion: Dict[str, int] | None = None) -> List[Dict[str, Any]]:
+    """用 TTS marks 的实测 duration 覆写 narration 条目发声时长。
+
+    匹配：窗口重叠比例（overlap / narration 窗口长）最大的 marks 段；比例阈值 0.3，
+    低于视为不相关（纯噪声段防误配）。marks 段最多消费一次。
+    """
+    segs = marks.get("segments") if isinstance(marks, dict) else None
+    if not isinstance(segs, list):
+        return narration
+    used: set = set()
+    fused = 0
+    for n in narration:
+        ns, ne = n["start"], n["end"]
+        win = max(ne - ns, 1e-6)
+        best_i, best_r = -1, 0.0
+        for mi, ms in enumerate(segs):
+            if not isinstance(ms, dict) or mi in used:
+                continue
+            ms_s, ms_d = _num(ms.get("start")), _num(ms.get("duration"))
+            if ms_d <= 0:
+                continue
+            ms_e = ms_s + ms_d
+            ov = max(0.0, min(ne, ms_e) - max(ns, ms_s))
+            r = ov / win
+            if r > best_r:
+                best_r, best_i = r, mi
+        if best_i >= 0 and best_r >= 0.3:
+            ms = segs[best_i]
+            n["duration"] = round(_num(ms.get("duration")), 3)
+            n["duration_source"] = "marks"
+            used.add(best_i)
+            fused += 1
+    if fusion is not None:
+        fusion["fused"] = fused
+    return narration
+
+
 def build_layout(rich_scenes: Any, narration_items: Any, padding_before: float,
-                 padding_after: float, ramp_ms: int, fade: float) -> Dict[str, Any]:
+                 padding_after: float, ramp_ms: int, fade: float,
+                 narration_marks: Any = None) -> Dict[str, Any]:
     """构造 MixedAudioLayout（r2 §5.2/§5.3 契约 + ramp_ms）。"""
     clips = calculate_original_clips(rich_scenes, padding_before, padding_after, fade)
-    narration = normalize_narration_items(narration_items)
+    _fusion: Dict[str, int] = {}
+    narration = normalize_narration_items(narration_items, narration_marks, _fusion)
     original_track = [{
         "type": "original",
         "start": c["start"], "end": c["end"],
@@ -173,6 +223,7 @@ def build_layout(rich_scenes: Any, narration_items: Any, padding_before: float,
         "original_self_overlap": round(_raw_original - _merged_original, 3),
         "narration_mute_ranges": len(narration_mute_ranges),
         "original_mute_ranges": len(original_mute_ranges),
+        "marks_fused": _fusion.get("fused", 0),
     }
     return {
         "schema_version": 1,
@@ -202,6 +253,11 @@ class MixedAudioLayoutNode(NodeBase):
             inputs=[
                 PortSpec(name="rich_scenes", type=PortType.JSON, label="富场景(已决策)", required=True),
                 PortSpec(name="narration_items", type=PortType.JSON, label="解说片段", required=True),
+                # 2026-10-27：新增可选口 marks（TTS 实测时长），替代"同端口双来源靠边序"的旧语义
+                PortSpec(name="narration_marks", type=PortType.JSON, label="TTS 时间戳(marks)",
+                         required=False,
+                         description="core/tts marks 输出 {segments:[{start,duration,...}]}；"
+                                     "提供时其 per-segment duration 优先于 narration_items 的窗口/估算值"),
             ],
             outputs=[
                 PortSpec(name="layout", type=PortType.JSON, label="混音布局", required=True),
@@ -217,7 +273,7 @@ class MixedAudioLayoutNode(NodeBase):
                 PortSpec(name="fade", type=PortType.FLOAT, label="原声淡入淡出(秒)", default=0.1,
                          widget="number"),
             ],
-            version="1.0.2",
+            version="1.0.3",
         )
 
     async def run(self, ctx, inputs, params) -> Dict[str, Any]:
@@ -225,10 +281,12 @@ class MixedAudioLayoutNode(NodeBase):
         progress = ctx.get("progress")
         rs_asset = inputs.get("rich_scenes")
         narr_asset = inputs.get("narration_items")
+        marks_asset = inputs.get("narration_marks")
         if rs_asset is None or narr_asset is None:
             raise RuntimeError("需要连接 富场景(已决策) 与 解说片段 输入")
         rich = store.read_json(rs_asset.id) or {}
         narr = store.read_json(narr_asset.id)
+        marks = store.read_json(marks_asset.id) if marks_asset is not None else None
 
         if progress:
             progress(0.2)
@@ -241,7 +299,8 @@ class MixedAudioLayoutNode(NodeBase):
             padding_before, padding_after, ramp_ms, fade = 0.05, 0.1, 50, 0.1
         if progress:
             progress(0.5)
-        layout = build_layout(rich, narr, padding_before, padding_after, ramp_ms, fade)
+        layout = build_layout(rich, narr, padding_before, padding_after, ramp_ms, fade,
+                              narration_marks=marks)
         layout_asset = store.save_asset(
             Asset(id="", kind=PortType.JSON.value,
                   meta={"narration": layout["stats"]["narration_count"],
@@ -319,8 +378,38 @@ def _run_selftest() -> int:
     assert l4["stats"]["total_original_duration_merged"] == 1.65, l4["stats"]
     assert l4["stats"]["original_self_overlap"] == 0.65, l4["stats"]
     assert l4["stats"]["total_original_duration"] == 2.3, l4["stats"]  # 旧字段保持 raw
+    # marks 融合（1.0.3）：marks 段 duration 覆写窗口回退值
+    marks = {"segments": [
+        {"index": 0, "text": "解说一", "start": 0.0, "end": 0.5, "duration": 0.5},
+        {"index": 1, "text": "解说二", "start": 7.6, "end": 9.1, "duration": 1.5},
+    ], "total_duration": 2.0}
+    l5 = build_layout(rich, narr, 0.05, 0.1, 50, 0.1, narration_marks=marks)
+    assert l5["narration_track"][0]["duration"] == 0.5, l5["narration_track"][0]
+    assert l5["narration_track"][0]["duration_source"] == "marks"
+    assert l5["narration_track"][1]["duration"] == 1.5
+    assert l5["stats"]["marks_fused"] == 2, l5["stats"]
+    # marks 为 None → 行为与 1.0.2 完全一致（向后兼容）
+    l6 = build_layout(rich, narr, 0.05, 0.1, 50, 0.1, narration_marks=None)
+    assert l6["narration_track"][0]["duration"] == 0.8
+    assert l6["narration_track"][0]["duration_source"] == "window"
+    assert l6["stats"]["marks_fused"] == 0
+    # marks 段与 narration 窗口重叠 <0.3 → 不匹配，保持回退
+    marks_noise = {"segments": [{"index": 0, "text": "x", "start": 50.0, "duration": 0.1}]}
+    l7 = build_layout(rich, narr, 0.05, 0.1, 50, 0.1, narration_marks=marks_noise)
+    assert l7["narration_track"][0]["duration_source"] == "window"
+    assert l7["stats"]["marks_fused"] == 0
+    # 同一 marks 段不被两个 narration 条目重复消费
+    narr_dup = [
+        {"segment_index": 0, "text": "a", "start": 0.0, "end": 0.8},
+        {"segment_index": 1, "text": "b", "start": 0.1, "end": 0.9},
+    ]
+    marks_one = {"segments": [{"index": 0, "start": 0.0, "duration": 0.4}]}
+    l8 = build_layout({"scenes": []}, narr_dup, 0.05, 0.1, 50, 0.1, narration_marks=marks_one)
+    fused_n = [n for n in l8["narration_track"] if n["duration_source"] == "marks"]
+    assert len(fused_n) == 1, l8["narration_track"]
     print("[B7 selftest] OK: 原声裁剪 padding/互斥区间/斜坡字段/无 keep 语义/"
-          "发声区间(tts_duration 优先, 缺失回退窗口)/统计口径(raw vs merged) 均通过")
+          "发声区间(tts_duration 优先, 缺失回退窗口)/统计口径(raw vs merged)/"
+          "marks 融合(命中+兼容+噪声拒配+单段单消费) 均通过")
     return 0
 
 

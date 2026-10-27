@@ -5,7 +5,7 @@
   "title": "双轨混音布局",
   "category": "剪辑",
   "description": "B7：解说轨+原声轨互斥静音布局（±50ms 斜坡），原声裁剪（padding 0.05/0.1），输出可导入剪映/渲染",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "kind": "python",
   "runtime": "python",
   "entrypoint": "node.py",
@@ -30,6 +30,16 @@
       "widget": "text",
       "options": [],
       "description": "解说时间线 [{segment_index,text,start,end}]（ai_narrate narration 输出）"
+    },
+    {
+      "name": "narration_marks",
+      "type": "JSON",
+      "label": "TTS 时间戳(marks)",
+      "required": false,
+      "default": null,
+      "widget": "text",
+      "options": [],
+      "description": "core/tts marks 输出 {segments:[{start,duration,...}]}；提供时其 per-segment duration 优先于 narration_items 的窗口/估算值"
     }
   ],
   "outputs": [
@@ -100,7 +110,7 @@
   "signature": {
     "alg": "ed25519",
     "key_id": "a8998646b062c170",
-    "value": "Rx79ZEeFOy1SAQhOKXGBBAoCMSL7tOTVryTDne6s6eeUDggzrnzdpUFVE5+K6JjwR+h/vqrfpt0+hpkuynUEDQ==",
+    "value": "rHsiXIpZYxKfZsUG86VJ2OUThu+wxZxYhsM7AXqIyANya+IJyOf+Gtqiyva0PxYwvjmTwtm+JiM9uMuhAKh9Bg==",
     "over": "manifest"
   }
 }
