@@ -696,7 +696,42 @@ class SemanticExtractor:
     def available(self) -> bool:
         if self._model is None:
             self._load()
-        return self._model is not None
+        return self._model is not None or self._sidecar_ready()
+
+    # ------------------------------------------------------------ 侧车（安装版）
+    def _sidecar_ready(self) -> bool:
+        """冻结包里没有 torch：让外置解释器跑 worker_dino.py。
+
+        解析顺序与 `_candidates` 一致（dino_base → dino_small → chinese_clip），
+        谁能 `ping` 通就绑谁；只试一次，失败记住原因。
+        """
+        if getattr(self, "_sc_checked", False):
+            return bool(getattr(self, "_sc_ok", False))
+        self._sc_checked = True
+        self._sc_ok = False
+        try:
+            from app.plugin import deps
+            if not deps.sidecar_runtime().get("ok"):
+                self._error = "需要外置 Python 运行时（torch/transformers）：模型中心 → 运行环境"
+                return False
+            worker = os.path.join(os.path.dirname(os.path.abspath(__file__)), "worker_dino.py")
+            for name, d in self._candidates():
+                if not d or not os.path.isdir(d):
+                    continue
+                kind = "clip" if name == "chinese_clip" else "dino"
+                try:
+                    info = deps.sidecar_call(worker, "ping", {"model_dir": d, "kind": kind}, timeout=300.0)
+                except Exception as e:  # noqa: BLE001
+                    self._error = f"{name}: 侧车 {e}"
+                    continue
+                self._sc_dir, self._sc_name, self._sc_kind = d, name, kind
+                self._device = str(info.get("device") or "")
+                self._sc_ok = True
+                return True
+        except Exception as e:  # noqa: BLE001
+            self._error = f"侧车不可用: {e}"
+        return False
+
 
     def name(self) -> str:
         return self._name or "unavailable"
@@ -708,7 +743,19 @@ class SemanticExtractor:
         if self._model is None:
             self._load()
         if self._model is None:
-            return None
+            if not self._sidecar_ready():
+                return None
+            try:
+                from app.plugin import deps
+                worker = os.path.join(os.path.dirname(os.path.abspath(__file__)), "worker_dino.py")
+                r = deps.sidecar_call(worker, "frame_features",
+                                      {"model_dir": self._sc_dir, "kind": self._sc_kind,
+                                       "paths": [str(p) for p in paths]}, timeout=900.0)
+                self._name = self._sc_name
+                return r.get("vectors") or None
+            except Exception as e:  # noqa: BLE001
+                self._error = f"frame_features（侧车）: {type(e).__name__}: {e}"
+                return None
         import torch
         import numpy as np
         try:

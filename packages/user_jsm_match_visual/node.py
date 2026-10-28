@@ -142,16 +142,33 @@ class _ClipBackend:
         self._proc = None
         self._device = None
         self._error = ""
+        # "local" = 本进程 import torch（源码态）；"sidecar" = 交给外置解释器（安装版）
+        self._mode = ""
+        self._worker = os.path.join(os.path.dirname(os.path.abspath(__file__)), "worker_clip.py")
 
     def available(self) -> bool:
         try:
             import torch  # noqa: F401
             import transformers  # noqa: F401
+            self._mode = "local"
             return True
         except Exception:  # noqa: BLE001
-            return False
+            pass
+        # 安装版：冻结包里没有 torch —— 看外置运行时能不能顶上
+        try:
+            from app.plugin import deps
+            rt = deps.sidecar_runtime()
+            if rt.get("ok") and os.path.isfile(self._worker):
+                self._mode = "sidecar"
+                return True
+            self._error = "需要外置 Python 运行时（torch/transformers）：模型中心 → 运行环境"
+        except Exception as e:  # noqa: BLE001
+            self._error = "侧车不可用: %s" % e
+        return False
 
     def load(self):
+        if self._mode == "sidecar":
+            return self._load_sidecar()
         if self._model is not None:
             return True
         if not self.available():
@@ -176,6 +193,27 @@ class _ClipBackend:
         except Exception as e:  # noqa: BLE001
             self._error = f"CLIP 加载失败: {e}"
             self._model = None
+            return False
+
+    def _load_sidecar(self) -> bool:
+        """安装版路线：模型在外置解释器里加载，本进程只收发 JSON。
+
+        `ping` 顺带把模型读进显存（8 s 左右），后面每条请求就只剩前向。
+        """
+        if getattr(self, "_sidecar_ready", False):
+            return True
+        if not self.model_dir or not os.path.isdir(self.model_dir):
+            self._error = ("未指定本地 CLIP 模型目录（model_dir 或 FRAMEWEAVE_CLIP_DIR），"
+                           "本节点不联网下载模型；请先用模型管理节点就绪 Chinese-CLIP")
+            return False
+        try:
+            from app.plugin import deps
+            info = deps.sidecar_call(self._worker, "ping", {"model_dir": self.model_dir}, timeout=300.0)
+            self._device = str(info.get("device") or "")
+            self._sidecar_ready = True
+            return True
+        except Exception as e:  # noqa: BLE001
+            self._error = f"CLIP 侧车加载失败: {e}"
             return False
 
     @staticmethod
@@ -209,6 +247,15 @@ class _ClipBackend:
     def text_features(self, texts: List[str]) -> Optional[List[List[float]]]:
         if not self.load():
             return None
+        if self._mode == "sidecar":
+            try:
+                from app.plugin import deps
+                r = deps.sidecar_call(self._worker, "text_features",
+                                      {"model_dir": self.model_dir, "texts": list(texts)}, timeout=600.0)
+                return r.get("embeddings") or None
+            except Exception as e:  # noqa: BLE001
+                self._error = f"CLIP 文本特征失败（侧车）: {e}"
+                return None
         try:
             import torch
             inputs = self._proc(text=texts, return_tensors="pt", padding=True, truncation=True)
@@ -223,6 +270,16 @@ class _ClipBackend:
     def image_features(self, paths: List[str]) -> Optional[List[List[float]]]:
         if not self.load():
             return None
+        if self._mode == "sidecar":
+            try:
+                from app.plugin import deps
+                r = deps.sidecar_call(self._worker, "image_features",
+                                      {"model_dir": self.model_dir, "paths": [str(p) for p in paths]},
+                                      timeout=900.0)
+                return r.get("embeddings") or None
+            except Exception as e:  # noqa: BLE001
+                self._error = f"CLIP 图像特征失败（侧车）: {e}"
+                return None
         try:
             import torch
             from PIL import Image

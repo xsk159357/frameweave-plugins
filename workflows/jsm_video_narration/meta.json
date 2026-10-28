@@ -4,7 +4,7 @@
   "version": "1.1.0",
   "kind": "workflow",
   "source": "official",
-  "updated_at": 1793013822,
+  "updated_at": 1793089435,
   "aligned_to": "n14 双边语义债修复：mixed_audio_layout v1.0.3 新增 narration_marks 口，n9.marks 改接新端口（规范 §3.3 修法落地，2026-10-27）",
   "workflow_sha256": "a4f85a36f6a66382b46cee49bd51b602b1b118ba7611f1f92e0119e56227d318"
 }
