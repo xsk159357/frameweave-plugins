@@ -4,8 +4,8 @@
   "type_id": "core/scene_detect",
   "title": "场景检测",
   "category": "分析",
-  "description": "镜头/场景切分：ffmpeg 帧差（默认）+ 可选 TransNetV2；输出候选与后处理两级片段",
-  "version": "2.1.3",
+  "description": "镜头/场景切分：ffmpeg 帧差（默认）+ 可选 TransNetV2；输出候选与后处理两级片段；无 torch 的安装版可经外置解释器侧车运行（0.3.52 起）",
+  "version": "2.1.4",
   "kind": "python",
   "runtime": "python",
   "entrypoint": "node.py",
@@ -179,7 +179,7 @@
   "signature": {
     "alg": "ed25519",
     "key_id": "a8998646b062c170",
-    "value": "zSHGoBkhpfn6IgJQX48LAtmmANC6BMNv6o9W4ZXtVQNwQnPRHNe5uHAejKEOosrM33gd9whIdAPb8duZ2ThpDA==",
+    "value": "gQdLd+hySKDqmWDgTrTzS8hwieA5sWJOMh4keU4NqdqCh/II6yy3zHRlI6FSSaD38N69iWjp4QB1LIj5mpoHBQ==",
     "over": "manifest"
   }
 }

@@ -89,6 +89,36 @@ def _has_torch() -> bool:
         return False
 
 
+_WORKER_TRANSNET = os.path.join(os.path.dirname(os.path.abspath(__file__)), "worker_transnet.py")
+_SIDECAR_PROBE: Dict[str, Any] = {"checked": False, "ok": False, "why": ""}
+
+
+def _sidecar_ready(model_dir: str = "") -> bool:
+    """外置解释器能不能跑 TransNetV2（0.3.52 起：应用自带运行时 / 用户自装 Python）。
+
+    只探一次并缓存：起一个 python 进程加载 7.6M 参数的模型要十几秒，
+    每次推理都探一次会把「auto 降级」变成常态。失败原因写进 _SIDECAR_PROBE["why"]。
+    """
+    if _SIDECAR_PROBE["checked"]:
+        return bool(_SIDECAR_PROBE["ok"])
+    _SIDECAR_PROBE["checked"] = True
+    try:
+        from app.plugin import deps
+        rt = deps.sidecar_runtime()
+        if not rt.get("ok"):
+            _SIDECAR_PROBE["why"] = str(rt.get("reason") or "没有可用的外置 Python 运行时")
+            return False
+        if not os.path.isfile(_WORKER_TRANSNET):
+            _SIDECAR_PROBE["why"] = f"缺少侧车脚本 {_WORKER_TRANSNET}"
+            return False
+        r = deps.sidecar_call(_WORKER_TRANSNET, "ping", {"model_dir": model_dir}, 300)
+        _SIDECAR_PROBE["ok"] = bool(r.get("ready"))
+        return bool(_SIDECAR_PROBE["ok"])
+    except Exception as e:  # noqa: BLE001
+        _SIDECAR_PROBE["why"] = f"{type(e).__name__}: {e}"
+        return False
+
+
 def _transnet_weights(d: str) -> str:
     for name in ("transnetv2-pytorch-weights.pth", "transnetv2_weights.pth", "weights.pth"):
         p = os.path.join(d, name)
@@ -144,7 +174,13 @@ def transnet_supply(model_path: str = "") -> Dict[str, Any]:
             info["blockers"].append("module_missing")
         if not info["weights"]:
             info["blockers"].append("weights_missing")
-    if not info["torch_in_process"]:
+    # torch 能不能用：进程内 import 优先；进程内没有就走外置解释器侧车（安装版正路）
+    info["torch_sidecar"] = False
+    if not info["torch_in_process"] and info["module"] and info["weights"]:
+        info["torch_sidecar"] = _sidecar_ready(d)
+        if not info["torch_sidecar"]:
+            info["sidecar_reason"] = _SIDECAR_PROBE.get("why") or ""
+    if not info["torch_in_process"] and not info["torch_sidecar"]:
         # 注意顺序：模型缺失与时序无关；torch 缺失是能力边界，两者都要报（调用方按需取先）
         info["blockers"].append("needs_external_python")
     if not HAS_CV2:
@@ -560,10 +596,20 @@ class TransNetAdapter:
         self.model_path = model_path
         self.backend = ""
         self._model = None
+        self._dir = ""
 
     def load(self) -> None:
         import importlib.util
         import sys as _sys
+        # 安装版没有 torch：先看外置解释器侧车能不能跑（这才是「装了运行时就能用」的正路）
+        if not _has_torch():
+            d = self.model_path
+            if d and os.path.isfile(d):
+                d = os.path.dirname(d)
+            if d and os.path.isdir(d) and os.path.isfile(_WORKER_TRANSNET) and _sidecar_ready(d):
+                self._dir = d
+                self.backend = "sidecar"
+                return
         if self.model_path:
             p = self.model_path
             module_file = os.path.join(p, "transnetv2_pytorch.py") if os.path.isdir(p) else p
@@ -622,6 +668,8 @@ class TransNetAdapter:
 
     def predict(self, frames: np.ndarray) -> np.ndarray:
         """frames: uint8 [N,27,48,3] → 每帧切点概率 [N]。"""
+        if self.backend == "sidecar":
+            return self._predict_sidecar(frames)
         m = self._model
         if self.backend == "tensorflow":
             # predict_frames 内部滑窗（100/50 + pad），返回 (single, all)
@@ -675,6 +723,27 @@ class TransNetAdapter:
                     cnt[idx] += 1
         cnt[cnt == 0] = 1.0
         return (acc / cnt).astype(np.float32)
+
+
+    def _predict_sidecar(self, frames: np.ndarray) -> np.ndarray:
+        """把抽帧矩阵丢给外置解释器算（npy 传输；27x48 的数组走 JSON 会膨胀十倍）。"""
+        import tempfile
+        from app.plugin import deps
+
+        if frames.size == 0:
+            return np.zeros((0,), dtype=np.float32)
+        fd, path = tempfile.mkstemp(prefix="fw_transnet_", suffix=".npy")
+        os.close(fd)
+        try:
+            np.save(path, np.ascontiguousarray(frames))
+            r = deps.sidecar_call(_WORKER_TRANSNET, "predict",
+                                  {"model_dir": self._dir, "npy": path}, 1800)
+            return np.asarray(r.get("probs") or [], dtype=np.float32)
+        finally:
+            try:
+                os.remove(path)
+            except OSError:
+                pass
 
 
 class SceneDetectNode(NodeBase):
