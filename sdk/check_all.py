@@ -68,18 +68,23 @@ def check_packages(packages_dir: str) -> int:
             failed.append((name, f"manifest.json 解析失败: {ex}"))
             continue
         sv = manifest.get("schema_version")
+        mv = manifest.get("manifest_version")
         signed = isinstance(manifest.get("signature"), dict)
+        # 2026-10-30：按契约版本分流。v3 包若继续丢给 v2 校验器，会被 _compat_normalize
+        # 当成「格式未知 → 走 v1 兼容通道」，报出 G2 type_id 为空、G5 类型未注册等一串假红。
+        checker = "check_manifest_v3.py" if mv == 3 else "check_manifest.py"
         proc = subprocess.run(
-            [sys.executable, os.path.join(HERE, "check_manifest.py"), pkg_dir],
+            [sys.executable, os.path.join(HERE, checker), pkg_dir],
             capture_output=True, text=True, encoding="utf-8", errors="replace")
+        ver = f"manifest_version={mv}" if mv == 3 else f"schema_version={sv}"
         if proc.returncode == 0:
-            ok.append((name, sv, signed, proc.stdout.strip().splitlines()[-1] if proc.stdout.strip() else ""))
+            ok.append((name, ver, signed, proc.stdout.strip().splitlines()[-1] if proc.stdout.strip() else ""))
         else:
-            failed.append((name, proc.stdout.strip() or proc.stderr.strip() or "check_manifest 失败"))
+            failed.append((name, proc.stdout.strip() or proc.stderr.strip() or f"{checker} 失败"))
     print(f"[check_all] 校验 {len(entries)} 个包：{len(ok)} OK / {len(failed)} FAILED"
           f"（signed=True 仅表示有 signature 对象，验签请开 --with-signature）")
     for name, sv, signed, tail in ok:
-        print(f"  OK   {name:<28} schema_version={sv} signed={signed} | {tail}")
+        print(f"  OK   {name:<28} {sv} signed={signed} | {tail}")
     for name, detail in failed:
         print(f"  FAIL {name}\n       {detail}")
     return 1 if failed else 0
