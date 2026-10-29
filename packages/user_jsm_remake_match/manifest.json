@@ -5,7 +5,7 @@
   "title": "精选复刻匹配",
   "category": "语义",
   "description": "B3 精选复刻：解说画面↔原片画面全本地匹配（灰度缩略图粗筛 + DINOv2/Chinese-CLIP 语义精排 + 全局时序 DP + log-mel 音频裁决），输出取材匹配表（ref_source/ref_name/ref_path/speed）；39 参数档位化为 快速/均衡/精准 预设 + 高级参数组；特征磁盘缓存跨运行复用。干净重实现 curated_remake_matcher（保留全局 DP + 音频裁决灵魂）。",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "kind": "python",
   "runtime": "python",
   "entrypoint": "node.py",
@@ -290,7 +290,7 @@
   "signature": {
     "alg": "ed25519",
     "key_id": "a8998646b062c170",
-    "value": "J80FXBICACK3ZAWb6RMsSR8endytgLskFdBZ2S0BxPtgjDFLtyaRPaqLMTfF3Ny1+45rgRliGQGVZtlQ8rzyBg==",
+    "value": "i32tnW/rYWWeULzBn9BvmK1flPXScDPMC8e6QfpZkmrqDF7X8i4OPxNmoIL5ugSCGssB2sBHgrRKfOXKXzudAg==",
     "over": "manifest"
   }
 }

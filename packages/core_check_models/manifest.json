@@ -5,7 +5,7 @@
   "title": "模型就绪检查",
   "category": "控制",
   "description": "轻量模型就绪检查（A10）：按模型清单解析路径并检查存在性（可选 sha256），report:JSON 输出逐项就绪状态；下载职责归宿主模型中心，缺失项给出下载指引（hf download，05 复现指南 §1.2）",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "kind": "python",
   "runtime": "python",
   "entrypoint": "node.py",
@@ -88,7 +88,7 @@
   "signature": {
     "alg": "ed25519",
     "key_id": "a8998646b062c170",
-    "value": "IDXh+X8zWz/ZEDfHr7ypgO8XwRLbqSOW24kfM8YatzftM7RELjj++oihrMoWb3st6dciktH+Ppkm2oC5uCZuAQ==",
+    "value": "EfZmw0Hqi2pS07wM5EzgP8KbDkrVcco5joktPX/+56DbrTXhJ1NruMSciCC2IEZFn/I0uIIa/nmnpqpSry1FAQ==",
     "over": "manifest"
   }
 }

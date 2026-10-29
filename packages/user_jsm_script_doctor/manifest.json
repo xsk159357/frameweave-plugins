@@ -5,7 +5,7 @@
   "title": "脚本医生·文案质检",
   "category": "语义",
   "description": "解说文案 6 维深度质检 + 12 项硬指标 + 3 套全文改写方案 + 结论等级。本地规则引擎离线可用（不绑定授权、不依赖 RAG 服务）；配置 API Key 时 LLM 增强润色。批量可用。",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "kind": "python",
   "runtime": "python",
   "entrypoint": "node.py",
@@ -179,7 +179,7 @@
   "signature": {
     "alg": "ed25519",
     "key_id": "a8998646b062c170",
-    "value": "TBG48bv7M9aIixJR0v3msm4bafkxzjC3RlLe8lQgSQgjVNHkfFVBBwttmH1rXJDiv/N1XjkFLBYBAsEJXnNdCA==",
+    "value": "PULivMvR2YK/AH/KbZrdLcZDdWgvq7cbczhjOfiBhbXdEjc2ZCASQTY/u9G9DBMaTYIWUk046mydpuvnVUgNCQ==",
     "over": "manifest"
   }
 }

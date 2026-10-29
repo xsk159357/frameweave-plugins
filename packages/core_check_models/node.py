@@ -260,7 +260,7 @@ class CheckModelsNode(NodeBase):
                          default="", widget="text",
                          description="平台按参数缓存结果；下载模型后改动此项（如填当前时间）可强制重算，或用节点重置 force=true"),
             ],
-            version="1.0.0",
+            version="1.0.1",
         )
 
     async def run(self, ctx: dict, inputs: dict, params: dict) -> Dict[str, Any]:

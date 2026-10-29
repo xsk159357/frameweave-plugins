@@ -385,7 +385,7 @@ class ScriptDoctorNode(NodeBase):
                 PortSpec(name="resume", type=PortType.BOOL, label="断点续跑",
                          default=True, widget="toggle"),
             ],
-            version="1.1.0",
+            version="1.1.1",
         )
 
     async def run(self, ctx, inputs, params) -> Dict[str, Any]:

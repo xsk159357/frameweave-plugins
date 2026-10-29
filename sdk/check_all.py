@@ -6,8 +6,10 @@
     python sdk/check_all.py --with-workflows         # 包 + workflows meta
     python sdk/check_all.py --with-signature         # 包 + 官方锚验签（**改包必带**）
     python sdk/check_all.py --with-workflows --with-signature   # 提交前推荐：三门全开
+    python sdk/check_all.py --with-workflows --with-signature --with-dist   # 再加 dist 一致性
     python sdk/check_all.py --only-workflows         # 只校验 workflows meta
     python sdk/check_all.py --only-signature         # 只验签
+    python sdk/check_all.py --only-dist              # 只查 dist 归档 ↔ 正本一致性
 
 门禁内容：
 - 包门禁 `check_manifest.py`：逐包 G1-G10，汇总 schema_version / 签名状态。
@@ -17,10 +19,15 @@
   M4 updated_at vs git 提交时间 / M5 meta↔workflow 基本字段。
 - 验签门 `check_signature.py`：官方锚（平台仓 `fw_official_pubkey.json`）+ ed25519 逐包验签，
   已知例外走 `sdk/signature_allowlist.json`（只减不增，删条目需用户裁定）。
+- dist 一致性门 `check_dist_parity.py`（T8 新增）：解每个 `dist/<pkg>.zip`，与
+  `packages/<pkg>/` 逐文件 sha256 比对（忽略 `__pycache__`/`*.pyc`/`.DS_Store`，但 zip 里
+  **出现**这些成员本身判 drift）；`--only-dist` 时只跑这一道。
+  **为什么需要它**：`.sig` 签的是 zip 字节，验签全绿只证明"没被篡改"，不证明"是最新版" ——
+  2026-10-18 的旧快照里 17/75 个 zip 与正本不符时，其余四道门全部 exit 0。
 
-三个开关都是**显式**的（不改默认语义）：既有调用方（含文档示例）按「只校验包」理解本脚本，
+四个开关都是**显式**的（不改默认语义）：既有调用方（含文档示例）按「只校验包」理解本脚本，
 把默认行为悄悄扩大 = 把他人的绿门变红门（例如在只有节点仓、没有平台仓锚的机器上，
-验签门会 exit 2 环境缺失）。README「提交前自检」已把推荐命令钉成三门全开。
+验签门会 exit 2 环境缺失；dist 目录不存在时 dist 门同样 exit 2）。README「提交前自检」已把推荐命令钉成三门全开。
 
 退出码 0 = 门禁全过；1 = 有门禁失败；2 = 环境缺失（目录不存在 / 缺官方锚 / 非 git 等）。
 """
@@ -34,7 +41,8 @@ import sys
 HERE = os.path.dirname(os.path.abspath(__file__))
 DEFAULT_PACKAGES = os.path.normpath(os.path.join(HERE, "..", "packages"))
 DEFAULT_WORKFLOWS = os.path.normpath(os.path.join(HERE, "..", "workflows"))
-KNOWN_FLAGS = {"--with-workflows", "--only-workflows", "--with-signature", "--only-signature"}
+KNOWN_FLAGS = {"--with-workflows", "--only-workflows", "--with-signature", "--only-signature",
+               "--with-dist", "--only-dist"}
 
 
 def check_packages(packages_dir: str) -> int:
@@ -103,6 +111,14 @@ def check_signature(packages_dir: str) -> int:
                      "FrameWeave/backend/app/fw_official_pubkey.json；可用 FW_OFFICIAL_PUBKEY 指定）")
 
 
+def check_dist(dist_dir: str) -> int:
+    if not os.path.isdir(dist_dir):
+        print(f"[check_all] 错误：dist 目录不存在: {dist_dir}")
+        return 2
+    return _run_step("check_dist_parity.py", ["--dist", dist_dir],
+                     "[check_all] dist 一致性门环境缺失（dist/ 或 packages/ 不存在 / dist 下没有 zip）")
+
+
 def main() -> int:
     args = [a for a in sys.argv[1:] if not a.startswith("--")]
     flags = {a for a in sys.argv[1:] if a.startswith("--")}
@@ -112,16 +128,21 @@ def main() -> int:
         return 2
     only_workflows = "--only-workflows" in flags
     only_signature = "--only-signature" in flags
-    if only_workflows and only_signature:
-        print("[check_all] --only-workflows 与 --only-signature 不能同时使用")
+    only_dist = "--only-dist" in flags
+    only_flags = [n for n, f in (("--only-workflows", only_workflows),
+                                 ("--only-signature", only_signature),
+                                 ("--only-dist", only_dist)) if f]
+    if len(only_flags) > 1:
+        print(f"[check_all] {only_flags[0]} 与 {only_flags[1]} 不能同时使用")
         return 2
 
     packages_dir = os.path.abspath(args[0]) if args else DEFAULT_PACKAGES
     workflows_dir = os.path.normpath(os.path.join(os.path.dirname(packages_dir), "workflows"))
 
-    do_packages = not (only_workflows or only_signature)
+    do_packages = not (only_workflows or only_signature or only_dist)
     do_workflows = only_workflows or ("--with-workflows" in flags)
     do_signature = only_signature or ("--with-signature" in flags)
+    do_dist = only_dist or ("--with-dist" in flags)
 
     steps = []          # [(名称, 退出码)]
     if do_packages:
@@ -130,10 +151,15 @@ def main() -> int:
         steps.append(("workflows-meta", check_workflow_meta(workflows_dir)))
     if do_signature:
         steps.append(("signature", check_signature(packages_dir)))
-    if not do_workflows and not only_signature:
+    if do_dist:
+        steps.append(("dist-parity", check_dist(os.path.normpath(os.path.join(
+            os.path.dirname(packages_dir), "dist")))))
+    if not do_workflows and not only_signature and not only_dist:
         print("[check_all] 提示：加 --with-workflows 同时校验 workflows meta（M1-M5），")
-    if not do_signature and not only_workflows:
+    if not do_signature and not only_workflows and not only_dist:
         print("[check_all]       加 --with-signature 跑官方锚验签（改包必带；signed=True 不等于验签通过）")
+    if not do_dist and not only_workflows and not only_signature:
+        print("[check_all]       加 --with-dist 校验 dist 归档与 packages 正本逐文件一致（改包/发版必带）")
 
     if len(steps) > 1:
         detail = " / ".join(f"{n}={'OK' if c == 0 else ('ENV' if c == 2 else 'FAIL')}" for n, c in steps)

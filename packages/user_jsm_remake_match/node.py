@@ -162,7 +162,7 @@ class RemakeMatchNode(NodeBase):
                          required=False, widget="text",
                          description="覆盖全部 39 参数键（如 {\"cross_file_pen\":0.5,\"drift_scale\":0.02}）"),
             ],
-            version="1.0.0",
+            version="1.0.1",
         )
 
     async def run(self, ctx: Dict[str, Any], inputs: Dict[str, Any], params: Dict[str, Any]) -> Dict[str, Any]:
