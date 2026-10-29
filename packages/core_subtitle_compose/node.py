@@ -5,7 +5,7 @@ import os
 from typing import Any, Dict, List
 
 from app.assets import Asset
-from app.nodespec import NodeBase, NodeSpec, PortSpec, PortType
+from app.nodespec import NodeBase, PortType
 
 STYLE_PRESETS = {
     "默认": {"font": "微软雅黑", "size": 48, "color": "#FFFFFF", "stroke": "#000000",
@@ -22,36 +22,6 @@ STYLE_PRESETS = {
 
 
 class SubtitleComposeNode(NodeBase):
-    @classmethod
-    def spec(cls) -> NodeSpec:
-        return NodeSpec(
-            type_id="core/subtitle_compose",
-            title="字幕装配",
-            category="输出",
-            description="字幕高级样式：花字/特效/逐句卡点动画",
-            inputs=[
-                PortSpec(name="subtitle", type=PortType.SUBTITLE, label="字幕", required=True),
-                PortSpec(name="script", type=PortType.SCRIPT, label="文案(可选)", required=False),
-            ],
-            outputs=[
-                PortSpec(name="styled_subtitle", type=PortType.SUBTITLE, label="样式化字幕"),
-            ],
-            params=[
-                PortSpec(name="manual_text", type=PortType.STRING, label="手动字幕",
-                         default="", widget="text",
-                         description="每行一条，可用 | 指定起始秒，如: 0.2|第一句字幕"),
-                PortSpec(name="preset", type=PortType.STRING, label="样式预设", default="默认",
-                         widget="select", options=list(STYLE_PRESETS.keys())),
-                PortSpec(name="font", type=PortType.STRING, label="字体", default="微软雅黑", widget="text"),
-                PortSpec(name="size", type=PortType.INT, label="字号", default=48, widget="number"),
-                PortSpec(name="color", type=PortType.STRING, label="字色", default="#FFFFFF", widget="text"),
-                PortSpec(name="stroke", type=PortType.STRING, label="描边色", default="#000000", widget="text"),
-                PortSpec(name="animation", type=PortType.STRING, label="动画", default="none",
-                         widget="select", options=["none", "typewriter", "bounce", "fade", "fadeup"]),
-                PortSpec(name="karaoke", type=PortType.BOOL, label="逐字卡点", default=True),
-            ],
-            version="1.0.2",
-        )
 
     async def run(self, ctx, inputs, params) -> Dict[str, Any]:
         sub_asset = inputs.get("subtitle")
