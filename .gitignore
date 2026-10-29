@@ -1,3 +1,6 @@
 __pycache__/
 *.pyc
 .tmp/
+
+# 2026-10-29 全清重做：旧节点/工作流/分发产物归档（不入库；旧版完整保存在 tag pre-remake-20261029）
+_remake_archive/
