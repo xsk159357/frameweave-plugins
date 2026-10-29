@@ -35,8 +35,6 @@ class SubtitleComposeNode(NodeBase):
             ],
             outputs=[
                 PortSpec(name="styled_subtitle", type=PortType.SUBTITLE, label="样式化字幕"),
-                PortSpec(name="report", type=PortType.JSON, label="装配报告",
-                         required=False),
             ],
             params=[
                 PortSpec(name="manual_text", type=PortType.STRING, label="手动字幕",
@@ -120,8 +118,8 @@ class SubtitleComposeNode(NodeBase):
             styled.append({**s, "style": style})
 
         # FW-DEV-58：空集合不许「既空又无痕」。
-        # 不失败（避免破坏既有工作流），但必须让下游/日志能看出「这次没字幕」：
-        #   degraded=true + warnings 明写原因，同时进 asset.meta 与 report 端口。
+        # 不失败（避免破坏既有工作流），但必须让下游能看出「这次没字幕」：
+        #   degraded=true + warnings 明写原因，落在 asset.meta（v3 已无 report 端口）。
         warnings: List[str] = []
         degraded = False
         if not styled:
@@ -134,6 +132,4 @@ class SubtitleComposeNode(NodeBase):
                   meta={"count": len(styled), "styled": True,
                         "degraded": degraded, "warnings": list(warnings)}),
             payload=styled)
-        report = {"count": len(styled), "degraded": degraded,
-                  "warnings": list(warnings), "styled": True}
-        return {"styled_subtitle": out, "report": report}
+        return {"styled_subtitle": out}

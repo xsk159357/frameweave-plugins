@@ -74,7 +74,7 @@
       "type": "string",
       "label": "字体",
       "default": "微软雅黑",
-      "description": "系统字体名；缺字体会退化为默认字体并在报告里标 degraded",
+      "description": "系统字体名，如 微软雅黑 / 思源黑体",
       "advanced": true
     },
     {
