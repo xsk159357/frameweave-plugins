@@ -42,16 +42,18 @@ PARAM_TYPES = frozenset({"string", "int", "float", "bool", "enum", "asset", "tex
 KINDS = frozenset({"python", "transform"})
 CATEGORIES = frozenset({"输入", "语义", "分析", "音频", "剪辑", "输出", "控制"})
 
-# A1（2026-10-30 定）：id 前缀白名单。规格 V2 只写了"前缀/名称"的格式，
-# 没给白名单，于是 V2 只能查"有没有斜杠"。这里补上枚举。
+# A1（2026-10-30 定，两次修正后的终值）：id 前缀 = **命名空间保留**。
+#   前缀只承担两件事：① 归属命名空间（core 官方 / user 第三方）
+#                     ② B1 的目录名映射（id 的 '/' 换 '_'）
+#   **不作为权限判据。** 官方身份由签名决定（signature.key_id 命中官方锚 +
+#   验签通过），与前缀无关；功能分类由 category 表达，前缀不再重复一遍。
+#
+#   曾一度定成七个（core/voice/visual/input/export/flow/user），那是把 category 的活
+#   派给了前缀：四个功能值在重复 category 已有的能力，两个归属值在承担 category 表达
+#   不了的东西——一个字段混装两种语义，两头都不好使。
 ID_PREFIXES = frozenset({
-    "core",     # 核心节点（出厂自带）
-    "voice",    # 语音（TTS/ASR/变声）
-    "visual",   # 画面（剪辑/合成/特效）
-    "input",    # 输入（素材加载）
-    "export",   # 输出（渲染/导出）
-    "flow",     # 流程（分支/循环/子图）
-    "user",     # 用户自建（第三方）
+    "core",     # 官方（归属）
+    "user",     # 第三方 / 用户自建（归属）
 })
 
 TOP_ALLOWED = frozenset({
