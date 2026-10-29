@@ -29,8 +29,7 @@
     {
       "name": "styled_subtitle",
       "type": "SUBTITLE",
-      "label": "样式化字幕",
-      "required": true
+      "label": "样式化字幕"
     }
   ],
   "params": [
@@ -75,7 +74,8 @@
       "type": "string",
       "label": "字体",
       "default": "微软雅黑",
-      "description": "系统字体名；缺字体会退化为默认字体并在报告里标 degraded"
+      "description": "系统字体名；缺字体会退化为默认字体并在报告里标 degraded",
+      "advanced": true
     },
     {
       "name": "size",

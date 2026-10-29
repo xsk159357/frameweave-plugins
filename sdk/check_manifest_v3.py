@@ -42,6 +42,18 @@ PARAM_TYPES = frozenset({"string", "int", "float", "bool", "enum", "asset", "tex
 KINDS = frozenset({"python", "transform"})
 CATEGORIES = frozenset({"输入", "语义", "分析", "音频", "剪辑", "输出", "控制"})
 
+# A1（2026-10-30 定）：id 前缀白名单。规格 V2 只写了"前缀/名称"的格式，
+# 没给白名单，于是 V2 只能查"有没有斜杠"。这里补上枚举。
+ID_PREFIXES = frozenset({
+    "core",     # 核心节点（出厂自带）
+    "voice",    # 语音（TTS/ASR/变声）
+    "visual",   # 画面（剪辑/合成/特效）
+    "input",    # 输入（素材加载）
+    "export",   # 输出（渲染/导出）
+    "flow",     # 流程（分支/循环/子图）
+    "user",     # 用户自建（第三方）
+})
+
 TOP_ALLOWED = frozenset({
     "manifest_version", "id", "title", "category", "description", "version",
     "kind", "entrypoint", "class_name", "inputs", "outputs", "params",
@@ -115,7 +127,17 @@ def check(path: str) -> Tuple[List[Tuple[str, str, str]], bool]:
     if not isinstance(nid, str) or not ID_RE.match(nid):
         fail("V2", f"id 必须形如 `前缀/名称`（小写字母数字下划线），实际 {nid!r}")
     else:
-        passed("V2", nid)
+        # A1：前缀必须在白名单里
+        prefix = nid.split("/", 1)[0]
+        if prefix not in ID_PREFIXES:
+            fail("V2", f"id 前缀 {prefix!r} 不在白名单 {sorted(ID_PREFIXES)}")
+        # B1：目录名必须等于 id 的 '/'→'_'（传 manifest 文件时取父目录名）
+        expect_dir = nid.replace("/", "_")
+        actual_dir = os.path.basename(os.path.normpath(os.path.dirname(mf_path)))
+        if actual_dir and actual_dir != expect_dir:
+            fail("V2", f"目录名 {actual_dir!r} 与 id 不匹配（应为 {expect_dir!r}）")
+        if prefix in ID_PREFIXES and actual_dir == expect_dir:
+            passed("V2", f"{nid}（前缀 {prefix} 合法，目录名一致）")
 
     # ---------- V3 kind / version / category / min_engine ----------
     if m.get("kind") not in KINDS:
@@ -144,6 +166,9 @@ def check(path: str) -> Tuple[List[Tuple[str, str, str]], bool]:
             extra = sorted(set(p) - PORT_FIELDS)
             if extra:
                 fail("V5", f"{where} 含端口不允许的字段 {extra}（v3 端口只有 {sorted(PORT_FIELDS)}）")
+            # B3：输出端口没有 required 这个概念（要么产生要么不产生）
+            if side == "outputs" and "required" in p:
+                fail("V5", f"{where}: outputs 不允许 required 字段")
             for k in ("name", "type", "label"):
                 if not _is_nonempty_str(p.get(k)):
                     fail("V5", f"{where}.{k} 必填且非空")
@@ -233,6 +258,11 @@ def check(path: str) -> Tuple[List[Tuple[str, str, str]], bool]:
         # 不变量：advanced:true 进 exposable ⇒ safe_for_wizard 必须 false
         if target in advanced and sfw is not False:
             fail("V11", f"{where}.param={target!r} 在 params 里是 advanced:true，safe_for_wizard 必须为 false")
+        # C：不变量②——advanced:false + safe_for_wizard:false 属可疑组合，给 WARN 不拦
+        if target in param_names and target not in advanced and sfw is False:
+            rows.append(("WARN", "V11",
+                         f"{where}.param={target!r}: advanced:false 却 safe_for_wizard:false"
+                         f"（要么标 advanced，要么允许直出）"))
 
     passed("V11", f"{len(exp)} 条 exposable，全部存在于 params 且 recipe_role 非空")
 
