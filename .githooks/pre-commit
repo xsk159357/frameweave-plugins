@@ -8,8 +8,9 @@
 # 内容（与 README「提交前自检」一致）：
 #  1) sdk/check_all.py
 #      包 G1-G10（96）+ workflows meta M1-M5（25）+ 官方锚验签（96，含允许清单）
-#   2) sdk/check_signature.py --only-dist
+#   2) sdk/check_signature.py --only-dist（仅当 dist/ 里有 *.zip）
 #      dist/*.zip 的 archive 签名（75，over=archive；实测 ~0.4s，故纳入默认门）
+#      建包期 dist/ 没有 zip -> 跳过并打印一行；打出 zip 即自动恢复，不靠人记得加 flag
 #
 # 退出码原样透传：1 = 有未登记失败；2 = 环境缺失（例如缺平台仓公钥锚，≠ 通过）。
 
@@ -57,17 +58,28 @@ if [ "$rc" -ne 0 ]; then
     exit "$rc"
 fi
 
-if [ "${SKIP_DIST:-0}" = "1" ]; then
-    echo "[pre-commit] 2/2 已跳过（SKIP_DIST=1）：dist 归档验签"
-else
-    echo "[pre-commit] 2/2 dist 归档验签"
-    echo "             python sdk/check_signature.py --only-dist"
-    "$PY" sdk/check_signature.py --only-dist
-    rc=$?
-    if [ "$rc" -ne 0 ]; then
-        print_hints "$rc"
-        exit "$rc"
+# 建包期 dist/ 可能还没有 zip：与 workflows/ 同一判据——检查对象不存在就跳过（留一行可见输出），
+# 一旦打出 zip 就自动恢复验签，不需要人记得把 flag 加回来。
+DIST_ZIPS=0
+if [ -d dist ]; then
+    DIST_ZIPS=$(ls -A dist 2>/dev/null | grep -c '\.zip$')
+fi
+
+if [ "$DIST_ZIPS" -gt 0 ]; then
+    if [ "${SKIP_DIST:-0}" = "1" ]; then
+        echo "[pre-commit] 2/2 已跳过（SKIP_DIST=1）：dist 归档验签（$DIST_ZIPS 个 zip 未验）"
+    else
+        echo "[pre-commit] 2/2 dist 归档验签（dist/ 有 $DIST_ZIPS 个 zip）"
+        echo "             python sdk/check_signature.py --only-dist"
+        "$PY" sdk/check_signature.py --only-dist
+        rc=$?
+        if [ "$rc" -ne 0 ]; then
+            print_hints "$rc"
+            exit "$rc"
+        fi
     fi
+else
+    echo "[pre-commit] 2/2 dist（dist/ 无 zip —— 建包期，归档验签跳过；发版必跑）"
 fi
 
 echo "[pre-commit] PASS：节点仓自检全绿"
