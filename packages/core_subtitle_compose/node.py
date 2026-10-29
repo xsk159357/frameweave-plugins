@@ -6,7 +6,6 @@ from typing import Any, Dict, List
 
 from app.assets import Asset
 from app.nodespec import NodeBase, NodeSpec, PortSpec, PortType
-from app.registry import register
 
 STYLE_PRESETS = {
     "默认": {"font": "微软雅黑", "size": 48, "color": "#FFFFFF", "stroke": "#000000",
