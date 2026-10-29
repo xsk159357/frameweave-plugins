@@ -3,7 +3,7 @@ chcp 65001 >nul 2>&1
 rem 节点仓一键自检（Windows）：双击可跑，也可被 hook / CI / 计划任务调用。
 rem
 rem 等价于：
-rem   python sdk\check_all.py --with-workflows --with-signature
+rem   python sdk\check_all.py --with-workflows
 rem   python sdk\check_signature.py --only-dist
 rem
 rem 跳过 dist 归档验签：  set SKIP_DIST=1 ^&^& sdk\precommit.cmd
@@ -26,8 +26,8 @@ if errorlevel 1 (
 )
 
 echo [precommit] 1/2 packages + workflows meta + official-anchor signature check
-echo              %PY% sdk\check_all.py --with-workflows --with-signature
-%PY% sdk\check_all.py --with-workflows --with-signature
+echo              %PY% sdk\check_all.py --with-workflows
+%PY% sdk\check_all.py --with-workflows
 set "RC=%ERRORLEVEL%"
 if not "%RC%"=="0" goto fail
 

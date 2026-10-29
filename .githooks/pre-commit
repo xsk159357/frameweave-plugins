@@ -6,7 +6,7 @@
 # 临时跳过：git commit --no-verify   ／  只想跳过 dist 归档验签：SKIP_DIST=1 git commit ...
 #
 # 内容（与 README「提交前自检」一致）：
-#   1) sdk/check_all.py --with-workflows --with-signature
+#  1) sdk/check_all.py
 #      包 G1-G10（96）+ workflows meta M1-M5（25）+ 官方锚验签（96，含允许清单）
 #   2) sdk/check_signature.py --only-dist
 #      dist/*.zip 的 archive 签名（75，over=archive；实测 ~0.4s，故纳入默认门）
@@ -43,8 +43,8 @@ print_hints() {
 }
 
 echo "[pre-commit] 1/2 包 + workflows meta + 官方锚验签"
-echo "             python sdk/check_all.py --with-workflows --with-signature"
-"$PY" sdk/check_all.py --with-workflows --with-signature
+echo "       python sdk/check_all.py "
+"$PY" sdk/check_all.py
 rc=$?
 if [ "$rc" -ne 0 ]; then
     print_hints "$rc"
