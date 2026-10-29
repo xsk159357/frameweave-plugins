@@ -6,7 +6,7 @@
 
 ## 0. 五分钟读懂
 
-插件包是一个目录（发布时为 zip），至少包含顶层目录下的 `manifest.json`。声明式插件使用 `kind=transform`，只执行白名单数据运算；Python 插件使用 `kind=python`，提供 `entrypoint` 和 `class_name`。`manifest.json` 是唯一契约来源，`inputs`、`outputs`、`params` 三字段必须存在（可为空数组）；Python 类的 `spec()` 只用于运行时接口，不替代 manifest。
+插件包是一个目录（发布时为 zip），至少包含顶层目录下的 `manifest.json`。声明式插件使用 `kind=transform`，只执行白名单数据运算；Python 插件使用 `kind=python`，提供 `entrypoint` 和 `class_name`。`manifest.json` 是唯一契约来源，`inputs`、`outputs`、`params` 三字段必须存在（可为空数组）；**Python 类不要写 `spec()`**：NodeSpec 由平台从 manifest 生成（见 §4「为什么不要写 spec()」），node.py 只实现 `run()`。
 
 扫描、安装和 SDK 打包均通过 G1-G10 强校验。失败必须返回稳定错误码，不能静默降级。插件不得使用 `core/` 前缀（官方签名包专用）；社区插件使用 `user/` 或已登记前缀。安装包的 zip 本体最多 2 GiB、解压总量最多 8 GiB、单文件最多 4 GiB、成员最多 20,000，且拒绝路径穿越、符号链接、加密和特殊成员。
 
@@ -162,22 +162,19 @@ manifest 缺少 `schema_version` 或为 1 时，只在内存副本注入 `schema
 
 ## 4. Python 插件（kind=python）
 
-入口类继承公开基类 `app.nodespec.NodeBase`，实现 `spec()`、`async run(ctx, inputs, params)`，可选 `async setup(ctx)`。manifest 端口为唯一契约；`spec()` 应与 manifest 的名称、类型、required、default、widget、options 一一对应。
+入口类继承公开基类 `app.nodespec.NodeBase`，实现 `async run(ctx, inputs, params)`，可选 `async setup(ctx)`。**不要写 `spec()`。**
+
+manifest 是唯一端口契约：平台在加载时用 `_spec_from_manifest(manifest)` 生成 NodeSpec，插件自己写的 `spec()` 会被**整段覆盖**（实测见下）。类型、默认值、端口名只写在 `manifest.json` 里。
 
 ```python
 from typing import Any, Dict
 from app.assets import Asset
-from app.nodespec import NodeBase, NodeSpec, PortSpec
+from app.nodespec import NodeBase
 from app.ports import PortType
 
 class MyPluginNode(NodeBase):
-    @classmethod
-    def spec(cls) -> NodeSpec:
-        return NodeSpec(
-            type_id="user/my_plugin", title="文本处理", category="用户节点",
-            inputs=[PortSpec("text", PortType.STRING, "文本")],
-            outputs=[PortSpec("result", PortType.STRING, "结果"), PortSpec("stats", PortType.JSON, "统计")],
-            params=[PortSpec("prefix", PortType.STRING, "前缀", default="FW")], version="1.0.0")
+    # 不要写 spec()，也不要 @register：端口/参数/类型/默认值全部只在 manifest.json 里。
+    # 平台在加载时用 _spec_from_manifest(manifest) 生成 NodeSpec，写了也会被覆盖。
 
     async def setup(self, ctx):
         pass
@@ -196,6 +193,18 @@ class MyPluginNode(NodeBase):
 ctx 公开字段：`workdir`、`store`、`logger`、`progress(0..1)`、`spawn_tracked`、`run_tracked`、`track_subprocess`、`untrack_subprocess`、`subprocess_registry`。async run 内禁止裸 `subprocess.run`；同步子进程必须走 `await ctx["run_tracked"]([...], timeout=...)`，以便超时和取消时杀掉进程树。
 
 默认节点超时按信任级为 L0 600 秒、L1 300 秒、L2 120 秒；声明上限分别为 7200/1800/900 秒，官方渲染节点 L0 可到 1800 秒；setup 上限为 `min(120s, run_timeout/3)`。
+
+### 为什么不要写 `spec()`
+
+**实测（2026-10-30）**：把 `core_subtitle_compose/node.py` 的 `spec()` 整段删掉，重新加载，**11 个字段逐个比对完全相同**。
+
+原因：`backend/app/declarative.py` 的 `_make_python_class` 造出的 `_P` 类里，`spec()` 返回 `_spec_from_manifest(manifest)`，**覆盖**了插件自己写的那份。
+
+所以「`spec()` 应与 manifest 一一对应」这条要求，等于让每个包的作者维护一份**平台从来不读**的副本。这不只是无用，是**危险**——它让人以为「改了 `spec()` 就等于改了契约」，而真正的契约在 manifest。
+
+复现脚本：`FrameWeave/_archive/tmp/verify_spec_dead.py`（删 spec 前后逐字段比对）。
+
+> **同理不要 `@register`**：`register()` 会塞 `_REGISTRY`，而声明式路径塞 `_decl`，`list_specs()` 是两处相加（`registry.py:70`）。两个都写 ⇒ 同一节点出现两个 spec。
 
 ## 5. Asset 协议与存储
 
@@ -264,7 +273,7 @@ UI 可放在包内 `ui/`；manifest 的 `ui.entry` 必须是 `ui/*.js|mjs|css` �
 mkdir my_plugin
 cp sdk/manifest.example.json my_plugin/manifest.json
 cp sdk/node.py.template my_plugin/node.py
-# 编辑 type_id、端口、spec() 与 run()
+# 编辑 manifest 的 id、端口、参数；node.py 只写 run()
 python sdk/check_manifest.py my_plugin/manifest.json
 python sdk/package_plugin.py my_plugin -o dist
 # 将 dist/my_plugin.zip、sha256、size 填入商城发布表单
@@ -274,15 +283,15 @@ python sdk/package_plugin.py my_plugin -o dist
 
 ## 10. 最佳实践与红线
 
-**必须**：写 `schema_version=2` 与 `engine_api="1.0"`；使用 `user/`；三端口字段齐全；端口类型准确；select 提供 options；Python 的 spec 与 manifest 同步；资产经 store 保存；秘密只经 params/secret 引用；子进程使用 tracked API；大文件流式处理；发布登记真实 sha256；携带前端注入能力的插件声明 `web.entry` 且只把资源放在 `web/` 子树（经 `window.fwExtensions.register` 挂载，不做任何越权访问）。
+**必须**：写 `schema_version=2` 与 `engine_api="1.0"`；使用 `user/`；三端口字段齐全；端口类型准确；select 提供 options；Python 的 node.py **不写** `spec()`、不 `@register`（类型契约由 manifest 生成）；资产经 store 保存；秘密只经 params/secret 引用；子进程使用 tracked API；大文件流式处理；发布登记真实 sha256；携带前端注入能力的插件声明 `web.entry` 且只把资源放在 `web/` 子树（经 `window.fwExtensions.register` 挂载，不做任何越权访问）。
 
 **禁止**：使用 core/ 冒充官方；依赖 v1 缺省；使用未知字段/未知类型/op；transform 使用媒体端口或读文件；在日志写入 token/password；裸 subprocess；写入包目录外任意路径；把 zip 整包载入内存；捕获异常后返回伪成功；让多个包复用同一个 type_id；`web.entry` 指向 `web/` 子树外（绝对路径/`..` 逃逸）；在 web 脚本中直接读取本地任意文件或调用未授权的后端端点。
 
-发布前清单：`check_manifest` 零错误、manifest 与 `spec()` 端口一致、entrypoint/UI/Web 文件存在、zip 无穿越成员、大小在上限内、sha256 与发布信息一致、依赖可解析、权限是最小集、实测安装后 `/api/specs` 能看到完整端口、安装后 `/api/extensions` 能看到 web 目录清单。
+发布前清单：`check_manifest` 零错误、manifest 端口三字段完整可解析（平台按 manifest 生成 spec，不再比对 node.py）、entrypoint/UI/Web 文件存在、zip 无穿越成员、大小在上限内、sha256 与发布信息一致、依赖可解析、权限是最小集、实测安装后 `/api/specs` 能看到完整端口、安装后 `/api/extensions` 能看到 web 目录清单。
 
 ## 11. 官方参考实现
 
-`frameweave-plugins/packages/hello` 是 transform 示例；`sdk/manifest.transform.example.json` 是严格 v2 canonical op 示例；`frameweave-plugins/packages/user_web_demo/` 是插件 web 目录示例（S1-T7，EXTENSION_WEB_DIRS 等价：manifest `web.entry` + `web/index.js` 自注册 + `web/style.css` 多文件资源，画布注入可点击计数组件）。官方 `core_scene_detect`、`core_tts`、`core_video_render` 等 Python 节点展示 Asset、模型初始化和 ffmpeg 场景。官方包历史上部分 manifest 仍为 v1 兼容形态；新发布包必须回填完整 v2 端口，不能把 `node.py.spec()` 当作 manifest 的替代。
+`frameweave-plugins/packages/hello` 是 transform 示例；`sdk/manifest.transform.example.json` 是严格 v2 canonical op 示例；`frameweave-plugins/packages/user_web_demo/` 是插件 web 目录示例（S1-T7，EXTENSION_WEB_DIRS 等价：manifest `web.entry` + `web/index.js` 自注册 + `web/style.css` 多文件资源，画布注入可点击计数组件）。官方 `core_scene_detect`、`core_tts`、`core_video_render` 等 Python 节点展示 Asset、模型初始化和 ffmpeg 场景。官方包历史上部分 manifest 仍为 v1 兼容形态；新发布包必须回填完整端口，**manifest 是唯一来源**——`node.py` 不写 `spec()`，也就无从「替代」。
 
 ## 12. 权威源码索引
 
