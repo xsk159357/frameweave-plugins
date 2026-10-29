@@ -3,7 +3,9 @@ chcp 65001 >nul 2>&1
 rem 节点仓一键自检（Windows）：双击可跑，也可被 hook / CI / 计划任务调用。
 rem
 rem 等价于：
-rem   python sdk\check_all.py --with-workflows
+rem   python sdk\check_all.py --with-workflows（workflows/ 非空时；建包期为空则不带该 flag）
+rem 注意：真正拦提交的是 .githooks/pre-commit（shell），本文件只是 Windows 双击辅助。
+rem       两份内容需保持一致，改一处要改两处。
 rem   python sdk\check_signature.py --only-dist
 rem
 rem 跳过 dist 归档验签：  set SKIP_DIST=1 ^&^& sdk\precommit.cmd

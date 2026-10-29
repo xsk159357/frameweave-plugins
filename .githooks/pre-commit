@@ -42,9 +42,15 @@ print_hints() {
     echo "  紧急放行（确认风险后）：git commit --no-verify"
 }
 
-echo "[pre-commit] 1/2 包 + workflows meta + 官方锚验签"
-echo "       python sdk/check_all.py "
-"$PY" sdk/check_all.py
+# 建包期 workflows/ 可能为空：此时 meta 无检查对象，跳过而不是判失败；
+# 一旦有工作流就自动恢复检查，不需要人记得把 flag 加回来。
+if [ -d workflows ] && [ -n "$(ls -A workflows 2>/dev/null)" ]; then
+    echo "[pre-commit] 1/2 包 + workflows meta（workflows/ 非空，含 M1-M5）"
+    "$PY" sdk/check_all.py --with-workflows
+else
+    echo "[pre-commit] 1/2 包（workflows/ 为空 —— 建包期，meta 检查跳过）"
+    "$PY" sdk/check_all.py
+fi
 rc=$?
 if [ "$rc" -ne 0 ]; then
     print_hints "$rc"
