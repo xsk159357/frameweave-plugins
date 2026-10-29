@@ -1,0 +1,187 @@
+{
+  "manifest_version": 3,
+  "id": "core/subtitle_compose",
+  "title": "字幕装配",
+  "category": "输出",
+  "description": "把字幕按预设样式装配成带花字与逐句动画的样式化字幕",
+  "version": "2.0.0",
+  "kind": "python",
+  "entrypoint": "node.py",
+  "class_name": "SubtitleComposeNode",
+  "min_engine": "3.0",
+  "inputs": [
+    {
+      "name": "subtitle",
+      "type": "SUBTITLE",
+      "label": "字幕",
+      "required": true,
+      "description": "上游生成的字幕轨；不连则需填手动字幕或接入文案"
+    },
+    {
+      "name": "script",
+      "type": "SCRIPT",
+      "label": "文案（可选）",
+      "required": false,
+      "description": "未接字幕时按行拆分成字幕"
+    }
+  ],
+  "outputs": [
+    {
+      "name": "styled_subtitle",
+      "type": "SUBTITLE",
+      "label": "样式化字幕",
+      "required": true
+    }
+  ],
+  "params": [
+    {
+      "name": "manual_text",
+      "type": "text",
+      "label": "手动字幕",
+      "default": "",
+      "description": "每行一条，可用 | 指定起始秒，如 0.2|第一句字幕"
+    },
+    {
+      "name": "preset",
+      "type": "enum",
+      "label": "样式预设",
+      "default": "默认",
+      "options": [
+        {
+          "value": "默认",
+          "label": "默认"
+        },
+        {
+          "value": "悬疑惊悚",
+          "label": "悬疑惊悚"
+        },
+        {
+          "value": "搞笑鬼畜",
+          "label": "搞笑鬼畜"
+        },
+        {
+          "value": "知识科普",
+          "label": "知识科普"
+        },
+        {
+          "value": "情感讲述",
+          "label": "情感讲述"
+        }
+      ],
+      "description": "一键套用整套样式；选它会覆盖字体、字号、颜色与动画"
+    },
+    {
+      "name": "font",
+      "type": "string",
+      "label": "字体",
+      "default": "微软雅黑",
+      "description": "系统字体名；缺字体会退化为默认字体并在报告里标 degraded"
+    },
+    {
+      "name": "size",
+      "type": "int",
+      "label": "字号",
+      "default": 48,
+      "min": 12,
+      "max": 120,
+      "unit": "像素",
+      "description": "字号越大越占屏；竖屏建议 56 以上"
+    },
+    {
+      "name": "color",
+      "type": "string",
+      "label": "字色",
+      "default": "#FFFFFF",
+      "description": "十六进制色值；浅色画面上建议加深描边"
+    },
+    {
+      "name": "stroke",
+      "type": "string",
+      "label": "描边色",
+      "default": "#000000",
+      "description": "描边让字幕在复杂画面上仍然可读"
+    },
+    {
+      "name": "animation",
+      "type": "enum",
+      "label": "动画",
+      "default": "none",
+      "options": [
+        {
+          "value": "none",
+          "label": "无"
+        },
+        {
+          "value": "typewriter",
+          "label": "打字机"
+        },
+        {
+          "value": "bounce",
+          "label": "弹跳"
+        },
+        {
+          "value": "fade",
+          "label": "淡入"
+        },
+        {
+          "value": "fadeup",
+          "label": "上浮淡入"
+        }
+      ],
+      "description": "逐句入场动画；none 最快，typewriter 最慢"
+    },
+    {
+      "name": "karaoke",
+      "type": "bool",
+      "label": "逐字卡点",
+      "default": true,
+      "description": "按字粒度高亮；关闭后整句一起显示"
+    }
+  ],
+  "perm": {
+    "fs": {
+      "read": [],
+      "write": []
+    },
+    "net": {
+      "hosts": []
+    },
+    "model": [],
+    "exec": [],
+    "secret": []
+  },
+  "deps": [],
+  "exposable": [
+    {
+      "param": "preset",
+      "recipe_role": "字幕样式",
+      "safe_for_wizard": true
+    },
+    {
+      "param": "size",
+      "recipe_role": "字号",
+      "safe_for_wizard": true
+    },
+    {
+      "param": "animation",
+      "recipe_role": "字幕动画",
+      "safe_for_wizard": true
+    },
+    {
+      "param": "karaoke",
+      "recipe_role": "逐字高亮",
+      "safe_for_wizard": true
+    },
+    {
+      "param": "font",
+      "recipe_role": "字体",
+      "safe_for_wizard": false
+    }
+  ],
+  "search_aliases": [
+    "字幕",
+    "花字",
+    "排版",
+    "subtitle"
+  ]
+}
