@@ -1,0 +1,149 @@
+{
+  "manifest_version": 3,
+  "id": "core/asr_whisper",
+  "title": "语音转写",
+  "category": "音频",
+  "description": "用本地 faster-whisper 把音轨转成带时间的字幕。模型不随包，首次使用前需下载；缺模型时明确报错，不返回空字幕",
+  "version": "1.0.0",
+  "kind": "python",
+  "entrypoint": "node.py",
+  "class_name": "AsrWhisperNode",
+  "min_engine": "3.0",
+  "inputs": [
+    {
+      "name": "audio",
+      "type": "AUDIO",
+      "label": "音频",
+      "required": true,
+      "description": "待转写的音轨；媒体导入产出的 audio 直接接上即可"
+    }
+  ],
+  "outputs": [
+    {
+      "name": "subtitle",
+      "type": "SUBTITLE",
+      "label": "字幕",
+      "description": "带起止时间的转写结果；行已按句子切开，可直接接样式化字幕"
+    }
+  ],
+  "params": [
+    {
+      "name": "model",
+      "type": "enum",
+      "label": "模型",
+      "default": "base",
+      "options": [
+        {
+          "value": "base",
+          "label": "base（145MB，快，够用）"
+        },
+        {
+          "value": "small",
+          "label": "small（480MB，更准）"
+        },
+        {
+          "value": "medium",
+          "label": "medium（1.5GB，最准，慢）"
+        }
+      ],
+      "description": "本地模型；越大越准也越慢。首次使用某个档位前要先下载它"
+    },
+    {
+      "name": "language",
+      "type": "string",
+      "label": "语言",
+      "default": "zh",
+      "description": "ISO 代码（zh/en/ja…）。留空则自动检测，但短音频检测容易错"
+    },
+    {
+      "name": "vad_filter",
+      "type": "bool",
+      "label": "静音过滤",
+      "default": true,
+      "description": "先切掉静音段再转写，长片能快不少；纯音乐素材建议关掉"
+    },
+    {
+      "name": "beam_size",
+      "type": "int",
+      "label": "搜索宽度",
+      "default": 5,
+      "min": 1,
+      "max": 10,
+      "advanced": true,
+      "description": "越大越准越慢；1 是最快的贪心解码"
+    },
+    {
+      "name": "initial_prompt",
+      "type": "text",
+      "label": "提示词",
+      "default": "",
+      "advanced": true,
+      "description": "给模型的上下文提示，可用于纠正专有名词（如人名、片名）"
+    },
+    {
+      "name": "simplified",
+      "type": "bool",
+      "label": "简体优先",
+      "default": true,
+      "description": "中文音频输出简体字。模型默认倾向繁体，靠提示词纠正（实测有效）；关掉则按模型原始输出"
+    }
+  ],
+  "perm": {
+    "fs": {
+      "read": [],
+      "write": []
+    },
+    "net": {
+      "hosts": []
+    },
+    "model": [
+      {
+        "name": "faster-whisper-base",
+        "sha256": "d01c3014881c9c6f3133c182f3d2887eb6ca1c789a7538c5c007196857a0a6a9"
+      },
+      {
+        "name": "faster-whisper-medium",
+        "sha256": "9b45e1009dcc4ab601eff815b61d80e60ce3fd8c74c1a14f4a282258286b51ae"
+      }
+    ],
+    "exec": [],
+    "secret": []
+  },
+  "deps": [
+    {
+      "kind": "model",
+      "name": "faster-whisper-base",
+      "size": 145217532,
+      "sha256": "d01c3014881c9c6f3133c182f3d2887eb6ca1c789a7538c5c007196857a0a6a9",
+      "optional": false,
+      "degrade": "block",
+      "user_message": "语音转写需要本地模型 faster-whisper-base（约 139 MB）；首次使用前请先下载，没下载时节点会明确报错而不是返回空字幕"
+    }
+  ],
+  "exposable": [
+    {
+      "param": "model",
+      "recipe_role": "转写精度",
+      "safe_for_wizard": true
+    },
+    {
+      "param": "language",
+      "recipe_role": "语言",
+      "safe_for_wizard": true
+    }
+  ],
+  "search_aliases": [
+    "语音转写",
+    "转写",
+    "识别",
+    "字幕识别",
+    "asr",
+    "whisper"
+  ],
+  "signature": {
+    "alg": "ed25519",
+    "key_id": "a8998646b062c170",
+    "value": "EAbED2SJ4bc8BKJGt0KmbzeHz8N3W3z3dYZoE12S6xV0I+bQEaxdt3VmD+Wr9aB5Yo8acZb75Z8gpuED+bACDA==",
+    "over": "manifest"
+  }
+}
