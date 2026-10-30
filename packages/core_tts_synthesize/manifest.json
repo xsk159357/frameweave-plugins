@@ -1,0 +1,179 @@
+{
+  "manifest_version": 3,
+  "id": "core/tts_synthesize",
+  "title": "语音合成",
+  "category": "音频",
+  "description": "把文案逐句合成为配音，并给出每句的真实时长。它是整条链里唯一知道「这句话读出来到底几秒」的节点，时间线据此排片比按字数估算准",
+  "version": "1.0.0",
+  "kind": "python",
+  "entrypoint": "node.py",
+  "class_name": "TtsSynthesizeNode",
+  "min_engine": "3.0",
+  "inputs": [
+    {
+      "name": "script",
+      "type": "SCRIPT",
+      "label": "文案",
+      "required": true,
+      "description": "要读出来的文字。按句末标点逐句合成，长句会按逗号再切"
+    }
+  ],
+  "outputs": [
+    {
+      "name": "audio",
+      "type": "AUDIO",
+      "label": "配音",
+      "description": "整段配音 wav（逐句合成后拼接）。路径与统计在 asset.meta"
+    },
+    {
+      "name": "segments",
+      "type": "SEGMENTS",
+      "label": "逐句时间",
+      "description": "每句一条：index / text / start / end / duration。start 是相对整段配音的秒数"
+    }
+  ],
+  "params": [
+    {
+      "name": "engine",
+      "type": "enum",
+      "label": "引擎",
+      "default": "auto",
+      "options": [
+        {
+          "value": "auto",
+          "label": "自动（可用就用 IndexTTS，否则退系统语音）"
+        },
+        {
+          "value": "sapi",
+          "label": "系统语音（Windows 自带，秒出）"
+        },
+        {
+          "value": "indextts",
+          "label": "IndexTTS（音质好，需本地权重与独立运行时）"
+        }
+      ],
+      "description": "选了 indextts 但环境不满足时会明确报错，不会静默换成别的引擎"
+    },
+    {
+      "name": "lang",
+      "type": "enum",
+      "label": "语言",
+      "default": "ZH",
+      "options": [
+        {
+          "value": "ZH",
+          "label": "中文"
+        },
+        {
+          "value": "EN",
+          "label": "英文"
+        }
+      ],
+      "description": "IndexTTS 用；系统语音按 voice 选音色，这个参数对它无效"
+    },
+    {
+      "name": "voice",
+      "type": "string",
+      "label": "音色",
+      "default": "",
+      "description": "留空用系统默认中文音色（本机是 Microsoft Huihui Desktop）"
+    },
+    {
+      "name": "ref_audio",
+      "type": "asset",
+      "label": "音色参考音频",
+      "default": "",
+      "description": "IndexTTS 的零样本克隆要一段参考音频（几秒即可）；留空则用模型自带音色。系统语音引擎忽略此项"
+    },
+    {
+      "name": "rate",
+      "type": "int",
+      "label": "语速",
+      "default": 0,
+      "min": -10,
+      "max": 10,
+      "description": "SAPI 语速档位，0 为正常；负数更慢，正数更快"
+    },
+    {
+      "name": "volume",
+      "type": "int",
+      "label": "音量",
+      "default": 100,
+      "min": 0,
+      "max": 100,
+      "description": "配音音量，100 为满；调低只影响配音本身，不影响后续混音"
+    },
+    {
+      "name": "max_chars",
+      "type": "int",
+      "label": "单句最大字数",
+      "default": 40,
+      "min": 8,
+      "max": 200,
+      "description": "超过这个长度的句子会按逗号再切；切得越短，配音越不容易一口气读到底"
+    },
+    {
+      "name": "gap",
+      "type": "float",
+      "label": "句间停顿（秒）",
+      "default": 0.15,
+      "min": 0,
+      "max": 2,
+      "description": "两句之间插入的静音长度；0 表示首尾相接。停顿会算进逐句时间，下游按它排片"
+    }
+  ],
+  "perm": {
+    "fs": {
+      "read": [],
+      "write": []
+    },
+    "net": {
+      "hosts": []
+    },
+    "model": [],
+    "exec": [
+      {
+        "bin": "powershell"
+      },
+      {
+        "bin": "ffmpeg"
+      },
+      {
+        "bin": "ffprobe"
+      }
+    ],
+    "secret": []
+  },
+  "deps": [],
+  "exposable": [
+    {
+      "param": "voice",
+      "recipe_role": "音色",
+      "safe_for_wizard": true
+    },
+    {
+      "param": "rate",
+      "recipe_role": "语速",
+      "safe_for_wizard": true
+    },
+    {
+      "param": "gap",
+      "recipe_role": "句间停顿",
+      "safe_for_wizard": false
+    }
+  ],
+  "search_aliases": [
+    "配音",
+    "语音合成",
+    "tts",
+    "朗读",
+    "旁白",
+    "口播"
+  ],
+  "signature": {
+    "alg": "ed25519",
+    "key_id": "a8998646b062c170",
+    "value": "Vz1xCauXbIa3oT8RMteNMdP79h+TZxp13kKwcHXRec/72I3qAkRbwUPCysHzgUv3mlZYP5zR5ExLm3EzTVCHBQ==",
+    "over": "manifest"
+  }
+}
