@@ -183,5 +183,11 @@
     "花字",
     "排版",
     "subtitle"
-  ]
+  ],
+  "signature": {
+    "alg": "ed25519",
+    "key_id": "a8998646b062c170",
+    "value": "CumQuEVP84GACw7L1doL4Pih1UVtQ6/T4+FaoNOQaC7iTcDIEbIjTNiTMBFqXhPpx6Gq42RxTvgw6TAutLLGDQ==",
+    "over": "manifest"
+  }
 }
