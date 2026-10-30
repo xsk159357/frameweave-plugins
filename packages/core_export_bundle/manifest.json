@@ -1,0 +1,124 @@
+{
+  "manifest_version": 3,
+  "id": "core/export_bundle",
+  "title": "片段包导出",
+  "category": "输出",
+  "description": "把时间线与字幕整理成剪辑软件能直接用的片段包：逐段给出源片区间与成片区间，可选写出 SRT",
+  "version": "1.0.0",
+  "kind": "python",
+  "entrypoint": "node.py",
+  "class_name": "ExportBundleNode",
+  "min_engine": "3.0",
+  "inputs": [
+    {
+      "name": "timeline",
+      "type": "TIMELINE",
+      "label": "时间线",
+      "required": true,
+      "description": "画面切片；导出以它的成片时间为准"
+    },
+    {
+      "name": "subtitle",
+      "type": "SUBTITLE",
+      "label": "字幕（可选）",
+      "required": false,
+      "description": "接了会把字幕一起写进片段包，并可另存 SRT"
+    },
+    {
+      "name": "video",
+      "type": "VIDEO",
+      "label": "源视频（可选）",
+      "required": false,
+      "description": "接了会在片段包里记下源文件路径，剪辑软件据此找素材"
+    }
+  ],
+  "outputs": [
+    {
+      "name": "bundle",
+      "type": "SEGMENTS",
+      "label": "片段包",
+      "description": "逐段一条：源片区间、成片区间、文案、对应字幕；路径与统计在 asset.meta"
+    }
+  ],
+  "params": [
+    {
+      "name": "output_name",
+      "type": "string",
+      "label": "输出名",
+      "default": "bundle",
+      "description": "落盘文件名前缀；同目录重名会覆盖"
+    },
+    {
+      "name": "write_srt",
+      "type": "bool",
+      "label": "写出 SRT",
+      "default": true,
+      "description": "接了字幕时，另存一份标准 SRT 到输出目录"
+    },
+    {
+      "name": "aspect",
+      "type": "enum",
+      "label": "画幅",
+      "default": "16:9",
+      "options": [
+        {
+          "value": "16:9",
+          "label": "横屏 16:9"
+        },
+        {
+          "value": "9:16",
+          "label": "竖屏 9:16"
+        },
+        {
+          "value": "1:1",
+          "label": "方形 1:1"
+        },
+        {
+          "value": "4:3",
+          "label": "经典 4:3"
+        }
+      ],
+      "description": "只写进片段包供下游使用，本节点不做画面处理"
+    }
+  ],
+  "perm": {
+    "fs": {
+      "read": [],
+      "write": []
+    },
+    "net": {
+      "hosts": []
+    },
+    "model": [],
+    "exec": [],
+    "secret": []
+  },
+  "deps": [],
+  "exposable": [
+    {
+      "param": "aspect",
+      "recipe_role": "画幅",
+      "safe_for_wizard": true
+    },
+    {
+      "param": "write_srt",
+      "recipe_role": "是否导出字幕文件",
+      "safe_for_wizard": true
+    }
+  ],
+  "search_aliases": [
+    "导出",
+    "片段",
+    "中间件",
+    "剪辑",
+    "export",
+    "bundle",
+    "srt"
+  ],
+  "signature": {
+    "alg": "ed25519",
+    "key_id": "a8998646b062c170",
+    "value": "VCXi7057YDINZjZ4Lt0ZiwI80HTcLaqaShljJ4dbSkj0fQNoJ1s5rvShaO32R/47gBJ/HDsHj3rLVqA9C/95Ag==",
+    "over": "manifest"
+  }
+}
