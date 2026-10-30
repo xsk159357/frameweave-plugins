@@ -1,0 +1,109 @@
+{
+  "manifest_version": 3,
+  "id": "core/subtitle_build",
+  "title": "字幕生成",
+  "category": "输出",
+  "description": "按时间线生成字幕：时间取自画面切片的成片时间，长句按字数比例拆行。字幕与画面严格对齐",
+  "version": "1.0.0",
+  "kind": "python",
+  "entrypoint": "node.py",
+  "class_name": "SubtitleBuildNode",
+  "min_engine": "3.0",
+  "inputs": [
+    {
+      "name": "timeline",
+      "type": "TIMELINE",
+      "label": "时间线",
+      "required": true,
+      "description": "时间线生成节点的输出；用它算出来的时长做字幕时间，不再自行估算"
+    }
+  ],
+  "outputs": [
+    {
+      "name": "subtitle",
+      "type": "SUBTITLE",
+      "label": "字幕",
+      "description": "按成片时间排好的字幕条目；长句已在标点处拆成多条"
+    }
+  ],
+  "params": [
+    {
+      "name": "max_chars_per_line",
+      "type": "int",
+      "label": "单行字数",
+      "default": 16,
+      "min": 6,
+      "max": 40,
+      "unit": "字",
+      "description": "超过就换行/拆条；竖屏建议 12 以内，横屏 16-20"
+    },
+    {
+      "name": "max_lines",
+      "type": "int",
+      "label": "最多行数",
+      "default": 2,
+      "min": 1,
+      "max": 4,
+      "description": "一条字幕最多几行；超出部分拆成下一条，时间按字数比例分"
+    },
+    {
+      "name": "min_duration",
+      "type": "float",
+      "label": "最短显示",
+      "default": 0.5,
+      "min": 0.2,
+      "max": 3.0,
+      "step": 0.1,
+      "unit": "秒",
+      "description": "太短会闪；拆出来的碎片会被抬到这个时长"
+    },
+    {
+      "name": "max_duration",
+      "type": "float",
+      "label": "最长显示",
+      "default": 8.0,
+      "min": 1.0,
+      "max": 30.0,
+      "step": 0.5,
+      "unit": "秒",
+      "description": "一条字幕停留过久会让观众以为卡住"
+    }
+  ],
+  "perm": {
+    "fs": {
+      "read": [],
+      "write": []
+    },
+    "net": {
+      "hosts": []
+    },
+    "model": [],
+    "exec": [],
+    "secret": []
+  },
+  "deps": [],
+  "exposable": [
+    {
+      "param": "max_chars_per_line",
+      "recipe_role": "单行字数",
+      "safe_for_wizard": true
+    },
+    {
+      "param": "max_lines",
+      "recipe_role": "最多行数",
+      "safe_for_wizard": true
+    }
+  ],
+  "search_aliases": [
+    "字幕",
+    "srt",
+    "subtitle",
+    "断句"
+  ],
+  "signature": {
+    "alg": "ed25519",
+    "key_id": "a8998646b062c170",
+    "value": "cj7ASFxi8U7koYmERGCsNO3quaWtjH87SJVUEAJwgN/5Nd8GyOKeoIT6Zru07cV1sRObNO2klnoPrIo/cBoUDQ==",
+    "over": "manifest"
+  }
+}
