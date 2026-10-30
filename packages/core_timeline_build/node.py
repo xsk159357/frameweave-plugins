@@ -19,21 +19,102 @@ from app.assets import Asset
 from app.nodespec import NodeBase, PortType
 
 
-def _as_list(store: Any, asset: Any, what: str) -> List[Dict[str, Any]]:
+def _as_list(store: Any, asset: Any, what: str, required: bool = True) -> List[Dict[str, Any]]:
     if asset is None:
-        raise RuntimeError("缺少%s输入" % what)
+        if required:
+            raise RuntimeError("缺少%s输入" % what)
+        return []
     try:
         data = store.read_json(asset.id) if hasattr(asset, "id") else asset
     except Exception as e:  # noqa: BLE001
-        raise RuntimeError("%s读取失败: %s" % (what, e))
+        if required:
+            raise RuntimeError("%s读取失败: %s" % (what, e))
+        return []
     if isinstance(data, dict):
         for key in ("items", "segments", "scenes", "data"):
             if isinstance(data.get(key), list):
                 data = data[key]
                 break
-    if not isinstance(data, list) or not data:
+    if not isinstance(data, list):
+        if required:
+            raise RuntimeError("%s为空或格式不对（期望数组）" % what)
+        return []
+    if required and not data:
         raise RuntimeError("%s为空或格式不对（期望数组）" % what)
     return data
+
+
+_PUNCT = "，。！？；：、,.;:!?…—～~\"'“”‘’（）()【】[]《》<>"
+
+
+def _norm(s: Any) -> str:
+    """去掉标点与空白，只留实义字符。用于跨节点比对文本。"""
+    return "".join(c for c in str(s or "") if c not in _PUNCT and not c.isspace())
+
+
+def _num(v: Any, default: float = 0.0) -> float:
+    try:
+        return float(v)
+    except (TypeError, ValueError):
+        return default
+
+
+def _voice_durations(texts: List[str], voice_segs: List[Dict[str, Any]]) -> List[Any]:
+    """把配音的逐句时长映射到文案句上，返回与 texts 等长、元素为 float 或 None。
+
+    为什么需要对齐：配音节点会把长句按逗号再切一刀、把只剩标点的碎片并进下一句，
+    所以它的句数和文案句数不一定相同。按 index 硬对会在切碎时整体错位。
+
+    **前提是先确认两边说的是同一段话**（去标点后拼接相同）。只判句数是不够的：
+    接错一个不相关的配音、句数碰巧一样，就会静默按 index 错位，时间轴全歪而
+    没有任何告警——宁可退回估算并报出来，也不要静默对错。
+
+    文本序列确认一致后，分两种切分：
+      1. 句数相同 → 直接按 index
+      2. 句数不同（配音把长句切碎了）→ 按字符位置把时长切分到文案句上
+    都对不上 → 返回全 None，调用方退回按字数估算并记 warning。
+    """
+    n = len(texts)
+    if not voice_segs:
+        return [None] * n
+
+    vt = [_norm(v.get("text")) for v in voice_segs]
+    tt = [_norm(t) for t in texts]
+    joined_v = "".join(vt)
+    joined_t = "".join(tt)
+    if not joined_t or joined_v != joined_t:
+        return [None] * n
+
+    if len(voice_segs) == n:
+        ds = [_num(v.get("duration")) for v in voice_segs]
+        if all(d > 0 for d in ds):
+            return ds
+
+    out: List[Any] = []
+    j = 0          # 配音句游标
+    offset = 0     # 当前配音句已被用掉的字符数
+    for want in tt:
+        need = len(want)
+        got = 0.0
+        while need > 0 and j < len(vt):
+            cur = vt[j]
+            avail = len(cur) - offset
+            if avail <= 0:
+                j += 1
+                offset = 0
+                continue
+            take = min(avail, need)
+            dur = _num(voice_segs[j].get("duration"))
+            got += dur * (take / max(len(cur), 1))
+            need -= take
+            offset += take
+            if offset >= len(cur):
+                j += 1
+                offset = 0
+        out.append(round(got, 3) if got > 0 else None)
+    if all(d and d > 0 for d in out):
+        return out
+    return [None] * n
 
 
 class TimelineBuildNode(NodeBase):
@@ -42,6 +123,7 @@ class TimelineBuildNode(NodeBase):
         store = ctx["store"]
         matches = _as_list(store, inputs.get("match"), "匹配结果")
         scenes = _as_list(store, inputs.get("scenes"), "场景段")
+        voice_segs = _as_list(store, inputs.get("voice_segments"), "配音逐句", required=False)
 
         try:
             cps = float(params.get("chars_per_second", 4.5) or 4.5)
@@ -70,9 +152,23 @@ class TimelineBuildNode(NodeBase):
             except (TypeError, ValueError):
                 continue
 
+        # 配音逐句时长：有就按它排片，没有就退回按字数估。
+        # 对齐必须整批成功或整批退回——一半用配音一半用估算，时间轴会在中间跳一下。
+        texts = [str(it.get("text") or "") for it in matches]
+        voice_durs = _voice_durations(texts, voice_segs)
+        voice_used = sum(1 for d in voice_durs if d)
+        duration_source = ("voice" if voice_used == len(matches)
+                           else "mixed" if voice_used else "estimate")
+
         warnings: List[str] = []
+        if voice_segs and not voice_used:
+            warnings.append(
+                "配音逐句（%d 句）与文案句（%d 句）对不上，本次退回按字数估算；"
+                "时间轴与配音会不同步，请检查两边的切句"
+                % (len(voice_segs), len(matches)))
         out: List[Dict[str, Any]] = []
         short = 0
+        voice_cut = 0
         used_scenes: List[int] = []
         reused = 0
         out_cursor = 0.0          # 成片时间游标：与源片位置无关，永远连续
@@ -80,8 +176,15 @@ class TimelineBuildNode(NodeBase):
         for i, it in enumerate(matches):
             text = str(it.get("text") or "")
             chars = int(it.get("chars") or len(text) or 0)
-            need = max(chars / cps, min_sec)
-            need = min(need, max_sec)
+            vd = voice_durs[i] if i < len(voice_durs) else None
+            from_voice = bool(vd and vd > 0)
+            if from_voice:
+                # 有配音时，内容时长就是配音时长，**不能**再按 max_sec 截断——
+                # 截了就是音画不同步。画面不够长是另一件事，按 fit_mode 处理并单独告警。
+                need = float(vd)
+            else:
+                need = max(chars / cps, min_sec)
+                need = min(need, max_sec)
 
             picks = it.get("scenes") or []
             try:
@@ -113,6 +216,8 @@ class TimelineBuildNode(NodeBase):
             fits = avail + 1e-6 >= need
             if not fits:
                 short += 1
+                if from_voice:
+                    voice_cut += 1
             # 源片时间与成片时间是两回事，必须分开存：
             #   start/end         —— 这段素材在原片里的位置（同一段用两次就会重叠）
             #   out_start/out_end —— 它在成片上的位置（永远连续、单调递增）
@@ -134,12 +239,19 @@ class TimelineBuildNode(NodeBase):
                 "duration": dur,
                 "need": round(need, 3),
                 "fits": fits,
+                "duration_source": "voice" if from_voice else "estimate",
             })
 
         if short:
             warnings.append(
                 "%d 句的画面不够长（fit_mode=%s）：%s。截断更稳，延长会把下一段画面带进来"
                 % (short, fit, "已按场景末尾截断" if fit == "truncate" else "已越过场景边界"))
+
+        if voice_cut:
+            warnings.append(
+                "%d 句的配音比可用画面长，按 fit_mode=%s 截断后配音会被切断（音画不同步）。"
+                "要么放宽 max_clip_sec、用 fit_mode=extend，要么给这句换更长的场景"
+                % (voice_cut, fit))
 
         if reused:
             warnings.append(
@@ -151,8 +263,11 @@ class TimelineBuildNode(NodeBase):
             Asset(id="", kind=PortType.TIMELINE.value,
                   meta={"count": len(out), "total_duration": total_dur,
                         "chars_per_second": cps, "fit_mode": fit,
-                        "short_count": short, "reused_count": reused,
+                        "duration_source": duration_source,
+                        "voice_lines": voice_used,
+                        "short_count": short, "voice_cut_count": voice_cut,
+                        "reused_count": reused,
                         "warnings": list(warnings),
-                        "degraded": bool(short or reused)}),
+                        "degraded": bool(short or reused or (voice_segs and not voice_used))}),
             payload=out)
         return {"timeline": timeline}

@@ -4,7 +4,7 @@
   "title": "时间线生成",
   "category": "剪辑",
   "description": "把「句子→场景」的匹配结果变成带时间的画面切片：按字数推算配音时长，再套到匹配到的场景上",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "kind": "python",
   "entrypoint": "node.py",
   "class_name": "TimelineBuildNode",
@@ -23,6 +23,13 @@
       "label": "场景段",
       "required": true,
       "description": "镜头切分产出的原片时间边界"
+    },
+    {
+      "name": "voice_segments",
+      "type": "SEGMENTS",
+      "label": "配音逐句（可选）",
+      "required": false,
+      "description": "接上语音合成的逐句时间后，每段时长按配音实测值排，不再按字数估。不接则保持估算；两者对不上时整批退回估算并告警"
     }
   ],
   "outputs": [
@@ -43,7 +50,7 @@
       "max": 8.0,
       "step": 0.1,
       "unit": "字/秒",
-      "description": "4.5 是实测默认值（10 个字约 2.22 秒，无固定开销）。纪录片约 3.5，电视剧约 4.2"
+      "description": "按字数估时长时每秒读几个字（实测默认 4.5）。接了配音逐句输入后本参数不生效"
     },
     {
       "name": "min_clip_sec",
@@ -65,7 +72,7 @@
       "max": 60.0,
       "step": 0.5,
       "unit": "秒",
-      "description": "单句画面超过则截断，避免一个长镜头配一句话"
+      "description": "单段画面最长秒数。按字数估时会截断；有配音时**不截断**配音——截了就是音画不同步，改用告警提示"
     },
     {
       "name": "fit_mode",
@@ -125,7 +132,7 @@
   "signature": {
     "alg": "ed25519",
     "key_id": "a8998646b062c170",
-    "value": "eaxUAdhNsI1J/psKsopfXGXLTcB1x3rzoXtJPzeYbhs4K6oXMjlit42ZQsTsiEYL5VePRnoT27Enwk27FKeTAQ==",
+    "value": "yJz2dhs68wYnmXrh5cXCgLp+u19ZkxzH9hVRGLdAUwk3PJJ3rly6gMigs99JPvCSDlYZTqFXene5maDbeWZ6Aw==",
     "over": "manifest"
   }
 }
