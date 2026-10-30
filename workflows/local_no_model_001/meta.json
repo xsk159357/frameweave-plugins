@@ -1,9 +1,9 @@
 {
   "id": "local_no_model_001",
-  "name": "本地出片 · 切分→配画面→时间线→字幕",
-  "version": "1.0.0",
+  "name": "本地出片 · 切分→配画面→时间线→字幕→片段包",
+  "version": "1.1.0",
   "kind": "workflow",
   "source": "official",
   "updated_at": 1793327583,
-  "workflow_sha256": "c0d3a3b09899cbc5e0f288fd29637581c6ccd5af2f164fa941fa8353755a2d4f"
+  "workflow_sha256": "b9920e4325fb89c961218a0896a229099364ff1745903e3f7c48f6c3b5172dbc"
 }
