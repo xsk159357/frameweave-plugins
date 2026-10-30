@@ -17,20 +17,16 @@ from __future__ import annotations
 import asyncio
 import os
 import re
-import shutil
 import subprocess
 from typing import Any, Dict, List, Optional, Tuple
 
+from app import media_tools
 from app.assets import Asset
 from app.nodespec import NodeBase, PortType
 
 _FFMPEG_TIMEOUT = 900     # 长片切分可能跑很久；超时视为不可用并降级
 _PROBE_TIMEOUT = 30
 _PTS_RE = re.compile(r"pts_time:\s*([0-9]+(?:\.[0-9]+)?)")
-
-
-def _tool(name: str) -> str:
-    return shutil.which(name) or ""
 
 
 def _run(cmd: List[str], timeout: int) -> Optional[subprocess.CompletedProcess]:
@@ -43,18 +39,7 @@ def _run(cmd: List[str], timeout: int) -> Optional[subprocess.CompletedProcess]:
 
 
 def _duration(path: str) -> float:
-    exe = _tool("ffprobe")
-    if not exe:
-        return 0.0
-    p = _run([exe, "-v", "error", "-show_entries", "format=duration",
-              "-of", "default=nw=1:nk=1", path], _PROBE_TIMEOUT)
-    if p is None or p.returncode != 0:
-        return 0.0
-    try:
-        v = float((p.stdout or "").strip() or 0)
-    except ValueError:
-        return 0.0
-    return v if v > 0 else 0.0
+    return media_tools.duration(path)
 
 
 def _cut_long(start: float, end: float, max_sec: float) -> List[Tuple[float, float]]:
@@ -94,18 +79,25 @@ def _build(cuts: List[float], total: float, min_sec: float,
 def _detect(path: str, threshold: float, min_sec: float,
             max_sec: float) -> Tuple[Optional[List[Dict[str, Any]]], str]:
     """ffmpeg 场景检测。返回 (段列表 或 None, 原因)。"""
-    exe = _tool("ffmpeg")
+    exe = media_tools.ffmpeg_path()
     if not exe:
-        return None, "未找到 ffmpeg"
+        return None, "未找到 ffmpeg（内置目录 / PATH / imageio_ffmpeg 都没有）"
     p = _run([exe, "-hide_banner", "-nostats", "-i", path,
               "-filter:v", "select='gt(scene,%g)',showinfo" % threshold,
               "-an", "-f", "null", "-"], _FFMPEG_TIMEOUT)
     if p is None:
         return None, "ffmpeg 执行失败或超时"
-    if p.returncode != 0:
-        return None, "ffmpeg 返回码 %d（视频可能无法解码）" % p.returncode
     times = [float(x) for x in _PTS_RE.findall(p.stderr or "")]
     if not times:
+        # 一帧都没选中有两种完全不同的原因，必须分开说：
+        #   ① 视频确实没有超过阈值的画面变化（静态镜头、纯色）—— 正常，降级即可
+        #   ② 视频解不开 —— 异常，要让用户知道是文件的问题
+        # ffmpeg 对 ① 也返回非 0（stderr 里是 "Output file is empty"）。只看返回码
+        # 会把正常情况报成「视频无法解码」：用户拿一段静态镜头来切，被告知文件坏了。
+        err = p.stderr or ""
+        benign = ("No filtered frames" in err) or ("Output file is empty" in err)
+        if p.returncode != 0 and not benign:
+            return None, "ffmpeg 返回码 %d（视频可能无法解码）" % p.returncode
         return None, "整片没有超过阈值 %g 的画面变化" % threshold
     total = _duration(path)
     segs = _build(times, total, min_sec, max_sec)

@@ -14,6 +14,7 @@ import os
 import subprocess
 from typing import Any, Dict, List, Optional, Tuple
 
+from app import media_tools
 from app.assets import Asset
 from app.nodespec import NodeBase, PortType
 
@@ -21,26 +22,9 @@ _PROBE_TIMEOUT = 30
 _FFMPEG_TIMEOUT = 1800
 
 
-def _ffprobe_json(path: str) -> Optional[Dict[str, Any]]:
-    """读 ffprobe 的 format + 首条视频流；不可用返回 None。"""
-    import json
-    import shutil
-    exe = shutil.which("ffprobe")
-    if not exe:
-        return None
-    try:
-        p = subprocess.run(
-            [exe, "-v", "error", "-print_format", "json",
-             "-show_format", "-show_streams", path],
-            capture_output=True, text=True, timeout=_PROBE_TIMEOUT, errors="replace")
-    except (OSError, subprocess.SubprocessError):
-        return None
-    if p.returncode != 0:
-        return None
-    try:
-        return json.loads(p.stdout or "{}")
-    except ValueError:
-        return None
+def _probe(path: str) -> Optional[Dict[str, Any]]:
+    """容器与流信息：ffprobe 优先，没有就用 ffmpeg -i 解析（见 media_tools）。"""
+    return media_tools.stream_info(path)
 
 
 def _pick(probe: Dict[str, Any]) -> Tuple[Dict[str, Any], List[str]]:
@@ -91,8 +75,7 @@ def _pick(probe: Dict[str, Any]) -> Tuple[Dict[str, Any], List[str]]:
 
 def _make_proxy(path: str, out_dir: str, height: int) -> Tuple[str, str]:
     """生成低分辨率代理。返回 (代理路径 或 "", 失败原因)。"""
-    import shutil
-    exe = shutil.which("ffmpeg")
+    exe = media_tools.ffmpeg_path()
     if not exe:
         return "", "未找到 ffmpeg"
     dst = os.path.join(out_dir, "proxy_%dp.mp4" % height)
@@ -123,7 +106,7 @@ class MediaImportNode(NodeBase):
         meta: Dict[str, Any] = {}
 
         if bool(params.get("probe", True)):
-            probe = await asyncio.to_thread(_ffprobe_json, path)
+            probe = await asyncio.to_thread(_probe, path)
             if probe is None:
                 warnings.append("ffprobe 不可用或无法解析该文件，元数据留空（流程继续）")
             else:
