@@ -83,6 +83,11 @@ async def case1_straight_through():
     if srt and os.path.isfile(srt):
         body = open(srt, encoding="utf-8").read()
         check("c1 SRT 首条时间戳正确", "00:00:00,000 --> 00:00:02,000" in body)
+    check("c1 srt 端口有全文",
+          isinstance(out.get("srt"), str) and " --> " in (out.get("srt") or ""),
+          "got %r" % (type(out.get("srt")).__name__,))
+    check("c1 进程内 srt_path 不算临时", m.get("srt_path_is_temp") is False,
+          "got %r" % (m.get("srt_path_is_temp"),))
     shutil.rmtree(d, ignore_errors=True)
 
 
@@ -179,12 +184,41 @@ async def case5_orphan_subtitle():
     shutil.rmtree(d, ignore_errors=True)
 
 
+async def case6_worker_temp_dir():
+    """worker 模式下 files_dir 在 runtime/work 里 → 必须标成临时，并明确告警。
+
+    supervisor 把每个 job 的 scratch 建在 <store>/runtime/work/<job_id>，
+    sweep_stale_scratch 回收 24 小时前的目录。所以 srt_path 在这种位置时，
+    用户隔天就拿到一个不存在的文件——除非我们标出来，并且把全文放进 srt 端口。
+    """
+    store, d = make_store("c6")
+    tmp_out = os.path.join(d, "runtime", "work", "job_probe", "out")
+    os.makedirs(tmp_out, exist_ok=True)
+    store.files_dir = tmp_out
+    video = store.save_asset(Asset(id="", kind=PortType.VIDEO.value,
+                                   path="F:/media/src.mp4", meta={"duration": 5.0}))
+    subs = store.save_asset(Asset(id="", kind=PortType.SUBTITLE.value),
+                            payload=[{"index": 0, "start": 0.0, "end": 1.0, "text": "x"}])
+    out = await call(store, {"video": video, "subtitle": subs})
+    m = out["bundle"].meta
+    ws = [str(w) for w in (m.get("warnings") or [])]
+
+    check("c6 临时目录 srt_path_is_temp=True", m.get("srt_path_is_temp") is True,
+          "got %r" % (m.get("srt_path_is_temp"),))
+    check("c6 有回收告警", any("回收" in w for w in ws), "warnings=%r" % (ws,))
+    check("c6 临时目录下 srt 端口仍给全文",
+          isinstance(out.get("srt"), str) and " --> " in (out.get("srt") or ""),
+          "got %r" % (type(out.get("srt")).__name__,))
+    shutil.rmtree(d, ignore_errors=True)
+
+
 async def main():
     await case1_straight_through()
     await case2_legacy_unchanged()
     await case3_no_timeline_no_video()
     await case4_video_without_duration()
     await case5_orphan_subtitle()
+    await case6_worker_temp_dir()
     print("\n合计 %d OK / %d BAD" % (len(OK), len(BAD)))
     if BAD:
         print("失败项: %s" % ", ".join(BAD))

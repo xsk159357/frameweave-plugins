@@ -63,6 +63,18 @@ def _to_srt(rows: List[Dict[str, Any]]) -> str:
     return "\n".join(out)
 
 
+def _is_runtime_work_dir(path: str) -> bool:
+    """路径是否落在 worker 的运行期工作目录里。
+
+    依据：supervisor 把每个 job 的 scratch 建在 `<store>/runtime/work/<job_id>`，
+    `sweep_stale_scratch` 会回收 24 小时前的目录。而进程内执行时 files_dir 是
+    `<store>/files`，不会被回收。两个位置必须区别对待——否则用户今天拿到的
+    srt_path，明天就是个不存在的文件，而片段包里没有任何提示。
+    """
+    norm = os.path.abspath(path).replace("\\", "/").lower()
+    return "/runtime/work/" in norm
+
+
 class ExportBundleNode(NodeBase):
 
     async def run(self, ctx, inputs, params) -> Dict[str, Any]:
@@ -70,7 +82,14 @@ class ExportBundleNode(NodeBase):
         timeline = _as_list(store, inputs.get("timeline"), "时间线", required=False)
         subtitle = _as_list(store, inputs.get("subtitle"), "字幕", required=False)
         video = inputs.get("video")
-        video_path = str(getattr(video, "path", "") or "") if video is not None else ""
+        # 素材路径优先取 meta.source。worker 模式下 video.path 指向该次 job 的
+        # in/ 临时目录，任务结束就删了——把它写进片段包，等于给用户一个必然失效的
+        # 路径，剪辑软件导入后素材全离线。meta.source 是 media_import 记下的用户
+        # 选的原始文件路径，才是能拿去重链接的那个。
+        video_path = ""
+        if video is not None:
+            vm = getattr(video, "meta", None) or {}
+            video_path = str(vm.get("source") or getattr(video, "path", "") or "")
 
         # 整段直出：没有时间线时，成片就是原片本身（转写加字幕这类场景不重剪画面）。
         # 不硬造一条假的「排片结果」：这一段如实标注 out 时间等于源片时间，
@@ -158,20 +177,27 @@ class ExportBundleNode(NodeBase):
             total = 0.0
 
         srt_path = ""
+        srt_text = ""
         if subtitle and bool(params.get("write_srt", True)):
+            srt_text = _to_srt(subtitle)
             files_dir = getattr(store, "files_dir", None)
             if files_dir:
                 try:
                     os.makedirs(files_dir, exist_ok=True)
                     srt_path = os.path.join(files_dir, "%s.srt" % name)
                     with open(srt_path, "w", encoding="utf-8", newline="\n") as f:
-                        f.write(_to_srt(subtitle))
+                        f.write(srt_text)
                     os.chmod(srt_path, 0o644)
                 except OSError as e:
                     srt_path = ""
                     warnings.append("SRT 写出失败（%s），片段包仍然可用" % e)
             else:
                 warnings.append("存储后端没有 files_dir，跳过 SRT 写出")
+        srt_temp = bool(srt_path) and _is_runtime_work_dir(srt_path)
+        if srt_temp:
+            warnings.append(
+                "SRT 落在运行期工作目录（%s），该目录会被定时回收；"
+                "要文件请取 srt 端口的全文自行落盘" % os.path.dirname(srt_path))
 
         meta = {
             "count": len(segs),
@@ -180,6 +206,9 @@ class ExportBundleNode(NodeBase):
             "source": video_path,
             "subtitle_count": len(subtitle),
             "srt_path": srt_path,
+            # srt_path 指向运行期目录时为 True——那个路径会失效，
+            # 权威产物是 srt 端口里的全文。
+            "srt_path_is_temp": srt_temp,
             "bundle_name": name,
             "straight_through": straight_through,
             "generated_at": round(time.time(), 3),
@@ -188,4 +217,7 @@ class ExportBundleNode(NodeBase):
         }
         asset = store.save_asset(
             Asset(id="", kind=PortType.SEGMENTS.value, meta=meta), payload=segs)
-        return {"bundle": asset}
+        out: Dict[str, Any] = {"bundle": asset}
+        if srt_text:
+            out["srt"] = srt_text
+        return out
