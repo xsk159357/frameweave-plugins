@@ -3,8 +3,8 @@
   "id": "core/export_bundle",
   "title": "片段包导出",
   "category": "输出",
-  "description": "把时间线与字幕整理成剪辑软件能直接用的片段包：逐段给出源片区间与成片区间，可选写出 SRT",
-  "version": "1.0.0",
+  "description": "把时间线与字幕整理成剪辑软件能直接用的片段包：逐段给出源片区间与成片区间，可选写出 SRT。没有时间线时按整段直出（原片不重剪）",
+  "version": "1.1.0",
   "kind": "python",
   "entrypoint": "node.py",
   "class_name": "ExportBundleNode",
@@ -14,8 +14,8 @@
       "name": "timeline",
       "type": "TIMELINE",
       "label": "时间线",
-      "required": true,
-      "description": "画面切片；导出以它的成片时间为准"
+      "required": false,
+      "description": "画面切片；导出以它的成片时间为准。不接时按源视频整段直出，成片时间等于源片时间"
     },
     {
       "name": "subtitle",
@@ -118,7 +118,7 @@
   "signature": {
     "alg": "ed25519",
     "key_id": "a8998646b062c170",
-    "value": "VCXi7057YDINZjZ4Lt0ZiwI80HTcLaqaShljJ4dbSkj0fQNoJ1s5rvShaO32R/47gBJ/HDsHj3rLVqA9C/95Ag==",
+    "value": "wtEXnx8SiVAUdYnU862kIVFdflq4ahb1xnFO+VjK//lC6nUdcdlmbWtjI6bzw6BTZWuDs7obOdGhl5qIGJAUDg==",
     "over": "manifest"
   }
 }
