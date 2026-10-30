@@ -73,6 +73,9 @@ class TimelineBuildNode(NodeBase):
         warnings: List[str] = []
         out: List[Dict[str, Any]] = []
         short = 0
+        used_scenes: List[int] = []
+        reused = 0
+        out_cursor = 0.0          # 成片时间游标：与源片位置无关，永远连续
 
         for i, it in enumerate(matches):
             text = str(it.get("text") or "")
@@ -110,6 +113,15 @@ class TimelineBuildNode(NodeBase):
             fits = avail + 1e-6 >= need
             if not fits:
                 short += 1
+            # 源片时间与成片时间是两回事，必须分开存：
+            #   start/end         —— 这段素材在原片里的位置（同一段用两次就会重叠）
+            #   out_start/out_end —— 它在成片上的位置（永远连续、单调递增）
+            # 下游排片只能用后者：用前者时，第 3 句会跳回片头与第 1 句重叠。
+            if si in used_scenes:
+                reused += 1
+            used_scenes.append(si)
+            out_start = out_cursor
+            out_cursor = round(out_cursor + dur, 3)
             out.append({
                 "index": i,
                 "scene_index": si,
@@ -117,6 +129,8 @@ class TimelineBuildNode(NodeBase):
                 "chars": chars,
                 "start": round(start, 3),
                 "end": round(end, 3),
+                "out_start": round(out_start, 3),
+                "out_end": out_cursor,
                 "duration": dur,
                 "need": round(need, 3),
                 "fits": fits,
@@ -127,12 +141,18 @@ class TimelineBuildNode(NodeBase):
                 "%d 句的画面不够长（fit_mode=%s）：%s。截断更稳，延长会把下一段画面带进来"
                 % (short, fit, "已按场景末尾截断" if fit == "truncate" else "已越过场景边界"))
 
+        if reused:
+            warnings.append(
+                "%d 句复用了已用过的场景（场景 %d 段 < 句子 %d 句）。"
+                "源片时间因此会重叠，成片时间不会——排片请用 out_start/out_end，"
+                "不要用 start/end" % (reused, n_scenes, len(matches)))
         total_dur = round(sum(x["duration"] for x in out), 3)
         timeline = store.save_asset(
             Asset(id="", kind=PortType.TIMELINE.value,
                   meta={"count": len(out), "total_duration": total_dur,
                         "chars_per_second": cps, "fit_mode": fit,
-                        "short_count": short, "warnings": list(warnings),
-                        "degraded": bool(short)}),
+                        "short_count": short, "reused_count": reused,
+                        "warnings": list(warnings),
+                        "degraded": bool(short or reused)}),
             payload=out)
         return {"timeline": timeline}
