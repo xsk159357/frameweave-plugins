@@ -1,0 +1,71 @@
+{
+  "manifest_version": 3,
+  "id": "core/script_input",
+  "title": "文案输入",
+  "category": "输入",
+  "description": "手工填写或粘贴解说文案，按行与句末标点切成逐句文本。流程的另一种入口",
+  "version": "1.0.0",
+  "kind": "python",
+  "entrypoint": "node.py",
+  "class_name": "ScriptInputNode",
+  "min_engine": "3.0",
+  "inputs": [],
+  "outputs": [
+    {
+      "name": "script",
+      "type": "SCRIPT",
+      "label": "文案",
+      "description": "逐句文案；下游配画面与生成字幕都读它"
+    }
+  ],
+  "params": [
+    {
+      "name": "text",
+      "type": "text",
+      "label": "文案正文",
+      "default": "",
+      "description": "一段一行更方便对轴；同一行内的句号问号感叹号也会切成独立句子"
+    },
+    {
+      "name": "keep_empty_lines",
+      "type": "bool",
+      "label": "保留空行",
+      "default": false,
+      "advanced": true,
+      "description": "保留空行作为分段提示；关掉则空行被丢弃"
+    }
+  ],
+  "perm": {
+    "fs": {
+      "read": [],
+      "write": []
+    },
+    "net": {
+      "hosts": []
+    },
+    "model": [],
+    "exec": [],
+    "secret": []
+  },
+  "deps": [],
+  "exposable": [
+    {
+      "param": "text",
+      "recipe_role": "解说文案",
+      "safe_for_wizard": true
+    }
+  ],
+  "search_aliases": [
+    "文案",
+    "解说词",
+    "文本输入",
+    "script",
+    "旁白"
+  ],
+  "signature": {
+    "alg": "ed25519",
+    "key_id": "a8998646b062c170",
+    "value": "wiw6aHI7pYUScuQsuhWSr7N/y+XYxIlu9Y3ysqchE0rGJMFIlj6TqbxcNmKIfkvpiE5eQZ3BIfSriml8Q5VmBw==",
+    "over": "manifest"
+  }
+}

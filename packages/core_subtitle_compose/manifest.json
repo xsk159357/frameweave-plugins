@@ -14,8 +14,8 @@
       "name": "subtitle",
       "type": "SUBTITLE",
       "label": "字幕",
-      "required": true,
-      "description": "上游生成的字幕轨；不连则需填手动字幕或接入文案"
+      "required": false,
+      "description": "上游生成的字幕轨；不连时用「文案」输入或「手动字幕」参数现做一份"
     },
     {
       "name": "script",
@@ -187,7 +187,7 @@
   "signature": {
     "alg": "ed25519",
     "key_id": "a8998646b062c170",
-    "value": "CumQuEVP84GACw7L1doL4Pih1UVtQ6/T4+FaoNOQaC7iTcDIEbIjTNiTMBFqXhPpx6Gq42RxTvgw6TAutLLGDQ==",
+    "value": "YnNpPjD9lSbmbR4b5CeoOWRJWccq0HbBf/WsBsK1yu+oifdjQ201KRwbWAAdlZ7xvnalarzdEeHK+gVBoPovAA==",
     "over": "manifest"
   }
 }
