@@ -219,5 +219,21 @@ class ExportBundleNode(NodeBase):
             Asset(id="", kind=PortType.SEGMENTS.value, meta=meta), payload=segs)
         out: Dict[str, Any] = {"bundle": asset}
         if srt_text:
-            out["srt"] = srt_text
+            if srt_path:
+                # 作为带 path 的 Asset 返回：worker 模式下 host 会把文件搬进
+                # store.files_dir，用户拿到的才是长期有效的路径。
+                # export_premiere_xml 对 XML 用的就是这一套——产物文件只有挂在
+                # 某个 Asset 的 path 上，才送得出去。
+                out["srt"] = store.save_asset(
+                    Asset(id="", kind=PortType.STRING.value, path=srt_path, meta={
+                        "format": "srt",
+                        "name": name,
+                        "subtitle_count": len(subtitle),
+                        "generated_at": round(time.time(), 3),
+                        "warnings": list(warnings),
+                        "degraded": bool(warnings),
+                    }))
+            else:
+                # 写盘失败时退化为纯文本：文件没了，内容还在，用户自己存
+                out["srt"] = srt_text
         return out

@@ -54,6 +54,17 @@ async def call(store, inputs, params=None):
     return await Node().run({"store": store}, inputs, params or {})
 
 
+def srt_of(out):
+    """从 srt 端口取全文：正常是带 path 的 Asset，写盘失败时退化为纯文本。"""
+    v = out.get("srt")
+    if isinstance(v, str):
+        return v
+    p = str(getattr(v, "path", "") or "") if v is not None else ""
+    if p and os.path.isfile(p):
+        return open(p, encoding="utf-8").read()
+    return ""
+
+
 async def case1_straight_through():
     """无 timeline + 有 video(duration=6.0) + 2 条字幕 → 整段直出。"""
     store, d = make_store("c1")
@@ -83,9 +94,10 @@ async def case1_straight_through():
     if srt and os.path.isfile(srt):
         body = open(srt, encoding="utf-8").read()
         check("c1 SRT 首条时间戳正确", "00:00:00,000 --> 00:00:02,000" in body)
-    check("c1 srt 端口有全文",
-          isinstance(out.get("srt"), str) and " --> " in (out.get("srt") or ""),
+    check("c1 srt 端口是带 path 的资产", bool(str(getattr(out.get("srt"), "path", "") or "")),
           "got %r" % (type(out.get("srt")).__name__,))
+    check("c1 srt 端口有全文", " --> " in srt_of(out),
+          "got %r" % (srt_of(out)[:60],))
     check("c1 进程内 srt_path 不算临时", m.get("srt_path_is_temp") is False,
           "got %r" % (m.get("srt_path_is_temp"),))
     shutil.rmtree(d, ignore_errors=True)
@@ -206,9 +218,8 @@ async def case6_worker_temp_dir():
     check("c6 临时目录 srt_path_is_temp=True", m.get("srt_path_is_temp") is True,
           "got %r" % (m.get("srt_path_is_temp"),))
     check("c6 有回收告警", any("回收" in w for w in ws), "warnings=%r" % (ws,))
-    check("c6 临时目录下 srt 端口仍给全文",
-          isinstance(out.get("srt"), str) and " --> " in (out.get("srt") or ""),
-          "got %r" % (type(out.get("srt")).__name__,))
+    check("c6 临时目录下 srt 端口仍给全文", " --> " in srt_of(out),
+          "got %r" % (srt_of(out)[:60],))
     shutil.rmtree(d, ignore_errors=True)
 
 
