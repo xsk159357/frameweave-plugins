@@ -138,7 +138,12 @@ def check_one(workflows_dir: str, wid: str, repo: str, use_git: bool) -> dict:
     if use_git:
         epoch = git_commit_epoch(repo, os.path.relpath(wf_p, repo).replace("\\", "/"))
         if epoch is None:
-            res["problems"].append("M4 无法取到 workflow.json 的最后提交时间（文件未跟踪或不在 git 仓库内）")
+            # 新工作流的第一次提交：git 里还没有它，committer 时间客观不存在。
+            # 这里判 FAIL 会形成死锁——要提交才拿得到时间，可 pre-commit 不放行提交。
+            # M4 防的是**已入库文件**的 meta 漂移，对尚未入库的文件无从谈起，
+            # 所以跳过；提交后重跑一次就能验到。
+            res.setdefault("skips", []).append(
+                "M4 跳过：workflow.json 尚未入库（首次提交后请重跑本校验）")
         else:
             desired["updated_at"] = epoch
             upd = _num(meta.get("updated_at"))
@@ -160,7 +165,7 @@ def main() -> int:
 
     workflows_dir = os.path.abspath(args.workflows)
     if not os.path.isdir(workflows_dir):
-        print(f"[wf-meta] 目录不存在: {workflows_dir}")
+        print(f"[wf-meta] 目录不存在: {workflows_dir}（未实际判定（无工作流），不代表通过）")
         return 2
     repo = os.path.dirname(workflows_dir)
     use_git = not args.no_git
@@ -171,7 +176,7 @@ def main() -> int:
     ids = sorted(d for d in os.listdir(workflows_dir)
                  if os.path.isdir(os.path.join(workflows_dir, d)))
     if not ids:
-        print(f"[wf-meta] {workflows_dir} 下没有工作流目录")
+        print(f"[wf-meta] {workflows_dir} 下没有工作流目录（未实际判定（无工作流），不代表通过）")
         return 2
 
     results = [check_one(workflows_dir, wid, repo, use_git) for wid in ids]
@@ -197,6 +202,8 @@ def main() -> int:
                 print(f"  FAIL {r['id']}")
                 for p in r["problems"]:
                     print(f"       - {p}")
+            for s in (r.get("skips") or []):
+                print(f"  SKIP {r['id']}: {s}")
         print(f"[wf-meta] 校验 {len(results)} 个工作流：{len(results) - len(failed)} OK / {len(failed)} FAILED"
               + ("" if use_git else "（已跳过 M4 时间戳）"))
         if failed:

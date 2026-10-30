@@ -1,0 +1,141 @@
+{
+  "id": "local_no_model_001",
+  "name": "本地出片 · 切分→配画面→时间线→字幕",
+  "description": "不依赖任何在线模型与 TTS：导入视频 + 输入文案，产出带时间的画面切片与样式化字幕。用于验证流程骨架，也是没有模型时的可用降级方案",
+  "version": "1.0.0",
+  "kind": "workflow",
+  "tags": [
+    "本地",
+    "无模型",
+    "骨架"
+  ],
+  "nodes": [
+    {
+      "id": "n1",
+      "type": "core/media_import",
+      "x": 40,
+      "y": 200,
+      "params": {
+        "path": "",
+        "probe": true,
+        "proxy_height": 0
+      },
+      "inputs": {}
+    },
+    {
+      "id": "n2",
+      "type": "core/script_input",
+      "x": 40,
+      "y": 420,
+      "params": {
+        "text": "",
+        "keep_empty_lines": false
+      },
+      "inputs": {}
+    },
+    {
+      "id": "n3",
+      "type": "core/scene_detect",
+      "x": 300,
+      "y": 200,
+      "params": {
+        "engine": "auto",
+        "threshold": 0.3,
+        "min_scene_sec": 1.0,
+        "max_scene_sec": 12.0,
+        "fallback_interval": 5.0
+      },
+      "inputs": {
+        "video": "n1"
+      }
+    },
+    {
+      "id": "n4",
+      "type": "core/match_clip",
+      "x": 560,
+      "y": 300,
+      "params": {
+        "min_similarity": 0.2,
+        "top_k": 1,
+        "avoid_adjacent_repeat": true
+      },
+      "inputs": {
+        "narration": "n2",
+        "scenes": "n3"
+      }
+    },
+    {
+      "id": "n5",
+      "type": "core/timeline_build",
+      "x": 820,
+      "y": 200,
+      "params": {
+        "chars_per_second": 4.5,
+        "min_clip_sec": 1.0,
+        "max_clip_sec": 12.0,
+        "fit_mode": "truncate"
+      },
+      "inputs": {
+        "match": "n4",
+        "scenes": "n3"
+      }
+    },
+    {
+      "id": "n6",
+      "type": "core/subtitle_compose",
+      "x": 820,
+      "y": 420,
+      "params": {
+        "manual_text": "",
+        "preset": "默认",
+        "font": "微软雅黑",
+        "size": 48,
+        "color": "#FFFFFF",
+        "stroke": "#000000",
+        "animation": "none",
+        "karaoke": true
+      },
+      "inputs": {
+        "script": "n2"
+      }
+    }
+  ],
+  "edges": [
+    {
+      "source": "n1",
+      "target": "n3",
+      "sourceHandle": "video",
+      "targetHandle": "video"
+    },
+    {
+      "source": "n2",
+      "target": "n4",
+      "sourceHandle": "script",
+      "targetHandle": "narration"
+    },
+    {
+      "source": "n3",
+      "target": "n4",
+      "sourceHandle": "scenes",
+      "targetHandle": "scenes"
+    },
+    {
+      "source": "n4",
+      "target": "n5",
+      "sourceHandle": "match",
+      "targetHandle": "match"
+    },
+    {
+      "source": "n3",
+      "target": "n5",
+      "sourceHandle": "scenes",
+      "targetHandle": "scenes"
+    },
+    {
+      "source": "n2",
+      "target": "n6",
+      "sourceHandle": "script",
+      "targetHandle": "script"
+    }
+  ]
+}

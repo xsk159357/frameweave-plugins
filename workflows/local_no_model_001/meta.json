@@ -1,0 +1,9 @@
+{
+  "id": "local_no_model_001",
+  "name": "本地出片 · 切分→配画面→时间线→字幕",
+  "version": "1.0.0",
+  "kind": "workflow",
+  "source": "official",
+  "updated_at": 1793327504,
+  "workflow_sha256": "c0d3a3b09899cbc5e0f288fd29637581c6ccd5af2f164fa941fa8353755a2d4f"
+}
