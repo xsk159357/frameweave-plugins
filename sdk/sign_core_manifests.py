@@ -56,19 +56,30 @@ def main() -> int:
         mpath = os.path.join(args.packages, name, "manifest.json")
         with open(mpath, "r", encoding="utf-8") as f:
             manifest = json.load(f)
-        # 预检：携带占位签名跑 G1-G10（避免 G2/G10 对未签名包误报，其他项目照常检查）
-        pre = dict(manifest)
-        pre["signature"] = {"alg": "ed25519", "key_id": "x" * 16,
-                            "value": "x", "over": "manifest"}
-        errs, _warnings = check_manifest_verbose(pre)
+        # 预检：按 manifest_version 分发到对应校验器
+        # v2 用 check_manifest（dict 输入，需带占位签名避免 G2/G10 对未签名包误报）
+        # v3 用 check_manifest_v3（路径输入，返回 (rows, has_fail)，rows=(级别,码,说明)）
+        # 2026-10-30：v3 包此前必被 v2 校验器拒（type_id 空 / type 未注册 / advanced 未知端口），
+        #   导致签名工具签不了任何 v3 包 —— 这是重播种卡住的真正原因。
+        is_v3 = manifest.get("manifest_version") == 3
+        if is_v3:
+            from check_manifest_v3 import check as check_v3  # noqa: E402 (sys.path 已加 sdk)
+            rows, _has_fail = check_v3(mpath)
+            errs = [f"{code}{'：' + msg if msg else ''}"
+                    for lvl, code, msg in rows if lvl == "FAIL"]
+        else:
+            pre = dict(manifest)
+            pre["signature"] = {"alg": "ed25519", "key_id": "x" * 16,
+                                "value": "x", "over": "manifest"}
+            errs, _warnings = check_manifest_verbose(pre)
         if errs:
-            print(f"[sign] {name}: manifest G1-G10 校验失败，跳过签名")
+            print(f"[sign] {name}: manifest {'v3 校验' if is_v3 else 'G1-G10'} 失败，跳过签名")
             for e in errs:
                 print(f"    - {e}")
             failed += 1
             continue
-        if manifest.get("schema_version") != 2:
-            print(f"[sign] {name}: 非 schema_version=2，拒绝签名")
+        if not is_v3 and manifest.get("schema_version") != 2:
+            print(f"[sign] {name}: 非 schema_version=2 且非 v3，拒绝签名")
             failed += 1
             continue
         signed = signatures.sign_manifest(manifest, priv, pub)
