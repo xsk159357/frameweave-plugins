@@ -1,0 +1,143 @@
+{
+  "manifest_version": 3,
+  "id": "core/scene_detect",
+  "title": "镜头切分",
+  "category": "分析",
+  "description": "把视频按画面突变切成场景段。降级链：ffmpeg 场景检测 → ffprobe 时长 + 固定间隔 → 明确报错（不返回空场景假装成功）",
+  "version": "1.0.0",
+  "kind": "python",
+  "entrypoint": "node.py",
+  "class_name": "SceneDetectNode",
+  "min_engine": "3.0",
+  "inputs": [
+    {
+      "name": "video",
+      "type": "VIDEO",
+      "label": "视频",
+      "required": true,
+      "description": "待切分的视频资产（含本地文件路径）"
+    }
+  ],
+  "outputs": [
+    {
+      "name": "scenes",
+      "type": "SEGMENTS",
+      "label": "场景段",
+      "description": "按时间顺序排列的镜头边界；只给边界，不含任何画面描述"
+    }
+  ],
+  "params": [
+    {
+      "name": "engine",
+      "type": "enum",
+      "label": "检测方式",
+      "default": "auto",
+      "options": [
+        {
+          "value": "auto",
+          "label": "自动（优先 ffmpeg）"
+        },
+        {
+          "value": "ffmpeg",
+          "label": "仅 ffmpeg"
+        },
+        {
+          "value": "fixed",
+          "label": "固定间隔"
+        }
+      ],
+      "description": "auto 按可用工具自动降级；固定间隔不看画面内容，同一视频每次都切一样"
+    },
+    {
+      "name": "threshold",
+      "type": "float",
+      "label": "切分阈值",
+      "default": 0.3,
+      "min": 0.1,
+      "max": 0.9,
+      "step": 0.05,
+      "description": "画面变化超过该值才切；调低切得更碎，调高会漏掉淡入淡出转场"
+    },
+    {
+      "name": "min_scene_sec",
+      "type": "float",
+      "label": "最短镜头",
+      "default": 1.0,
+      "min": 0.3,
+      "max": 30.0,
+      "step": 0.1,
+      "unit": "秒",
+      "description": "短于该值的切点会被丢弃并与前一段合并，避免碎成几百段"
+    },
+    {
+      "name": "max_scene_sec",
+      "type": "float",
+      "label": "最长镜头",
+      "default": 12.0,
+      "min": 1.0,
+      "max": 120.0,
+      "step": 0.5,
+      "unit": "秒",
+      "description": "超过则强制再切；不设上限会让一句台词配一个长镜头"
+    },
+    {
+      "name": "fallback_interval",
+      "type": "float",
+      "label": "降级间隔",
+      "default": 5.0,
+      "min": 1.0,
+      "max": 60.0,
+      "step": 0.5,
+      "unit": "秒",
+      "advanced": true,
+      "description": "ffmpeg 不可用时按此间隔平均切分"
+    }
+  ],
+  "perm": {
+    "fs": {
+      "read": [],
+      "write": []
+    },
+    "net": {
+      "hosts": []
+    },
+    "model": [],
+    "exec": [
+      {
+        "bin": "ffmpeg"
+      },
+      {
+        "bin": "ffprobe"
+      }
+    ],
+    "secret": []
+  },
+  "deps": [],
+  "exposable": [
+    {
+      "param": "threshold",
+      "recipe_role": "切分灵敏度",
+      "safe_for_wizard": true
+    },
+    {
+      "param": "max_scene_sec",
+      "recipe_role": "单镜头上限",
+      "safe_for_wizard": true
+    }
+  ],
+  "search_aliases": [
+    "镜头",
+    "切分",
+    "场景",
+    "分镜",
+    "scene",
+    "shot",
+    "分割"
+  ],
+  "signature": {
+    "alg": "ed25519",
+    "key_id": "a8998646b062c170",
+    "value": "hrsDjQV4CSuMQQ08pIK+L8ZNk0UIcRcyDVOhKuU3407RvWt+t5jAFMXby0zn7KVSw+oQ81HCJt89ZNAU41PWDw==",
+    "over": "manifest"
+  }
+}

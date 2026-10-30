@@ -1,0 +1,110 @@
+{
+  "manifest_version": 3,
+  "id": "core/match_clip",
+  "title": "文案配画面",
+  "category": "语义",
+  "description": "把解说文案逐句配到场景段上。有场景描述时按文本相似度配，没有时按顺序均匀分配（并明确标记降级）",
+  "version": "1.0.0",
+  "kind": "python",
+  "entrypoint": "node.py",
+  "class_name": "MatchClipNode",
+  "min_engine": "3.0",
+  "inputs": [
+    {
+      "name": "narration",
+      "type": "SCRIPT",
+      "label": "解说文案",
+      "required": true,
+      "description": "逐句文案；按换行与中文句末标点切分"
+    },
+    {
+      "name": "scenes",
+      "type": "SEGMENTS",
+      "label": "场景段",
+      "required": true,
+      "description": "镜头切分产出的场景边界列表"
+    },
+    {
+      "name": "desc",
+      "type": "SEGMENTS",
+      "label": "场景描述（可选）",
+      "required": false,
+      "description": "场景理解产出的描述列表；不接则退化为顺序均匀分配"
+    }
+  ],
+  "outputs": [
+    {
+      "name": "match",
+      "type": "SEGMENTS",
+      "label": "匹配结果",
+      "description": "每句文案对应的场景索引与得分；不含时间，时间由下游时间线节点计算"
+    }
+  ],
+  "params": [
+    {
+      "name": "min_similarity",
+      "type": "float",
+      "label": "最低相似度",
+      "default": 0.2,
+      "min": 0.0,
+      "max": 1.0,
+      "step": 0.05,
+      "description": "低于该分的匹配不作为候选；全部低于时退回该句的最佳候选，并在 warnings 里说明"
+    },
+    {
+      "name": "top_k",
+      "type": "int",
+      "label": "每句候选数",
+      "default": 1,
+      "min": 1,
+      "max": 5,
+      "description": "每句保留几个场景候选；大于 1 时下游可以再按画面质量挑"
+    },
+    {
+      "name": "avoid_adjacent_repeat",
+      "type": "bool",
+      "label": "避免相邻重复",
+      "default": true,
+      "description": "相邻两句不共用同一个场景；画面数量多于句子时能明显减少重复镜头"
+    }
+  ],
+  "perm": {
+    "fs": {
+      "read": [],
+      "write": []
+    },
+    "net": {
+      "hosts": []
+    },
+    "model": [],
+    "exec": [],
+    "secret": []
+  },
+  "deps": [],
+  "exposable": [
+    {
+      "param": "avoid_adjacent_repeat",
+      "recipe_role": "减少重复镜头",
+      "safe_for_wizard": true
+    },
+    {
+      "param": "top_k",
+      "recipe_role": "候选数量",
+      "safe_for_wizard": true
+    }
+  ],
+  "search_aliases": [
+    "匹配",
+    "配画面",
+    "文案配画面",
+    "对齐",
+    "match",
+    "clip"
+  ],
+  "signature": {
+    "alg": "ed25519",
+    "key_id": "a8998646b062c170",
+    "value": "mltDkFpVd4FZEua4S0HcGIY66C5TiDmLjRBI+geKHnsPFp29tqYUwXVGZ2BhVgzAY5XJJfzNRenPMIvOuSwIAA==",
+    "over": "manifest"
+  }
+}
