@@ -1,0 +1,97 @@
+{
+  "manifest_version": 3,
+  "id": "core/media_import",
+  "title": "媒体导入",
+  "category": "输入",
+  "description": "把本地视频接入流程，产出视频与音频两路资产。默认只读元数据不转码——本机没装 ffmpeg 也要能先把文件接进来",
+  "version": "1.0.0",
+  "kind": "python",
+  "entrypoint": "node.py",
+  "class_name": "MediaImportNode",
+  "min_engine": "3.0",
+  "inputs": [],
+  "outputs": [
+    {
+      "name": "video",
+      "type": "VIDEO",
+      "label": "视频",
+      "description": "原视频文件资产（不复制，引用原路径）"
+    },
+    {
+      "name": "audio",
+      "type": "AUDIO",
+      "label": "音频",
+      "description": "同一文件的音轨引用；后续语音转写接这一路"
+    }
+  ],
+  "params": [
+    {
+      "name": "path",
+      "type": "asset",
+      "label": "视频文件",
+      "default": "",
+      "description": "待处理的源视频；支持 mp4/mov/mkv/avi 等 ffmpeg 能解的封装"
+    },
+    {
+      "name": "probe",
+      "type": "bool",
+      "label": "读取时长与分辨率",
+      "default": true,
+      "advanced": true,
+      "description": "用 ffprobe 探测；取不到时元数据留空并记一条告警，不阻断流程"
+    },
+    {
+      "name": "proxy_height",
+      "type": "int",
+      "label": "代理高度",
+      "default": 0,
+      "min": 0,
+      "max": 2160,
+      "step": 120,
+      "unit": "像素",
+      "advanced": true,
+      "description": "0 = 不生成代理。非 0 时用 ffmpeg 生成低分辨率副本，长片剪辑更跟手；需要 ffmpeg"
+    }
+  ],
+  "perm": {
+    "fs": {
+      "read": [],
+      "write": []
+    },
+    "net": {
+      "hosts": []
+    },
+    "model": [],
+    "exec": [
+      {
+        "bin": "ffprobe"
+      },
+      {
+        "bin": "ffmpeg"
+      }
+    ],
+    "secret": []
+  },
+  "deps": [],
+  "exposable": [
+    {
+      "param": "path",
+      "recipe_role": "源视频",
+      "safe_for_wizard": true
+    }
+  ],
+  "search_aliases": [
+    "导入",
+    "媒体",
+    "素材",
+    "视频导入",
+    "import",
+    "media"
+  ],
+  "signature": {
+    "alg": "ed25519",
+    "key_id": "a8998646b062c170",
+    "value": "prycsKjIxVhcXwos11BVF41xVPGaxxNnpyaS557OklVZpukfbh0BY9s4on9Eh+LfABp4PN1fNCc5f1/VEKldDw==",
+    "over": "manifest"
+  }
+}
