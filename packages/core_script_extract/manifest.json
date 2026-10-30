@@ -1,0 +1,110 @@
+{
+  "manifest_version": 3,
+  "id": "core/script_extract",
+  "title": "解说提纯切分",
+  "category": "语义",
+  "description": "把文案切成适合配音的短句，并去掉「首先/其次/这部电影讲述了」这类套话开头。切分与改写分开做，出问题时分得清是哪一步",
+  "version": "1.0.0",
+  "kind": "python",
+  "entrypoint": "node.py",
+  "class_name": "ScriptExtractNode",
+  "min_engine": "3.0",
+  "inputs": [
+    {
+      "name": "script",
+      "type": "SCRIPT",
+      "label": "文案",
+      "required": true,
+      "description": "待切分的文案；接受 {\"text\": ...} 或裸字符串"
+    }
+  ],
+  "outputs": [
+    {
+      "name": "narration",
+      "type": "SCRIPT",
+      "label": "逐句解说",
+      "description": "切好并去过套话的句子列表；下游配画面与配音都读它"
+    }
+  ],
+  "params": [
+    {
+      "name": "min_chars",
+      "type": "int",
+      "label": "最短句长",
+      "default": 8,
+      "min": 4,
+      "max": 40,
+      "unit": "字",
+      "description": "短于这个长度会和下一句合并；太碎的句子念出来没有节奏"
+    },
+    {
+      "name": "max_chars",
+      "type": "int",
+      "label": "最长句长",
+      "default": 30,
+      "min": 10,
+      "max": 120,
+      "unit": "字",
+      "description": "超过就按逗号继续切；一句话超过 30 字，配音和字幕都会挤"
+    },
+    {
+      "name": "strip_leads",
+      "type": "bool",
+      "label": "去掉套话开头",
+      "default": true,
+      "description": "关掉则原文照切，只做切分不改写"
+    },
+    {
+      "name": "lead_words",
+      "type": "string",
+      "label": "套话词表",
+      "default": "首先,其次,最后,这部电影讲述了,本片中,接下来,然后",
+      "advanced": true,
+      "description": "逗号分隔。命中就用逗号切分或直接去掉，不做同义改写"
+    }
+  ],
+  "perm": {
+    "fs": {
+      "read": [],
+      "write": []
+    },
+    "net": {
+      "hosts": []
+    },
+    "model": [],
+    "exec": [],
+    "secret": []
+  },
+  "deps": [],
+  "exposable": [
+    {
+      "param": "min_chars",
+      "recipe_role": "最短句长",
+      "safe_for_wizard": true
+    },
+    {
+      "param": "max_chars",
+      "recipe_role": "最长句长",
+      "safe_for_wizard": true
+    },
+    {
+      "param": "strip_leads",
+      "recipe_role": "是否去套话",
+      "safe_for_wizard": true
+    }
+  ],
+  "search_aliases": [
+    "提纯",
+    "切分",
+    "断句",
+    "文案处理",
+    "extract",
+    "narration"
+  ],
+  "signature": {
+    "alg": "ed25519",
+    "key_id": "a8998646b062c170",
+    "value": "UDGu+OySv1VZ+/9LGRcAuXC10Thxj46+CYBkxBB3c+izwx5QpTj6Rwlxm3+nzvbDqV+y8z3V4EHhW6Y4xjOnDQ==",
+    "over": "manifest"
+  }
+}

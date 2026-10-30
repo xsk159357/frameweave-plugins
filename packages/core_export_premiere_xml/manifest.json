@@ -1,0 +1,104 @@
+{
+  "manifest_version": 3,
+  "id": "core/export_premiere_xml",
+  "title": "导出 Premiere XML",
+  "category": "输出",
+  "description": "把片段包导成 FCP7 XML（xmeml），Premiere / DaVinci / Final Cut 都能直接导入。这是公开格式，不是猜出来的结构",
+  "version": "1.0.0",
+  "kind": "python",
+  "entrypoint": "node.py",
+  "class_name": "ExportPremiereXmlNode",
+  "min_engine": "3.0",
+  "inputs": [
+    {
+      "name": "bundle",
+      "type": "SEGMENTS",
+      "label": "片段包",
+      "required": true,
+      "description": "片段包导出节点的输出；每段都带源片与成片两条区间"
+    }
+  ],
+  "outputs": [
+    {
+      "name": "xml",
+      "type": "STRING",
+      "label": "XML 路径",
+      "description": "生成的 .xml 文件路径；同目录重名会覆盖"
+    }
+  ],
+  "params": [
+    {
+      "name": "output_name",
+      "type": "string",
+      "label": "输出名",
+      "default": "timeline",
+      "description": "落盘文件名（不含扩展名）"
+    },
+    {
+      "name": "fps",
+      "type": "float",
+      "label": "帧率",
+      "default": 25.0,
+      "min": 1.0,
+      "max": 120.0,
+      "step": 0.001,
+      "unit": "fps",
+      "description": "序列与素材的时基。必须和源视频一致，否则导入后时长会错位",
+      "advanced": true
+    },
+    {
+      "name": "width",
+      "type": "int",
+      "label": "画面宽度",
+      "default": 1920,
+      "min": 128,
+      "max": 7680,
+      "unit": "像素",
+      "description": "序列宽度；必须与源视频一致，否则导入后画面被拉伸"
+    },
+    {
+      "name": "height",
+      "type": "int",
+      "label": "画面高度",
+      "default": 1080,
+      "min": 128,
+      "max": 4320,
+      "unit": "像素",
+      "description": "序列高度；必须与源视频一致"
+    }
+  ],
+  "perm": {
+    "fs": {
+      "read": [],
+      "write": []
+    },
+    "net": {
+      "hosts": []
+    },
+    "model": [],
+    "exec": [],
+    "secret": []
+  },
+  "deps": [],
+  "exposable": [
+    {
+      "param": "fps",
+      "recipe_role": "帧率",
+      "safe_for_wizard": false
+    }
+  ],
+  "search_aliases": [
+    "导出",
+    "Premiere",
+    "XML",
+    "xmeml",
+    "FCP",
+    "达芬奇"
+  ],
+  "signature": {
+    "alg": "ed25519",
+    "key_id": "a8998646b062c170",
+    "value": "79R1uHB3dIRJg/Qg319JU5ioMldZPVumJXJcfL901qbIIVKkIx7zGyw+lMEjO6bmVVdIosKjjzR372+2qmM0CA==",
+    "over": "manifest"
+  }
+}
