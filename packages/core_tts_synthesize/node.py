@@ -77,6 +77,31 @@ def _split_long(piece: str, max_chars: int) -> List[str]:
     return final
 
 
+def _extract_ref_audio(src: str, workdir: str, seconds: float = 8.0) -> str:
+    """从视频里抽一段音频当音色参考。失败返回空串。
+
+    为什么需要：IndexTTS 内部用 librosa.load() 读参考音频，它读不了 mp4。
+    而 voice_ref 端口最自然的来源就是 media_import 的 audio——那是个 mp4 路径。
+    不转一下，用户接上端口也会失败。
+    """
+    exe = ffmpeg_path()
+    if not exe or not os.path.isfile(src):
+        return ""
+    out_dir = os.path.join(workdir, "voice_ref")
+    os.makedirs(out_dir, exist_ok=True)
+    out = os.path.join(out_dir, "ref.wav")
+    try:
+        r = subprocess.run(
+            [exe, "-v", "error", "-y", "-i", src, "-t", str(seconds),
+             "-vn", "-ac", "1", "-ar", "24000", "-c:a", "pcm_s16le", out],
+            capture_output=True, text=True, timeout=120, errors="replace")
+    except (OSError, subprocess.SubprocessError):
+        return ""
+    if r.returncode != 0 or not os.path.isfile(out) or os.path.getsize(out) < 1024:
+        return ""
+    return out
+
+
 def _to_lines(payload: Any, max_chars: int) -> List[str]:
     """SCRIPT 载荷 → 逐句。兼容 {text, lines}、纯字符串、字符串数组三种形态。
 
@@ -331,10 +356,27 @@ class TtsSynthesizeNode(NodeBase):
             rate, volume, gap = 0, 100, 0.15
         gap = max(0.0, min(2.0, gap))
         lang = str(params.get("lang") or "ZH").strip().upper() or "ZH"
-        # 音色参考：只有 IndexTTS 用得上；SAPI 靠 voice 名选系统音色
-        ref_audio = str(params.get("ref_audio") or "").strip()
-
         warnings: List[str] = []
+        # 音色参考：端口优先（把 media_import 的 audio 直接接过来，从原片截一段
+        # 就是最自然的音色），参数 ref_audio 作为覆盖项。
+        ref_audio = str(params.get("ref_audio") or "").strip()
+        ref_port = inputs.get("voice_ref")
+        if ref_port is not None:
+            _rp = str(getattr(ref_port, "path", "") or "")
+            if _rp and os.path.isfile(_rp):
+                ref_audio = _rp
+        if ref_audio and not os.path.isfile(ref_audio):
+            ref_audio = ""   # 路径失效时按「没有参考」处理，由下面按引擎判定
+        # 参考音频要是纯音频文件：IndexTTS 内部用 librosa.load()，它读不了 mp4。
+        # 而 voice_ref 最自然的来源是 media_import.audio——那是个 mp4 路径。
+        # 所以非 wav/mp3/flac 的先抽成 wav，抽不出来就当作没有参考。
+        if ref_audio and os.path.splitext(ref_audio)[1].lower() \
+                not in (".wav", ".mp3", ".flac", ".m4a"):
+            _ref_wav = _extract_ref_audio(ref_audio, ctx.get("workdir", "."))
+            ref_audio = _ref_wav or ""
+            if not ref_audio:
+                warnings.append("音色参考是视频文件，抽音频失败；本次不使用音色克隆")
+
         idx_base = ""
         if engine in ("auto", "indextts"):
             ready, why = _indextts_ready(params)

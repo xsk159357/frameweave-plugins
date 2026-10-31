@@ -4,7 +4,7 @@
   "title": "语音合成",
   "category": "音频",
   "description": "把文案逐句合成为配音，并给出每句的真实时长。它是整条链里唯一知道「这句话读出来到底几秒」的节点，时间线据此排片比按字数估算准",
-  "version": "1.2.0",
+  "version": "1.3.0",
   "kind": "python",
   "entrypoint": "node.py",
   "class_name": "TtsSynthesizeNode",
@@ -16,6 +16,13 @@
       "label": "文案",
       "required": true,
       "description": "要读出来的文字。按句末标点逐句合成，长句会按逗号再切"
+    },
+    {
+      "name": "voice_ref",
+      "type": "AUDIO",
+      "label": "音色参考（可选）",
+      "required": false,
+      "description": "接一段音频当音色样本（把媒体导入的音频接过来即可，从原片截几秒）。给了就用它做零样本克隆，优先级高于下面的参数"
     }
   ],
   "outputs": [
@@ -83,7 +90,7 @@
       "type": "asset",
       "label": "音色参考音频",
       "default": "",
-      "description": "IndexTTS 的零样本克隆需要一段音色参考音频（几秒人声即可）。用 engine=indextts 时**必填**——IndexTTS 的合成接口必须拿到参考音频，没有它会明确报错而不是用默认音色。系统语音引擎忽略此项"
+      "description": "音色参考音频文件的路径。**优先用上面的 voice_ref 端口**——直接把媒体导入的音频接过来最省事。这个参数是给「手头已有参考 wav」的场景用的。engine=indextts 时必须有一个，否则明确报错"
     },
     {
       "name": "rate",
@@ -186,7 +193,7 @@
   "signature": {
     "alg": "ed25519",
     "key_id": "a8998646b062c170",
-    "value": "5UwfUGFymlCyM3BLyd6vr4QeYpvd4LDZXGIB2TejE5wRwERCaDPu4qQU0Ity1zi7e/1Id/p3cf4RiBQFeTrbCw==",
+    "value": "qyCeAB3BnwqtLfVV2oAmHhmmI2kLbU9u05IV+HRy+g1bv8bICEsdCCTgyIcmC9NtBln9sS0GeR4ZMDxvPO60Dw==",
     "over": "manifest"
   }
 }

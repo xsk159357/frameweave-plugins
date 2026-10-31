@@ -72,7 +72,7 @@
       "x": 300,
       "y": 560,
       "params": {
-        "engine": "auto",
+        "engine": "indextts",
         "lang": "ZH",
         "voice": "",
         "ref_audio": "",
@@ -83,7 +83,8 @@
         "indextts_dir": ""
       },
       "inputs": {
-        "script": "n2"
+        "script": "n2",
+        "voice_ref": "n1"
       }
     },
     {
@@ -273,6 +274,12 @@
       "target": "n10",
       "sourceHandle": "audio",
       "targetHandle": "audio"
+    },
+    {
+      "source": "n1",
+      "target": "n5",
+      "sourceHandle": "audio",
+      "targetHandle": "voice_ref"
     }
   ]
 }
