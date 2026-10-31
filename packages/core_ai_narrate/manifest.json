@@ -1,0 +1,367 @@
+{
+  "manifest_version": 3,
+  "id": "core/ai_narrate",
+  "title": "AI 文案生成",
+  "category": "语义",
+  "description": "生成带时间戳的解说词：上帝视角（读视频/场景/描述）· 扩写 · 配画面 · 仿写 · 神回复 · 透传；OpenAI/Gemini 双协议",
+  "version": "3.0.0",
+  "kind": "python",
+  "entrypoint": "node.py",
+  "class_name": "AINarrateNode",
+  "min_engine": "3.0",
+  "inputs": [
+    {
+      "name": "video",
+      "type": "VIDEO",
+      "label": "视频",
+      "required": false,
+      "description": "上帝视角下无场景描述时抽关键帧交给视觉模型；接了描述则不看视频，省 Token"
+    },
+    {
+      "name": "scenes",
+      "type": "SEGMENTS",
+      "label": "场景片段",
+      "required": false,
+      "description": "镜头切分产出的场景边界；解说词的时间戳对齐到这些边界"
+    },
+    {
+      "name": "descriptions",
+      "type": "SEGMENTS",
+      "label": "场景描述",
+      "required": false,
+      "description": "分块分析产出的场景描述；接了它上帝视角就能不看画面直接写词（最省 Token）"
+    },
+    {
+      "name": "draft",
+      "type": "SCRIPT",
+      "label": "文案草稿/示例",
+      "required": false,
+      "description": "扩写模式下待润色的草稿；仿写模式下作为风格样例"
+    },
+    {
+      "name": "items",
+      "type": "SEGMENTS",
+      "label": "手写分镜",
+      "required": false,
+      "description": "仅 passthrough 模式用：每项 {text,start,end}，原样透传成解说词（不改时间、不重切）"
+    }
+  ],
+  "outputs": [
+    {
+      "name": "script",
+      "type": "SCRIPT",
+      "label": "解说文案",
+      "description": "整段解说词文本；逐句分段与统计在 narration"
+    },
+    {
+      "name": "narration",
+      "type": "SEGMENTS",
+      "label": "结构化文案",
+      "description": "每段一条 index/text/start/end/scene_ids/tts_duration；生成统计与覆盖度在 asset.meta"
+    }
+  ],
+  "params": [
+    {
+      "name": "mode",
+      "type": "enum",
+      "label": "模式",
+      "default": "上帝视角",
+      "options": [
+        {
+          "value": "上帝视角",
+          "label": "上帝视角（看视频写）"
+        },
+        {
+          "value": "扩写",
+          "label": "扩写（润色草稿）"
+        },
+        {
+          "value": "配画面",
+          "label": "配画面（文案配场景）"
+        },
+        {
+          "value": "仿写",
+          "label": "仿写（照样例写）"
+        },
+        {
+          "value": "神回复",
+          "label": "神回复（短评）"
+        },
+        {
+          "value": "passthrough",
+          "label": "原样透传"
+        }
+      ],
+      "description": "上帝视角是主力模式；其余按输入内容选"
+    },
+    {
+      "name": "style",
+      "type": "string",
+      "label": "风格",
+      "default": "悬疑解说",
+      "description": "内置 8 套题材风格 + 5 套通用风格；填「自定义」时用下面的自定义描述"
+    },
+    {
+      "name": "custom_style",
+      "type": "text",
+      "label": "自定义风格描述",
+      "default": "",
+      "description": "style 填「自定义」时生效：一句话说清要什么语气；留空则退回内置风格"
+    },
+    {
+      "name": "perspective",
+      "type": "enum",
+      "label": "视角",
+      "default": "第三人称",
+      "options": [
+        {
+          "value": "第三人称",
+          "label": "第三人称"
+        },
+        {
+          "value": "第一人称",
+          "label": "第一人称"
+        }
+      ],
+      "description": "第三人称更像解说，第一人称更有代入感"
+    },
+    {
+      "name": "language",
+      "type": "string",
+      "label": "语言",
+      "default": "中文",
+      "description": "13 语可选；语种会影响断句与节奏提示"
+    },
+    {
+      "name": "provider",
+      "type": "enum",
+      "label": "Provider",
+      "default": "auto",
+      "options": [
+        {
+          "value": "auto",
+          "label": "自动（按 API 地址判断）"
+        },
+        {
+          "value": "openai",
+          "label": "OpenAI 兼容"
+        },
+        {
+          "value": "gemini",
+          "label": "Gemini"
+        }
+      ],
+      "description": "auto 按 base_url 里有没有 generativelanguage 判断"
+    },
+    {
+      "name": "api_key",
+      "type": "string",
+      "label": "API Key",
+      "default": "",
+      "description": "可直接填，也可写 @secret:名称 引用保险箱；留空则用全局 LLM 配置"
+    },
+    {
+      "name": "base_url",
+      "type": "string",
+      "label": "API 地址",
+      "default": "",
+      "description": "留空按 provider 取默认端点"
+    },
+    {
+      "name": "model",
+      "type": "string",
+      "label": "模型",
+      "default": "",
+      "description": "留空则用全局配置里的模型名"
+    },
+    {
+      "name": "target_duration",
+      "type": "float",
+      "label": "目标时长",
+      "default": 0.0,
+      "min": 0.0,
+      "max": 3600.0,
+      "unit": "秒",
+      "description": "0 = 按视频时长 ×80% 自动推算"
+    },
+    {
+      "name": "target_chars",
+      "type": "int",
+      "label": "目标字数",
+      "default": 0,
+      "min": 0,
+      "max": 100000,
+      "description": "0 = 按目标时长 ×4.5 字/秒 推算；与目标时长二选一填即可"
+    },
+    {
+      "name": "avg_segment_chars",
+      "type": "int",
+      "label": "平均每段字数",
+      "default": 25,
+      "min": 5,
+      "max": 200,
+      "description": "决定切成多少段；25 字约等于一句话"
+    },
+    {
+      "name": "temperature",
+      "type": "float",
+      "label": "温度",
+      "default": 0.7,
+      "min": 0.0,
+      "max": 2.0,
+      "step": 0.05,
+      "description": "越低越稳定、越高越发散；解说词建议 0.6–0.8"
+    },
+    {
+      "name": "max_tokens",
+      "type": "int",
+      "label": "最大 Token",
+      "default": 4096,
+      "min": 256,
+      "max": 32768,
+      "description": "一次生成的输出上限；长片要调大"
+    },
+    {
+      "name": "keyframes",
+      "type": "int",
+      "label": "关键帧数",
+      "default": 8,
+      "min": 1,
+      "max": 32,
+      "advanced": true,
+      "description": "上帝视角下没有场景描述时，从视频里抽几帧给视觉模型"
+    },
+    {
+      "name": "json_mode",
+      "type": "bool",
+      "label": "结构化输出",
+      "default": true,
+      "advanced": true,
+      "description": "让模型按 JSON 返回；关掉走文本行解析（部分模型不支持 JSON 模式时用）"
+    },
+    {
+      "name": "local_match",
+      "type": "bool",
+      "label": "本地匹配兜底",
+      "default": true,
+      "description": "LLM 匹配失败时用本地顺序匹配兜底，零 Token"
+    },
+    {
+      "name": "retries",
+      "type": "int",
+      "label": "重试次数",
+      "default": 2,
+      "min": 0,
+      "max": 5,
+      "advanced": true,
+      "description": "覆盖度不达标时的自动重试轮数（最多 2 轮）"
+    },
+    {
+      "name": "llm_channel",
+      "type": "enum",
+      "label": "LLM 通道",
+      "default": "llm_call",
+      "options": [
+        {
+          "value": "llm_call",
+          "label": "走 llm_call 注册表（统一退避/回退）"
+        },
+        {
+          "value": "internal",
+          "label": "内嵌调用"
+        }
+      ],
+      "advanced": true,
+      "description": "llm_call 通道会在失败时自动退避与回退模型"
+    },
+    {
+      "name": "hook_first",
+      "type": "bool",
+      "label": "黄金3秒钩子前置",
+      "default": false,
+      "description": "把最抓人的片段放开头并倒叙；抖音投放向，默认关（事实优先）"
+    },
+    {
+      "name": "filter_intro_outro",
+      "type": "bool",
+      "label": "过滤片头片尾",
+      "default": false,
+      "description": "不给片头动画/Logo/演职员表/预告片生成解说"
+    },
+    {
+      "name": "ost_ratio",
+      "type": "float",
+      "label": "原片穿插占比",
+      "default": 0.0,
+      "min": 0.0,
+      "max": 0.6,
+      "step": 0.05,
+      "description": "0 = 关；大于 0 时在解说词里输出【原片:开始-结束】标记，交给下游选段"
+    }
+  ],
+  "perm": {
+    "fs": {
+      "read": [],
+      "write": []
+    },
+    "net": {
+      "hosts": []
+    },
+    "model": [],
+    "exec": [
+      {
+        "bin": "ffmpeg"
+      }
+    ],
+    "secret": [
+      "*"
+    ]
+  },
+  "deps": [],
+  "exposable": [
+    {
+      "param": "mode",
+      "recipe_role": "生成模式",
+      "safe_for_wizard": true
+    },
+    {
+      "param": "style",
+      "recipe_role": "解说风格",
+      "safe_for_wizard": true
+    },
+    {
+      "param": "language",
+      "recipe_role": "语言",
+      "safe_for_wizard": true
+    },
+    {
+      "param": "target_duration",
+      "recipe_role": "目标时长",
+      "safe_for_wizard": true
+    },
+    {
+      "param": "hook_first",
+      "recipe_role": "钩子前置",
+      "safe_for_wizard": true
+    },
+    {
+      "param": "ost_ratio",
+      "recipe_role": "原片穿插占比",
+      "safe_for_wizard": false
+    }
+  ],
+  "search_aliases": [
+    "文案",
+    "解说词",
+    "AI写",
+    "生成",
+    "narrate",
+    "脚本"
+  ],
+  "signature": {
+    "alg": "ed25519",
+    "key_id": "a8998646b062c170",
+    "value": "Jca0Ky+CeZodSF/xNqG3YBRno7vlArMtGnc5RWNGJ4juCpaZC5dPjAWp8MSi3wilt2wRql3I8y1XX7xbfj7rDA==",
+    "over": "manifest"
+  }
+}
