@@ -344,7 +344,7 @@ def _esc_filter_path(path: str) -> str:
 class VideoRenderNode(NodeBase):
     async def run(self, ctx, inputs, params) -> Dict[str, Any]:
         video = inputs.get("video")
-        seg_asset = inputs.get("segments")
+        seg_asset = inputs.get("timeline")
         if video is None or not getattr(video, "path", "") or not os.path.exists(video.path):
             raise RuntimeError("需要源视频输入")
         if seg_asset is None:

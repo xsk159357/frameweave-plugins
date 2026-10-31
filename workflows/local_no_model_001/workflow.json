@@ -1,8 +1,8 @@
 {
   "id": "local_no_model_001",
-  "name": "本地出片 · 切分→配画面→时间线→字幕→片段包",
+  "name": "本地出片 · 切分→配画面→时间线→字幕→渲染成片",
   "description": "不依赖任何在线模型与 TTS：导入视频 + 输入文案，产出带时间的画面切片、样式化字幕、剪辑软件可直接用的片段包与 SRT",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "kind": "workflow",
   "tags": [
     "本地",
@@ -129,6 +129,32 @@
         "subtitle": "n7",
         "video": "n1"
       }
+    },
+    {
+      "id": "n9",
+      "type": "core/video_render",
+      "x": 1600,
+      "y": 440,
+      "params": {
+        "aspect": "16:9",
+        "resolution": "1080p",
+        "fps": 30,
+        "burn_subtitle": true,
+        "transition": "fade",
+        "transition_duration": 0.5,
+        "scale_mode": "contain",
+        "audio_mix": "original_only",
+        "original_volume": 0.8,
+        "overlay_alpha": 0.8,
+        "align_mode": "none",
+        "color_grade": "none",
+        "output_name": "chengpian"
+      },
+      "inputs": {
+        "video": "n1",
+        "timeline": "n5",
+        "styled_subtitle": "n7"
+      }
     }
   ],
   "edges": [
@@ -191,6 +217,24 @@
       "target": "n8",
       "sourceHandle": "video",
       "targetHandle": "video"
+    },
+    {
+      "source": "n1",
+      "target": "n9",
+      "sourceHandle": "video",
+      "targetHandle": "video"
+    },
+    {
+      "source": "n5",
+      "target": "n9",
+      "sourceHandle": "timeline",
+      "targetHandle": "timeline"
+    },
+    {
+      "source": "n7",
+      "target": "n9",
+      "sourceHandle": "styled_subtitle",
+      "targetHandle": "styled_subtitle"
     }
   ]
 }

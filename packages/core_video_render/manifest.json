@@ -18,11 +18,11 @@
       "description": "要剪的原始视频；片段列表里的时间都指向它"
     },
     {
-      "name": "segments",
-      "type": "SEGMENTS",
-      "label": "片段列表",
+      "name": "timeline",
+      "type": "TIMELINE",
+      "label": "时间线",
       "required": true,
-      "description": "时间线节点的输出；每段一条 start/end，按数组顺序拼接"
+      "description": "时间线节点的输出；每段一条 start/end（原片时间），按数组顺序拼接。也接受同结构的纯片段列表"
     },
     {
       "name": "audio",
@@ -393,7 +393,7 @@
   "signature": {
     "alg": "ed25519",
     "key_id": "a8998646b062c170",
-    "value": "jAocg1NzSd2pNEuUMRmHcQs8gKc7B3BSVfRt9t/evjUrcloqUVQyPD4L/Rq3YwEwgwe9no7+fTggzjIFAthRBQ==",
+    "value": "GuX1oOcGK0+PtQSz7xJqFcnyigrASMrDG8oYV+aQ0oFEFlss/IZO+wUYGKwAIfJvM5UERsugK6YRyQsoJWU6Dg==",
     "over": "manifest"
   }
 }
