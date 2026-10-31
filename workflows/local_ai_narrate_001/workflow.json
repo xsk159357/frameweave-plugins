@@ -328,6 +328,12 @@
       "target": "n10",
       "sourceHandle": "timeline",
       "targetHandle": "timeline"
+    },
+    {
+      "source": "n1",
+      "target": "n6",
+      "sourceHandle": "video",
+      "targetHandle": "video"
     }
   ]
 }

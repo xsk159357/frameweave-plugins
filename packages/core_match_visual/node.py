@@ -24,6 +24,26 @@ from typing import Any, Dict, List, Optional, Tuple
 from app.assets import Asset
 from app.nodespec import NodeBase, PortType
 
+# 必须在 torch / transformers 被 import 之前设好这几个：
+#
+# 真凶是 **torch 的 inductor 缓存**（不是 huggingface_hub，也不是 HF_HOME）：
+# torch/_inductor/runtime/cache_dir_utils.py:23 用 getpass.getuser() 拼缓存目录，
+# 而 getpass 在 Windows 上读 USERNAME 环境变量。worker 的 env 是白名单
+# （supervisor._BASE_ENV_PASSTHROUGH），不含 USERNAME ⇒ 直接抛
+# "No username set in the environment"，模型根本没机会加载。
+#
+# 两条都要：
+#   1. TORCHINDUCTOR_CACHE_DIR 显式给出目录（绕过 getpass）；
+#   2. USERNAME 兜底（别的库可能也读它）。
+os.environ.setdefault("TRANSFORMERS_OFFLINE", "1")
+os.environ.setdefault("HF_HUB_OFFLINE", "1")
+if not os.environ.get("TORCHINDUCTOR_CACHE_DIR"):
+    _cache_base = (os.environ.get("TEMP") or os.environ.get("TMP")
+                   or os.path.join(os.path.expanduser("~"), ".cache"))
+    os.environ["TORCHINDUCTOR_CACHE_DIR"] = os.path.join(_cache_base, "fw_torch_cache")
+if not os.environ.get("USERNAME") and not os.environ.get("USER"):
+    os.environ["USERNAME"] = "frameweave"
+
 try:
     from app import batchlib
 except Exception:  # noqa: BLE001  测试环境可能无 app.batchlib
@@ -176,16 +196,7 @@ class _ClipBackend:
             return False
         # 只允许本地模型目录/缓存：节点不做模型下载（模型就绪由 model_readiness
         # 类节点负责），避免联网拉取导致挂起或隐式消耗。
-        os.environ.setdefault("TRANSFORMERS_OFFLINE", "1")
-        os.environ.setdefault("HF_HUB_OFFLINE", "1")
-        # worker 的 env 是白名单，不含 USERNAME——huggingface_hub 在 Windows 上
-        # 拿它拼缓存路径，缺了就报 "No username set in the environment" 直接加载失败。
-        # 显式把 HF_HOME 指到调用方给的目录（或系统 temp 下的固定名），
-        # 不让库去猜用户目录。
-        if not os.environ.get("HF_HOME"):
-            hf = (os.environ.get("TEMP") or os.environ.get("TMP")
-                  or os.path.join(os.path.expanduser("~"), ".cache"))
-            os.environ["HF_HOME"] = os.path.join(hf, "fw_hf_cache")
+        # HF_HOME / OFFLINE 已在模块顶层设好，这里再设无效（库已解析完常量）。
         if not self.model_dir or not os.path.isdir(self.model_dir):
             self._error = ("未指定本地 CLIP 模型目录（model_dir 或 FRAMEWEAVE_CLIP_DIR），"
                            "本节点不联网下载模型；请先用模型管理节点就绪 Chinese-CLIP")
