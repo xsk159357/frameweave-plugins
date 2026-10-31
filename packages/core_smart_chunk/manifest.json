@@ -1,0 +1,126 @@
+{
+  "manifest_version": 3,
+  "id": "core/smart_chunk",
+  "title": "智能分块",
+  "category": "分析",
+  "description": "按场景边界把长视频切成若干分析块：目标时长窗、上下界约束、末块太短并入前一块",
+  "version": "3.0.0",
+  "kind": "python",
+  "entrypoint": "node.py",
+  "class_name": "SmartChunkNode",
+  "min_engine": "3.0",
+  "inputs": [
+    {
+      "name": "video",
+      "type": "VIDEO",
+      "label": "视频",
+      "required": true,
+      "description": "原始视频；分块时间对齐到它的时间轴"
+    },
+    {
+      "name": "scenes",
+      "type": "SEGMENTS",
+      "label": "场景段",
+      "required": true,
+      "description": "镜头切分产出的场景边界；分块只在场景边界上切，不切碎镜头"
+    }
+  ],
+  "outputs": [
+    {
+      "name": "chunks",
+      "type": "SEGMENTS",
+      "label": "分块列表",
+      "description": "每块一条 chunk_index/start/end/duration/scene_indices；分块参数与告警在 asset.meta"
+    }
+  ],
+  "params": [
+    {
+      "name": "target_duration",
+      "type": "float",
+      "label": "目标块长",
+      "default": 180.0,
+      "min": 10.0,
+      "max": 3600.0,
+      "step": 5.0,
+      "unit": "秒",
+      "description": "想切多长一块；实际会在上下界之间找最近的场景边界"
+    },
+    {
+      "name": "min_duration",
+      "type": "float",
+      "label": "最短块长",
+      "default": 120.0,
+      "min": 5.0,
+      "max": 1800.0,
+      "step": 5.0,
+      "unit": "秒",
+      "description": "低于这个长度就不单独成块"
+    },
+    {
+      "name": "max_duration",
+      "type": "float",
+      "label": "最长块长",
+      "default": 240.0,
+      "min": 10.0,
+      "max": 7200.0,
+      "step": 5.0,
+      "unit": "秒",
+      "description": "超过就强制在场景边界处切开"
+    },
+    {
+      "name": "tail_policy",
+      "type": "enum",
+      "label": "末块处理",
+      "default": "merge_back",
+      "options": [
+        {
+          "value": "merge_back",
+          "label": "并入前一块"
+        },
+        {
+          "value": "keep",
+          "label": "单独保留"
+        }
+      ],
+      "description": "最后一块短于最短块长时怎么处理"
+    }
+  ],
+  "perm": {
+    "fs": {
+      "read": [],
+      "write": []
+    },
+    "net": {
+      "hosts": []
+    },
+    "model": [],
+    "exec": [],
+    "secret": []
+  },
+  "deps": [],
+  "exposable": [
+    {
+      "param": "target_duration",
+      "recipe_role": "分块长度",
+      "safe_for_wizard": true
+    },
+    {
+      "param": "tail_policy",
+      "recipe_role": "末块处理",
+      "safe_for_wizard": false
+    }
+  ],
+  "search_aliases": [
+    "分块",
+    "切片",
+    "切段",
+    "chunk",
+    "智能切分"
+  ],
+  "signature": {
+    "alg": "ed25519",
+    "key_id": "a8998646b062c170",
+    "value": "2NwVc0Fz/yJysisxNkzRYI+SPXem8oDdZ5iKlC6MUl5+u8pr7E5KWuS8AM0UxOfdfUReyhfM8E3nVCylCyedAw==",
+    "over": "manifest"
+  }
+}
