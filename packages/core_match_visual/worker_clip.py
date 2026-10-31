@@ -18,6 +18,13 @@ import sys
 os.environ.setdefault("TRANSFORMERS_OFFLINE", "1")
 os.environ.setdefault("HF_HUB_OFFLINE", "1")
 os.environ.setdefault("TOKENIZERS_PARALLELISM", "false")
+# worker 的 env 是白名单（不含 USERNAME），huggingface_hub 在 Windows 上拿它
+# 拼缓存路径会直接报 "No username set in the environment"。显式给 HF_HOME，
+# 不让库去猜用户目录。离线模式下这个目录只用于放锁文件，不会真下载。
+if not os.environ.get("HF_HOME"):
+    _hf = (os.environ.get("TEMP") or os.environ.get("TMP")
+           or os.path.join(os.path.expanduser("~"), ".cache"))
+    os.environ["HF_HOME"] = os.path.join(_hf, "fw_hf_cache")
 
 _MODEL = None
 _PROC = None

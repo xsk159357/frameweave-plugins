@@ -178,6 +178,14 @@ class _ClipBackend:
         # 类节点负责），避免联网拉取导致挂起或隐式消耗。
         os.environ.setdefault("TRANSFORMERS_OFFLINE", "1")
         os.environ.setdefault("HF_HUB_OFFLINE", "1")
+        # worker 的 env 是白名单，不含 USERNAME——huggingface_hub 在 Windows 上
+        # 拿它拼缓存路径，缺了就报 "No username set in the environment" 直接加载失败。
+        # 显式把 HF_HOME 指到调用方给的目录（或系统 temp 下的固定名），
+        # 不让库去猜用户目录。
+        if not os.environ.get("HF_HOME"):
+            hf = (os.environ.get("TEMP") or os.environ.get("TMP")
+                  or os.path.join(os.path.expanduser("~"), ".cache"))
+            os.environ["HF_HOME"] = os.path.join(hf, "fw_hf_cache")
         if not self.model_dir or not os.path.isdir(self.model_dir):
             self._error = ("未指定本地 CLIP 模型目录（model_dir 或 FRAMEWEAVE_CLIP_DIR），"
                            "本节点不联网下载模型；请先用模型管理节点就绪 Chinese-CLIP")
