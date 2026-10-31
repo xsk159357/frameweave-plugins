@@ -1,0 +1,399 @@
+{
+  "manifest_version": 3,
+  "id": "core/video_render",
+  "title": "MP4 渲染",
+  "category": "输出",
+  "description": "把片段列表渲染成成片：拼接 + 转场 + 配音/原声/背景乐混音 + 字幕烧录 + 可选覆盖轨；带进度与成品 ffprobe 复核",
+  "version": "1.0.0",
+  "kind": "python",
+  "entrypoint": "node.py",
+  "class_name": "VideoRenderNode",
+  "min_engine": "3.0",
+  "inputs": [
+    {
+      "name": "video",
+      "type": "VIDEO",
+      "label": "源视频",
+      "required": true,
+      "description": "要剪的原始视频；片段列表里的时间都指向它"
+    },
+    {
+      "name": "segments",
+      "type": "SEGMENTS",
+      "label": "片段列表",
+      "required": true,
+      "description": "时间线节点的输出；每段一条 start/end，按数组顺序拼接"
+    },
+    {
+      "name": "audio",
+      "type": "AUDIO",
+      "label": "配音",
+      "required": false,
+      "description": "配音音频；audio_mix=narration_only 时只用它，mix 时与原声叠加"
+    },
+    {
+      "name": "styled_subtitle",
+      "type": "SUBTITLE",
+      "label": "样式字幕",
+      "required": false,
+      "description": "接了且 burn_subtitle=true 时烧进画面（ASS，字号随画布缩放）"
+    },
+    {
+      "name": "layout",
+      "type": "SEGMENTS",
+      "label": "混音布局",
+      "required": false,
+      "description": "给出后只在保留区间放原声（区间内满音量、区间外静音），需 audio_mix=mix 才生效"
+    },
+    {
+      "name": "overlay",
+      "type": "VIDEO",
+      "label": "覆盖视频轨",
+      "required": false,
+      "description": "整段覆盖在成片上的第二视频轨，透明度由 overlay_alpha 控制"
+    },
+    {
+      "name": "bgm",
+      "type": "AUDIO",
+      "label": "背景乐",
+      "required": false,
+      "description": "背景音乐；与解说/原声一起混音"
+    }
+  ],
+  "outputs": [
+    {
+      "name": "rendered",
+      "type": "VIDEO",
+      "label": "成品 MP4",
+      "description": "渲染出的成片；宽高/帧率/时长/体积与渲染统计在 asset.meta"
+    }
+  ],
+  "params": [
+    {
+      "name": "aspect",
+      "type": "enum",
+      "label": "画幅",
+      "default": "16:9",
+      "options": [
+        {
+          "value": "16:9",
+          "label": "横屏 16:9"
+        },
+        {
+          "value": "9:16",
+          "label": "竖屏 9:16"
+        },
+        {
+          "value": "1:1",
+          "label": "方形 1:1"
+        },
+        {
+          "value": "original",
+          "label": "跟随源视频"
+        }
+      ],
+      "description": "9:16 与 1:1 会在上下或两侧补黑边（scale_mode=contain 时）"
+    },
+    {
+      "name": "resolution",
+      "type": "string",
+      "label": "分辨率",
+      "default": "1080p",
+      "description": "1080p / 720p / 4k / source，或直接写 WxH（如 1280x544 得到 2.35:1 不补边）"
+    },
+    {
+      "name": "fps",
+      "type": "int",
+      "label": "帧率",
+      "default": 30,
+      "min": 1,
+      "max": 120,
+      "description": "输出帧率；与源视频不一致时会重采样"
+    },
+    {
+      "name": "burn_subtitle",
+      "type": "bool",
+      "label": "烧录字幕",
+      "default": true,
+      "description": "把样式字幕写进画面；关掉则只输出画面，字幕需要外部叠加"
+    },
+    {
+      "name": "transition",
+      "type": "enum",
+      "label": "转场",
+      "default": "fade",
+      "options": [
+        {
+          "value": "cut",
+          "label": "硬切（无转场）"
+        },
+        {
+          "value": "fade",
+          "label": "淡入淡出"
+        },
+        {
+          "value": "fadeblack",
+          "label": "经黑场过渡"
+        },
+        {
+          "value": "dissolve",
+          "label": "溶解"
+        },
+        {
+          "value": "slideleft",
+          "label": "左滑"
+        },
+        {
+          "value": "slideup",
+          "label": "上滑"
+        },
+        {
+          "value": "wiperight",
+          "label": "右擦除"
+        },
+        {
+          "value": "zoomin",
+          "label": "推近"
+        },
+        {
+          "value": "smoothleft",
+          "label": "平滑左移"
+        },
+        {
+          "value": "circleopen",
+          "label": "圆形展开"
+        },
+        {
+          "value": "pixelize",
+          "label": "像素化"
+        }
+      ],
+      "description": "cut 最快也最稳；转场会让总时长按每处重叠缩短 transition_duration"
+    },
+    {
+      "name": "transition_duration",
+      "type": "float",
+      "label": "转场时长",
+      "default": 0.5,
+      "min": 0.05,
+      "max": 3.0,
+      "step": 0.05,
+      "unit": "秒",
+      "description": "每处转场的重叠秒数；片段很短时会被片段长度限制"
+    },
+    {
+      "name": "scale_mode",
+      "type": "enum",
+      "label": "缩放模式",
+      "default": "contain",
+      "options": [
+        {
+          "value": "contain",
+          "label": "完整显示（补黑边）"
+        },
+        {
+          "value": "fill",
+          "label": "铺满（裁掉多余）"
+        }
+      ],
+      "description": "源画幅与目标画幅不一致时的处理方式"
+    },
+    {
+      "name": "audio_mix",
+      "type": "enum",
+      "label": "混音模式",
+      "default": "narration_only",
+      "options": [
+        {
+          "value": "narration_only",
+          "label": "只要配音（原声静音）"
+        },
+        {
+          "value": "original_only",
+          "label": "只要原声"
+        },
+        {
+          "value": "mix",
+          "label": "配音 + 原声 + 背景乐"
+        }
+      ],
+      "description": "narration_only 时接不到配音会输出无音轨成片并写警告"
+    },
+    {
+      "name": "narration_volume",
+      "type": "float",
+      "label": "配音音量",
+      "default": 1.0,
+      "min": 0.0,
+      "max": 3.0,
+      "step": 0.05,
+      "description": "1.0 为原始音量"
+    },
+    {
+      "name": "original_volume",
+      "type": "float",
+      "label": "原声音量",
+      "default": 0.35,
+      "min": 0.0,
+      "max": 3.0,
+      "step": 0.05,
+      "description": "解说盖住原声时通常给 0.2–0.4；接了 layout 且 audio_mix=mix 时由区间门控接管"
+    },
+    {
+      "name": "bgm_volume",
+      "type": "float",
+      "label": "背景乐音量",
+      "default": 0.3,
+      "min": 0.0,
+      "max": 3.0,
+      "step": 0.05,
+      "description": "背景乐通常压到 0.2–0.3，否则会盖住人声"
+    },
+    {
+      "name": "overlay_alpha",
+      "type": "float",
+      "label": "覆盖轨不透明度",
+      "default": 0.8,
+      "min": 0.0,
+      "max": 1.0,
+      "step": 0.05,
+      "description": "只在接了 overlay 时生效"
+    },
+    {
+      "name": "align_mode",
+      "type": "enum",
+      "label": "音画对齐",
+      "default": "none",
+      "options": [
+        {
+          "value": "none",
+          "label": "不调整"
+        },
+        {
+          "value": "audio_to_video",
+          "label": "压缩/拉伸配音到画面时长"
+        },
+        {
+          "value": "video_to_audio",
+          "label": "按配音时长扩展末段"
+        },
+        {
+          "value": "bidirectional",
+          "label": "两者都做"
+        }
+      ],
+      "description": "配音与画面长度不一致时自动对齐；调整 tempo 时字幕轴会同步缩放"
+    },
+    {
+      "name": "color_grade",
+      "type": "enum",
+      "label": "调色",
+      "default": "none",
+      "options": [
+        {
+          "value": "none",
+          "label": "不调色"
+        },
+        {
+          "value": "warm",
+          "label": "暖色"
+        },
+        {
+          "value": "cool",
+          "label": "冷色"
+        },
+        {
+          "value": "vintage",
+          "label": "复古"
+        },
+        {
+          "value": "cinematic",
+          "label": "电影感"
+        },
+        {
+          "value": "high_contrast",
+          "label": "高对比"
+        },
+        {
+          "value": "bright",
+          "label": "提亮"
+        }
+      ],
+      "description": "叠在缩放之后的一键滤镜，不改变时间轴"
+    },
+    {
+      "name": "output_name",
+      "type": "string",
+      "label": "输出文件名",
+      "default": "chengpian",
+      "description": "落盘文件名（不含扩展名）；同目录重名会覆盖"
+    }
+  ],
+  "perm": {
+    "fs": {
+      "read": [],
+      "write": []
+    },
+    "net": {
+      "hosts": []
+    },
+    "model": [],
+    "exec": [
+      {
+        "bin": "ffmpeg"
+      },
+      {
+        "bin": "ffprobe"
+      }
+    ],
+    "secret": []
+  },
+  "deps": [],
+  "exposable": [
+    {
+      "param": "aspect",
+      "recipe_role": "画幅",
+      "safe_for_wizard": true
+    },
+    {
+      "param": "resolution",
+      "recipe_role": "分辨率",
+      "safe_for_wizard": true
+    },
+    {
+      "param": "transition",
+      "recipe_role": "转场",
+      "safe_for_wizard": true
+    },
+    {
+      "param": "audio_mix",
+      "recipe_role": "混音模式",
+      "safe_for_wizard": true
+    },
+    {
+      "param": "color_grade",
+      "recipe_role": "调色",
+      "safe_for_wizard": true
+    },
+    {
+      "param": "burn_subtitle",
+      "recipe_role": "是否烧字幕",
+      "safe_for_wizard": true
+    }
+  ],
+  "search_aliases": [
+    "渲染",
+    "出片",
+    "合成",
+    "混剪",
+    "拼接",
+    "render",
+    "mp4"
+  ],
+  "signature": {
+    "alg": "ed25519",
+    "key_id": "a8998646b062c170",
+    "value": "jAocg1NzSd2pNEuUMRmHcQs8gKc7B3BSVfRt9t/evjUrcloqUVQyPD4L/Rq3YwEwgwe9no7+fTggzjIFAthRBQ==",
+    "over": "manifest"
+  }
+}
