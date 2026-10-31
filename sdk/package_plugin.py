@@ -80,9 +80,24 @@ def package(pkg_dir: str, out_dir: str) -> dict:
         raise ValueError(f"{pkg_dir} 缺少 manifest.json")
     with open(mp, "r", encoding="utf-8") as f:
         m = json.load(f)
-    errs, warnings = check_manifest_verbose(m)
+    # 按 manifest_version 分发校验器（与 sign_core_manifests.py 同一口径）：
+    # v3 包用 check_manifest_v3；v2 老包才走 check_manifest。
+    # 2026-10-31：此前这里只调 v2 的 check_manifest_verbose，v3 包一律被拒
+    # （G5 params type 'enum'/'text' 未注册、未知字段 advanced/unit、G2 type_id 空），
+    # 18 个现役包一个都打不出来——与 2026-10-30 签名工具遇到的是同一类问题。
+    is_v3 = m.get("manifest_version") == 3
+    if is_v3:
+        from check_manifest_v3 import check as check_v3  # noqa: E402
+        rows, _has_fail = check_v3(base_abs)
+        errs = [f"{code}{'：' + msg if msg else ''}"
+                for lvl, code, msg in rows if lvl == "FAIL"]
+        warnings = [f"{code}{'：' + msg if msg else ''}"
+                    for lvl, code, msg in rows if lvl == "WARN"]
+    else:
+        errs, warnings = check_manifest_verbose(m)
     if errs:
-        raise ValueError("manifest 校验失败（G1-G10），拒绝打包:\n  " + "\n  ".join(errs))
+        raise ValueError("manifest 校验失败（%s），拒绝打包:\n  "
+                         % ("v3" if is_v3 else "G1-G10") + "\n  ".join(errs))
     # 大插件上限预检（与后端 worker/limits.py 对齐）
     total = 0
     count = 0

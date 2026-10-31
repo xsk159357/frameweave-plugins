@@ -1,0 +1,175 @@
+{
+  "tool": "sdk/hygiene_dist.py (t32)",
+  "packages_checked": 18,
+  "pycache_cleaned": 4,
+  "ok": [
+    {
+      "pkg": "core_ai_narrate",
+      "zip": "core_ai_narrate.zip",
+      "bytes": 39588,
+      "zip_sha256": "9932f33c01cadcb9a08fe1af70fea73a5af35c95648372667606036e94a2ec66",
+      "sig": "core_ai_narrate.zip.sig",
+      "signed_manifest": true,
+      "consistent": true
+    },
+    {
+      "pkg": "core_analyze_chunks",
+      "zip": "core_analyze_chunks.zip",
+      "bytes": 10654,
+      "zip_sha256": "755aa3d07164f9e8d6bca65dcf8a6b197dcdc5e1ab1fc435377d45737c934326",
+      "sig": "core_analyze_chunks.zip.sig",
+      "signed_manifest": true,
+      "consistent": true
+    },
+    {
+      "pkg": "core_asr_whisper",
+      "zip": "core_asr_whisper.zip",
+      "bytes": 4999,
+      "zip_sha256": "f3c3320ef3a1a78607dce0a6c5de93eef6d9d2361672c1b39a4c3010eae94b6a",
+      "sig": "core_asr_whisper.zip.sig",
+      "signed_manifest": true,
+      "consistent": true
+    },
+    {
+      "pkg": "core_export_bundle",
+      "zip": "core_export_bundle.zip",
+      "bytes": 6141,
+      "zip_sha256": "fdd4bcc7b69733847cef5704fb35c0e2a277b65bc850c5d9c047f6b1adfe07ee",
+      "sig": "core_export_bundle.zip.sig",
+      "signed_manifest": true,
+      "consistent": true
+    },
+    {
+      "pkg": "core_export_premiere_xml",
+      "zip": "core_export_premiere_xml.zip",
+      "bytes": 4863,
+      "zip_sha256": "1a84742896142bd76290ec1169b9ec05c5250aa706cb7df1785f6722a03ff55f",
+      "sig": "core_export_premiere_xml.zip.sig",
+      "signed_manifest": true,
+      "consistent": true
+    },
+    {
+      "pkg": "core_llm_call",
+      "zip": "core_llm_call.zip",
+      "bytes": 9801,
+      "zip_sha256": "5835190e87c46a698bb7404b8f13cf30fcdece407b3fc9f647cbdddc1d6c81de",
+      "sig": "core_llm_call.zip.sig",
+      "signed_manifest": true,
+      "consistent": true
+    },
+    {
+      "pkg": "core_match_clip",
+      "zip": "core_match_clip.zip",
+      "bytes": 5238,
+      "zip_sha256": "e8a08909cc2092fe2b239bc32b63a036796f203134336c202030a80090faa0f1",
+      "sig": "core_match_clip.zip.sig",
+      "signed_manifest": true,
+      "consistent": true
+    },
+    {
+      "pkg": "core_match_visual",
+      "zip": "core_match_visual.zip",
+      "bytes": 15618,
+      "zip_sha256": "c1e3187edb2543a9a9a4772977eaa7b609d60bb0e0ccd2f13ca4cc8582dcd193",
+      "sig": "core_match_visual.zip.sig",
+      "signed_manifest": true,
+      "consistent": true
+    },
+    {
+      "pkg": "core_media_import",
+      "zip": "core_media_import.zip",
+      "bytes": 4046,
+      "zip_sha256": "03967ff65d38fb6decb473b1baf07f6173ef5827e6078a3359dff08d9318e786",
+      "sig": "core_media_import.zip.sig",
+      "signed_manifest": true,
+      "consistent": true
+    },
+    {
+      "pkg": "core_scene_detect",
+      "zip": "core_scene_detect.zip",
+      "bytes": 10964,
+      "zip_sha256": "4bad73d627572837f7e0f23e57c5e82eaf032c1fb9c908b134ae3e3c58b26340",
+      "sig": "core_scene_detect.zip.sig",
+      "signed_manifest": true,
+      "consistent": true
+    },
+    {
+      "pkg": "core_script_extract",
+      "zip": "core_script_extract.zip",
+      "bytes": 4306,
+      "zip_sha256": "efa447f5c738d0b3abfce45b03237e56dd39012d4c0dd192d19f846bf4ac3eb6",
+      "sig": "core_script_extract.zip.sig",
+      "signed_manifest": true,
+      "consistent": true
+    },
+    {
+      "pkg": "core_script_input",
+      "zip": "core_script_input.zip",
+      "bytes": 2444,
+      "zip_sha256": "13c731ea4c39c1440f3acc37b1c9b8a570c1ccdf8133ea9a3dd4bac7c5e79ff0",
+      "sig": "core_script_input.zip.sig",
+      "signed_manifest": true,
+      "consistent": true
+    },
+    {
+      "pkg": "core_smart_chunk",
+      "zip": "core_smart_chunk.zip",
+      "bytes": 3988,
+      "zip_sha256": "c99e5c6381682a9a1f0a40c769b8a39b7c575e2669980aabfa493bf53ab26fad",
+      "sig": "core_smart_chunk.zip.sig",
+      "signed_manifest": true,
+      "consistent": true
+    },
+    {
+      "pkg": "core_subtitle_build",
+      "zip": "core_subtitle_build.zip",
+      "bytes": 4264,
+      "zip_sha256": "f966509b45e7e523845a7033bd64b039f8ac6fa3a402ae00b7401759382a46bc",
+      "sig": "core_subtitle_build.zip.sig",
+      "signed_manifest": true,
+      "consistent": true
+    },
+    {
+      "pkg": "core_subtitle_compose",
+      "zip": "core_subtitle_compose.zip",
+      "bytes": 3849,
+      "zip_sha256": "a9a977ca02c308c1a17b0c62f87661db85c55b77dd8ee5e03379bb1c602b3af0",
+      "sig": "core_subtitle_compose.zip.sig",
+      "signed_manifest": true,
+      "consistent": true
+    },
+    {
+      "pkg": "core_timeline_build",
+      "zip": "core_timeline_build.zip",
+      "bytes": 6618,
+      "zip_sha256": "22d361baba231819d7bee467df4f4183d8490b7186803a4be3f38fdde4829d5e",
+      "sig": "core_timeline_build.zip.sig",
+      "signed_manifest": true,
+      "consistent": true
+    },
+    {
+      "pkg": "core_tts_synthesize",
+      "zip": "core_tts_synthesize.zip",
+      "bytes": 13852,
+      "zip_sha256": "2c07cdcb3d97ea2179918a8ea711d008f2f77d403eab0ee895fc3214e7b16b34",
+      "sig": "core_tts_synthesize.zip.sig",
+      "signed_manifest": true,
+      "consistent": true
+    },
+    {
+      "pkg": "core_video_render",
+      "zip": "core_video_render.zip",
+      "bytes": 15682,
+      "zip_sha256": "8b0d64d17ec4737d881e304945baa0b60149b92b808adbc2323785a3806bb6a3",
+      "sig": "core_video_render.zip.sig",
+      "signed_manifest": true,
+      "consistent": true
+    }
+  ],
+  "failed": [],
+  "summary": {
+    "total": 18,
+    "ok": 18,
+    "failed": 0
+  }
+}
