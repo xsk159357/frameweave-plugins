@@ -4,7 +4,7 @@
   "title": "语音合成",
   "category": "音频",
   "description": "把文案逐句合成为配音，并给出每句的真实时长。它是整条链里唯一知道「这句话读出来到底几秒」的节点，时间线据此排片比按字数估算准",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "kind": "python",
   "entrypoint": "node.py",
   "class_name": "TtsSynthesizeNode",
@@ -120,6 +120,14 @@
       "min": 0,
       "max": 2,
       "description": "两句之间插入的静音长度；0 表示首尾相接。停顿会算进逐句时间，下游按它排片"
+    },
+    {
+      "name": "indextts_dir",
+      "type": "string",
+      "label": "IndexTTS 模型目录",
+      "default": "",
+      "advanced": true,
+      "description": "IndexTTS 的模型根；留空用默认安装位。路径必须纯 ASCII——wetext 的 C++ 扩展打不开中文路径，填了非 ASCII 会直接判不可用并说明原因"
     }
   ],
   "perm": {
@@ -160,6 +168,11 @@
       "param": "gap",
       "recipe_role": "句间停顿",
       "safe_for_wizard": false
+    },
+    {
+      "param": "indextts_dir",
+      "recipe_role": "IndexTTS 模型目录",
+      "safe_for_wizard": false
     }
   ],
   "search_aliases": [
@@ -173,7 +186,7 @@
   "signature": {
     "alg": "ed25519",
     "key_id": "a8998646b062c170",
-    "value": "Vz1xCauXbIa3oT8RMteNMdP79h+TZxp13kKwcHXRec/72I3qAkRbwUPCysHzgUv3mlZYP5zR5ExLm3EzTVCHBQ==",
+    "value": "QHkQ6sIc07kKMUfnGiQFgsDvSnVLE4FwAdOkprTiXxZVNJP95iQJqkaC1qFiyyYAMghFlttPlFStmK6ygpk0Cw==",
     "over": "manifest"
   }
 }

@@ -1,8 +1,8 @@
 {
   "id": "local_ai_narrate_001",
-  "name": "AI 写文案出片 · 切分→分块→视觉分析→写词→配画面→字幕→渲染",
-  "description": "给一段视频和 API Key，自动看懂画面并写出解说词，配好画面、烧好字幕、渲染成 MP4。全程需要视觉与文本模型各一次调用。",
-  "version": "1.0.0",
+  "name": "AI 写文案出片 · 切分→分块→视觉分析→写词→配音→配画面→字幕→渲染",
+  "description": "给一段视频和 API Key，自动看懂画面并写出解说词，配上配音、画面与字幕，渲染成有声 MP4。",
+  "version": "1.1.0",
   "kind": "workflow",
   "tags": [
     "AI",
@@ -142,7 +142,8 @@
       },
       "inputs": {
         "match": "n6",
-        "scenes": "n2"
+        "scenes": "n2",
+        "voice_segments": "n11"
       }
     },
     {
@@ -192,17 +193,39 @@
         "transition": "fade",
         "transition_duration": 0.5,
         "scale_mode": "contain",
-        "audio_mix": "original_only",
-        "original_volume": 0.8,
+        "audio_mix": "mix",
+        "original_volume": 0.25,
         "overlay_alpha": 0.8,
         "align_mode": "none",
         "color_grade": "none",
-        "output_name": "chengpian"
+        "output_name": "chengpian",
+        "narration_volume": 1.0
       },
       "inputs": {
         "video": "n1",
         "timeline": "n7",
-        "styled_subtitle": "n9"
+        "styled_subtitle": "n9",
+        "audio": "n11"
+      }
+    },
+    {
+      "id": "n11",
+      "type": "core/tts_synthesize",
+      "x": 1080,
+      "y": 460,
+      "params": {
+        "engine": "auto",
+        "lang": "ZH",
+        "voice": "",
+        "ref_audio": "",
+        "rate": 0,
+        "volume": 100,
+        "max_chars": 40,
+        "gap": 0.15,
+        "indextts_dir": ""
+      },
+      "inputs": {
+        "script": "n5"
       }
     }
   ],
@@ -314,6 +337,24 @@
       "target": "n10",
       "sourceHandle": "styled_subtitle",
       "targetHandle": "styled_subtitle"
+    },
+    {
+      "source": "n5",
+      "target": "n11",
+      "sourceHandle": "script",
+      "targetHandle": "script"
+    },
+    {
+      "source": "n11",
+      "target": "n7",
+      "sourceHandle": "segments",
+      "targetHandle": "voice_segments"
+    },
+    {
+      "source": "n11",
+      "target": "n10",
+      "sourceHandle": "audio",
+      "targetHandle": "audio"
     }
   ]
 }

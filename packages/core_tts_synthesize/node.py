@@ -183,11 +183,29 @@ def _dur(path: str, fp: str) -> float:
         return 0.0
 
 
-def _indextts_base() -> str:
+def _indextts_base(params: Optional[Dict[str, Any]] = None) -> str:
+    """IndexTTS 模型根。三级来源，优先级从高到低：
+
+    1. 参数 `indextts_dir`（worker 环境下唯一可靠的一条——worker 的 env 是白名单，
+       宿主设的 FRAMEWEAVE_INDEXTTS_DIR 传不进去）；
+    2. 环境变量 FRAMEWEAVE_INDEXTTS_DIR（直跑/宿主进程内有效）；
+    3. backend/data/models/index-tts-code（默认安装位）。
+
+    为什么需要能改：模型目录必须纯 ASCII（wetext 的 kaldifst 用窄字符 API），
+    而工作区路径常含中文。给一条显式出口，用户把模型放到英文路径后指过来即可，
+    不必为此搬家整个安装目录。
+    """
+    if isinstance(params, dict):
+        p = str(params.get("indextts_dir") or "").strip()
+        if p:
+            return os.path.abspath(p)
+    override = (os.environ.get("FRAMEWEAVE_INDEXTTS_DIR") or "").strip()
+    if override:
+        return os.path.abspath(override)
     return os.path.join(_app_root(), "data", "models", "index-tts-code")
 
 
-def _indextts_ready() -> Tuple[bool, str]:
+def _indextts_ready(params: Optional[Dict[str, Any]] = None) -> Tuple[bool, str]:
     """IndexTTS 能不能用。只做轻量检查，不加载 9.5 GB 权重。
 
     三条都是「跑起来必炸」的前置条件。与其让用户点完播放等了半天再崩，
@@ -198,7 +216,7 @@ def _indextts_ready() -> Tuple[bool, str]:
       3. 路径是不是纯 ASCII——wetext 里的 kaldifst 是 C++ 扩展，用窄字符 API
          打开 .fst 词典，中文路径直接打不开。
     """
-    base = _indextts_base()
+    base = _indextts_base(params)
     if not os.path.isdir(base):
         return False, "模型目录不存在：%s" % base
     for rel in ("checkpoints/gpt.pth", "checkpoints/config.yaml"):
@@ -290,9 +308,9 @@ class TtsSynthesizeNode(NodeBase):
         warnings: List[str] = []
         idx_base = ""
         if engine in ("auto", "indextts"):
-            ready, why = _indextts_ready()
+            ready, why = _indextts_ready(params)
             if ready:
-                idx_base = _indextts_base()
+                idx_base = _indextts_base(params)
             elif engine == "indextts":
                 raise RuntimeError("IndexTTS 不可用：%s" % why)
             else:
