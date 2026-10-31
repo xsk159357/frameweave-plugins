@@ -1,0 +1,197 @@
+{
+  "manifest_version": 3,
+  "id": "core/match_visual",
+  "title": "文案-画面匹配",
+  "category": "语义",
+  "description": "把解说文案逐句配到视频场景上：Chinese-CLIP 视觉语义匹配，缺模型时退本地文本嵌入，再缺就明确报错——降级链写进 warnings，绝不假装匹配过",
+  "version": "2.0.0",
+  "kind": "python",
+  "entrypoint": "node.py",
+  "class_name": "MatchVisualNode",
+  "min_engine": "3.0",
+  "inputs": [
+    {
+      "name": "video",
+      "type": "VIDEO",
+      "label": "视频",
+      "required": false,
+      "description": "视觉匹配要从它抽关键帧；只用文本匹配时可不接"
+    },
+    {
+      "name": "script",
+      "type": "SCRIPT",
+      "label": "解说文案",
+      "required": false,
+      "description": "逐句文案；与 items 二选一"
+    },
+    {
+      "name": "scenes",
+      "type": "SEGMENTS",
+      "label": "场景段",
+      "required": false,
+      "description": "镜头切分产出的场景边界；匹配结果按它落时间"
+    },
+    {
+      "name": "items",
+      "type": "SEGMENTS",
+      "label": "逐句条目",
+      "required": false,
+      "description": "已切好的逐句条目（每项 text/start/end）；给了就不再用 script 切句"
+    }
+  ],
+  "outputs": [
+    {
+      "name": "matches",
+      "type": "SEGMENTS",
+      "label": "匹配结果",
+      "description": "每句一条 index/text/start/end/scene_ids；用的是哪个 embedder 与质量等级在 asset.meta"
+    },
+    {
+      "name": "timeline",
+      "type": "TIMELINE",
+      "label": "时间线",
+      "description": "可直接接字幕与渲染的时间线；与 matches 同源，省掉一次 timeline_build"
+    }
+  ],
+  "params": [
+    {
+      "name": "embedder",
+      "type": "enum",
+      "label": "匹配方式",
+      "default": "auto",
+      "options": [
+        {
+          "value": "auto",
+          "label": "自动（优先 CLIP，缺则文本）"
+        },
+        {
+          "value": "clip",
+          "label": "仅 Chinese-CLIP（缺模型直接报错）"
+        },
+        {
+          "value": "text",
+          "label": "仅文本嵌入（零依赖）"
+        }
+      ],
+      "description": "clip 需要外置运行时与 753MB 模型；text 用字符 n-gram，快但没有画面语义"
+    },
+    {
+      "name": "model_dir",
+      "type": "string",
+      "label": "CLIP 模型目录",
+      "default": "",
+      "description": "留空用模型中心登记位置；指到含 config.json 与 pytorch_model.bin 的目录可覆盖"
+    },
+    {
+      "name": "frame_positions",
+      "type": "string",
+      "label": "抽帧位置",
+      "default": "0.1,0.5,0.9",
+      "advanced": true,
+      "description": "在每个场景内的相对位置取帧（0-1）；多点取平均更稳"
+    },
+    {
+      "name": "min_similarity",
+      "type": "float",
+      "label": "最低相似度",
+      "default": 0.2,
+      "min": 0.0,
+      "max": 1.0,
+      "step": 0.05,
+      "description": "低于该分的匹配会在 warnings 里点名，不阻断"
+    },
+    {
+      "name": "avoid_adjacent_repeat",
+      "type": "bool",
+      "label": "避免相邻重复",
+      "default": true,
+      "description": "相邻两句不共用同一场景；画面多于句子时明显减少重复镜头"
+    },
+    {
+      "name": "allow_reuse",
+      "type": "bool",
+      "label": "允许场景复用",
+      "default": true,
+      "description": "关掉则每个场景只用一次，画面不够时后面的句子会没画面"
+    },
+    {
+      "name": "max_concurrent",
+      "type": "int",
+      "label": "并发数",
+      "default": 2,
+      "min": 1,
+      "max": 8,
+      "advanced": true,
+      "description": "同时抽帧/编码几个场景；太高在低配机上会抢 CPU"
+    },
+    {
+      "name": "retries",
+      "type": "int",
+      "label": "重试次数",
+      "default": 1,
+      "min": 0,
+      "max": 5,
+      "advanced": true,
+      "description": "单场景编码失败后的重试次数"
+    },
+    {
+      "name": "resume",
+      "type": "bool",
+      "label": "断点续跑",
+      "default": true,
+      "advanced": true,
+      "description": "批量处理时跳过已完成的条目"
+    }
+  ],
+  "perm": {
+    "fs": {
+      "read": [],
+      "write": []
+    },
+    "net": {
+      "hosts": []
+    },
+    "model": [],
+    "exec": [
+      {
+        "bin": "ffmpeg"
+      },
+      {
+        "bin": "ffprobe"
+      }
+    ],
+    "secret": []
+  },
+  "deps": [],
+  "exposable": [
+    {
+      "param": "embedder",
+      "recipe_role": "匹配方式",
+      "safe_for_wizard": true
+    },
+    {
+      "param": "avoid_adjacent_repeat",
+      "recipe_role": "减少重复镜头",
+      "safe_for_wizard": true
+    },
+    {
+      "param": "allow_reuse",
+      "recipe_role": "允不允许复用场景",
+      "safe_for_wizard": true
+    }
+  ],
+  "search_aliases": [
+    "匹配",
+    "配画面",
+    "视觉匹配",
+    "CLIP",
+    "对齐",
+    "match"
+  ],
+  "signature": {
+    "alg": "ed25519",
+    "key_id": "a8998646b062c170",
+    "value": "KyJy/aVbDHvqkFJD6fliCTqVaVir2F+P5Dje/zraHg/g7XiyvdRkRzG7NIEQuuzbStOJOrKW0dfwZw8Mc5v0Cw==",
+    "over": "manifest"
+  }
+}
