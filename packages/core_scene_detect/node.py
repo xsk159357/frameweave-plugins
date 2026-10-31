@@ -18,6 +18,7 @@ import asyncio
 import os
 import re
 import subprocess
+import tempfile
 from typing import Any, Dict, List, Optional, Tuple
 
 from app import media_tools
@@ -122,8 +123,190 @@ def _fixed(total: float, interval: float, max_sec: float) -> List[Dict[str, Any]
     return segs
 
 
-class SceneDetectNode(NodeBase):
+# ---------- TransNetV2（外置解释器侧车） ----------
+# 为什么走侧车：安装版后端是 PyInstaller 冻结产物，spec 里 excludes 了 torch
+# （+2.5 GB 不现实），模型在本进程内**永远** import 不到。这不是模型缺，是能力
+# 边界。正确做法交给外置解释器跑：平台负责进程管理与协议，本包提供 worker 脚本。
+_WORKER_TRANSNET = os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                                "worker_transnet.py")
+_SIDECAR_PROBE: Dict[str, Any] = {"checked": False, "ok": False, "why": ""}
 
+
+def _transnet_weights(d: str) -> str:
+    for name in ("transnetv2-pytorch-weights.pth", "transnetv2_weights.pth", "weights.pth"):
+        p = os.path.join(d, name)
+        if os.path.exists(p):
+            return p
+    try:
+        cands = [f for f in os.listdir(d) if f.lower().endswith(".pth")]
+    except OSError:
+        cands = []
+    return os.path.join(d, sorted(cands)[0]) if cands else ""
+
+
+def transnet_supply(model_path: str = "") -> Dict[str, Any]:
+    """TransNetV2「供给 + 可运行性」预检。
+
+    供给（模型在不在）与可运行性（torch 能不能用）分开判断：
+    前者用户能自己解决（去模型中心下载），后者是能力边界（需要外置 Python）。
+    """
+    from app.plugin import deps
+    info: Dict[str, Any] = {"ready": False, "usable": False, "path": "",
+                            "source": "", "warnings": [], "blockers": []}
+    try:
+        res = deps.resolve_model("transnetv2", requested=model_path,
+                                 env=os.environ, params={}) or {}
+    except Exception as e:  # noqa: BLE001 —— 供给探测失败不应让节点崩
+        info["warnings"].append("resolve_model 异常: %s: %s" % (type(e).__name__, e))
+        res = {}
+    path = str(res.get("path") or model_path or "")
+    d = os.path.dirname(path) if path and os.path.isfile(path) else path
+    info.update({"ready": bool(res.get("ready")), "path": path,
+                 "source": str(res.get("source") or ""),
+                 "warnings": info["warnings"] + list(res.get("warnings") or [])})
+    if not d or not os.path.isdir(d):
+        info["blockers"].append("model_missing")
+        return info
+    if not os.path.exists(os.path.join(d, "transnetv2_pytorch.py")):
+        info["blockers"].append("module_missing")
+    elif not _transnet_weights(d):
+        info["blockers"].append("weights_missing")
+    else:
+        info["weights"] = _transnet_weights(d)
+        ok = _sidecar_ready(d)
+        info["torch_sidecar"] = ok
+        if not ok:
+            info["blockers"].append("needs_external_python")
+            info["sidecar_reason"] = _SIDECAR_PROBE.get("why") or ""
+        info["model_dir"] = d
+    info["usable"] = not info["blockers"]
+    return info
+
+
+def _sidecar_ready(model_dir: str = "") -> bool:
+    """外置解释器能不能跑 TransNetV2。只探一次并缓存——起进程加载模型要十几秒，
+    每次推理都探会把「auto 降级」变成常态。"""
+    if _SIDECAR_PROBE["checked"]:
+        return bool(_SIDECAR_PROBE["ok"])
+    _SIDECAR_PROBE["checked"] = True
+    try:
+        from app.plugin import deps
+        rt = deps.sidecar_runtime()
+        if not rt.get("ok"):
+            _SIDECAR_PROBE["why"] = str(rt.get("reason") or "没有可用的外置 Python 运行时")
+            return False
+        if not os.path.isfile(_WORKER_TRANSNET):
+            _SIDECAR_PROBE["why"] = "缺少侧车脚本 %s" % _WORKER_TRANSNET
+            return False
+        r = deps.sidecar_call(_WORKER_TRANSNET, "ping", {"model_dir": model_dir}, 300)
+        _SIDECAR_PROBE["ok"] = bool(r.get("ready"))
+        if not _SIDECAR_PROBE["ok"]:
+            _SIDECAR_PROBE["why"] = "侧车 ping 未就绪"
+        return bool(_SIDECAR_PROBE["ok"])
+    except Exception as e:  # noqa: BLE001
+        _SIDECAR_PROBE["why"] = "%s: %s" % (type(e).__name__, e)
+        return False
+
+
+def _transnet_blocker_error(supply: Dict[str, Any]) -> RuntimeError:
+    """把预检结果翻成节点错误。判定顺序 = 先补供给、再看能力：
+    模型缺失用户能自己解决，所以先报 model_missing；模型齐了才轮到 torch。"""
+    blockers = list(supply.get("blockers") or [])
+    hint = ("去模型中心下载 transnetv2；或把 model_dir 指到已下载的目录"
+            if "model_missing" in blockers else "")
+    if "needs_external_python" in blockers:
+        reason = supply.get("sidecar_reason") or ""
+        return RuntimeError(
+            "TransNetV2 需要外置 Python 运行时（安装版后端不含 torch）。"
+            "请指定一个装好 torch 的 Python（FRAMEWEAVE_PY_EXE 或设置里的模型运行时）。"
+            + (" 原因: %s" % reason if reason else ""))
+    return RuntimeError("TransNetV2 不可用：%s（%s）" % (", ".join(blockers), hint))
+
+
+def _extract_transnet_frames(path: str, workdir: str) -> Any:
+    """按 27x48 抽帧供 TransNetV2。返回 numpy 数组 [N,27,48,3]，失败返回 None。"""
+    try:
+        import numpy as np
+    except ImportError:
+        return None
+    exe = media_tools.ffmpeg_path()
+    if not exe:
+        return None
+    out_dir = os.path.join(workdir, "tn_frames")
+    os.makedirs(out_dir, exist_ok=True)
+    for f in os.listdir(out_dir):
+        try:
+            os.remove(os.path.join(out_dir, f))
+        except OSError:
+            pass
+    p = _run([exe, "-v", "error", "-i", path, "-vf", "scale=48:27",
+              os.path.join(out_dir, "f_%06d.jpg")], _FFMPEG_TIMEOUT)
+    if p is None or p.returncode != 0:
+        return None
+    files = sorted(os.listdir(out_dir))
+    if not files:
+        return None
+    arr = []
+    try:
+        from PIL import Image
+        for f in files:
+            im = Image.open(os.path.join(out_dir, f)).convert("RGB").resize((48, 27))
+            arr.append(np.asarray(im, dtype=np.uint8))
+    except ImportError:
+        # 没有 PIL 就交给 ffmpeg 直接吐 rawvideo
+        p2 = _run([exe, "-v", "error", "-i", path, "-vf", "scale=48:27",
+                   "-f", "rawvideo", "-pix_fmt", "rgb24", "-"], _FFMPEG_TIMEOUT)
+        if p2 is None or p2.returncode != 0:
+            return None
+        return None   # 文本模式捕获不到二进制，走 PIL 路径才是正路
+    return np.asarray(arr) if arr else None
+
+
+def _detect_transnet(path: str, workdir: str, model_dir: str, threshold: float,
+                     min_sec: float, max_sec: float) -> Tuple[Optional[List[Dict[str, Any]]], str]:
+    """TransNetV2 检测。返回 (段列表 或 None, 原因)。"""
+    try:
+        import numpy as np
+    except ImportError:
+        return None, "缺少 numpy（TransNetV2 需要）"
+    frames = _extract_transnet_frames(path, workdir)
+    if frames is None or frames.size == 0:
+        return None, "抽帧失败（需要 ffmpeg 与 PIL）"
+    fd, npy = tempfile.mkstemp(prefix="fw_tn_", suffix=".npy")
+    os.close(fd)
+    try:
+        np.save(npy, np.ascontiguousarray(frames))
+        from app.plugin import deps
+        r = deps.sidecar_call(_WORKER_TRANSNET, "predict",
+                              {"model_dir": model_dir, "npy": npy}, 1800)
+        probs = np.asarray(r.get("probs") or [], dtype=float)
+    except Exception as e:  # noqa: BLE001 —— 推理失败按策略降级，不吞成空结果
+        return None, "TransNetV2 推理失败: %s: %s" % (type(e).__name__, str(e)[:120])
+    finally:
+        try:
+            os.remove(npy)
+        except OSError:
+            pass
+    if probs.size == 0:
+        return None, "TransNetV2 没有返回概率"
+    total = _duration(path)
+    if total <= 0:
+        return None, "探不到视频时长"
+    # 逐帧概率 → 切点帧号（概率过阈值且是上升沿）
+    cuts: List[float] = []
+    fps_est = max(len(probs) / total, 0.001) if total > 0 else 25.0
+    for i in range(1, len(probs)):
+        if probs[i] >= threshold and probs[i - 1] < threshold:
+            cuts.append(i / fps_est)
+    if not cuts:
+        return None, "TransNetV2 未检出超过阈值 %g 的切点" % threshold
+    segs = _build(cuts, total, min_sec, max_sec)
+    if not segs:
+        return None, "切点全部被最短镜头约束合并"
+    return segs, "transnetv2"
+
+
+class SceneDetectNode(NodeBase):
     async def run(self, ctx, inputs, params) -> Dict[str, Any]:
         video = inputs.get("video")
         path = str(getattr(video, "path", "") or "") if video is not None else ""
@@ -133,7 +316,7 @@ class SceneDetectNode(NodeBase):
             raise RuntimeError("视频文件不存在: %s" % path)
 
         engine = str(params.get("engine", "auto") or "auto").strip().lower()
-        if engine not in ("auto", "ffmpeg", "fixed"):
+        if engine not in ("auto", "transnetv2", "ffmpeg", "fixed"):
             engine = "auto"
         try:
             threshold = float(params.get("threshold", 0.3))
@@ -157,12 +340,33 @@ class SceneDetectNode(NodeBase):
         warnings: List[str] = []
         segs: Optional[List[Dict[str, Any]]] = None
         used = ""
+        model_path = str(params.get("model_dir", "") or "").strip()
 
-        if engine in ("auto", "ffmpeg"):
+        # TransNetV2 优先：它比帧差准得多，但要多一个外置运行时。
+        # 显式选它时不可用就报结构化错误（不静默换引擎）；auto 才降级并写原因。
+        if engine in ("auto", "transnetv2"):
+            supply = await asyncio.to_thread(transnet_supply, model_path)
+            if supply.get("usable"):
+                segs, reason = await asyncio.to_thread(
+                    _detect_transnet, path, ctx.get("workdir", "."),
+                    supply.get("model_dir", ""), threshold, min_sec, max_sec)
+                if segs:
+                    used = "transnetv2"
+                else:
+                    warnings.append("TransNetV2 未产出切点：%s" % reason)
+            else:
+                detail = _transnet_blocker_error(supply)
+                if engine == "transnetv2":
+                    raise detail
+                warnings.append("TransNetV2 不可用，改用 ffmpeg：%s" % detail)
+
+        if not segs and engine in ("auto", "ffmpeg"):
             segs, reason = await asyncio.to_thread(
                 _detect, path, threshold, min_sec, max_sec)
             if segs:
                 used = "ffmpeg"
+            elif engine == "ffmpeg":
+                warnings.append("ffmpeg 场景检测不可用：%s" % reason)
             else:
                 warnings.append("ffmpeg 场景检测不可用：%s" % reason)
 
@@ -183,7 +387,7 @@ class SceneDetectNode(NodeBase):
         out = store.save_asset(
             Asset(id="", kind=PortType.SEGMENTS.value,
                   meta={"count": len(segs), "engine": used, "source": path,
-                        "degraded": used != "ffmpeg",
+                        "degraded": used != "transnetv2",
                         "warnings": list(warnings)}),
             payload=segs)
         return {"scenes": out}

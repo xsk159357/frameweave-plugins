@@ -4,7 +4,7 @@
   "title": "镜头切分",
   "category": "分析",
   "description": "把视频按画面突变切成场景段。降级链：ffmpeg 场景检测 → ffprobe 时长 + 固定间隔 → 明确报错（不返回空场景假装成功）",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "kind": "python",
   "entrypoint": "node.py",
   "class_name": "SceneDetectNode",
@@ -35,18 +35,22 @@
       "options": [
         {
           "value": "auto",
-          "label": "自动（优先 ffmpeg）"
+          "label": "自动（优先 TransNetV2）"
+        },
+        {
+          "value": "transnetv2",
+          "label": "仅 TransNetV2（需要外置运行时）"
         },
         {
           "value": "ffmpeg",
-          "label": "仅 ffmpeg"
+          "label": "仅 ffmpeg 帧差"
         },
         {
           "value": "fixed",
           "label": "固定间隔"
         }
       ],
-      "description": "auto 按可用工具自动降级；固定间隔不看画面内容，同一视频每次都切一样"
+      "description": "auto 依次尝试 TransNetV2 → ffmpeg → 固定间隔；显式选 transnetv2 但不可用时直接报错，不静默降级"
     },
     {
       "name": "threshold",
@@ -91,6 +95,14 @@
       "unit": "秒",
       "advanced": true,
       "description": "ffmpeg 不可用时按此间隔平均切分"
+    },
+    {
+      "name": "model_dir",
+      "type": "string",
+      "label": "TransNetV2 模型目录",
+      "default": "",
+      "advanced": true,
+      "description": "留空用模型中心登记的位置；指到含 transnetv2_pytorch.py 与 .pth 的目录可覆盖"
     }
   ],
   "perm": {
@@ -123,6 +135,11 @@
       "param": "max_scene_sec",
       "recipe_role": "单镜头上限",
       "safe_for_wizard": true
+    },
+    {
+      "param": "engine",
+      "recipe_role": "切镜引擎",
+      "safe_for_wizard": true
     }
   ],
   "search_aliases": [
@@ -137,7 +154,7 @@
   "signature": {
     "alg": "ed25519",
     "key_id": "a8998646b062c170",
-    "value": "hrsDjQV4CSuMQQ08pIK+L8ZNk0UIcRcyDVOhKuU3407RvWt+t5jAFMXby0zn7KVSw+oQ81HCJt89ZNAU41PWDw==",
+    "value": "LOPirZiqrHAxmBkE6shGdK+RFWpBZVLqWhcDPH7KHOePfEjLebFh+hs3Z0quMa626rK/xBi+34It3lK3aIilCg==",
     "over": "manifest"
   }
 }
