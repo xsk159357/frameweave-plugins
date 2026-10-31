@@ -1,0 +1,193 @@
+{
+  "manifest_version": 3,
+  "id": "core/llm_call",
+  "title": "统一 LLM 调用",
+  "category": "语义",
+  "description": "提示词进、响应出；统一超时、退避、备用模型回退、JSON 模式与 schema 校验；OpenAI / Gemini 双协议",
+  "version": "2.0.0",
+  "kind": "python",
+  "entrypoint": "node.py",
+  "class_name": "LLMCallNode",
+  "min_engine": "3.0",
+  "inputs": [
+    {
+      "name": "prompt",
+      "type": "TEXT",
+      "label": "提示词",
+      "required": false,
+      "description": "单轮提问用这个；要完整对话历史就用 messages"
+    },
+    {
+      "name": "messages",
+      "type": "TEXT",
+      "label": "完整消息列表",
+      "required": false,
+      "description": "JSON 格式的 [{role, content}] 数组字符串；与 prompt 二选一"
+    },
+    {
+      "name": "system",
+      "type": "TEXT",
+      "label": "系统提示",
+      "required": false,
+      "description": "设定角色与约束；会作为 system 消息插在最前"
+    }
+  ],
+  "outputs": [
+    {
+      "name": "text",
+      "type": "STRING",
+      "label": "响应文本",
+      "description": "模型的原始回复；解析结果与用量统计在 asset.meta"
+    }
+  ],
+  "params": [
+    {
+      "name": "provider",
+      "type": "enum",
+      "label": "Provider",
+      "default": "auto",
+      "options": [
+        {
+          "value": "auto",
+          "label": "自动（按 API 地址判断）"
+        },
+        {
+          "value": "openai",
+          "label": "OpenAI 兼容"
+        },
+        {
+          "value": "gemini",
+          "label": "Gemini"
+        }
+      ],
+      "description": "auto 时看 base_url 里有没有 generativelanguage"
+    },
+    {
+      "name": "api_key",
+      "type": "string",
+      "label": "API Key",
+      "default": "",
+      "description": "可直接填，也可写 @secret:名称 引用保险箱；留空用全局配置"
+    },
+    {
+      "name": "base_url",
+      "type": "string",
+      "label": "API 地址",
+      "default": "",
+      "description": "留空按 provider 取默认端点"
+    },
+    {
+      "name": "model",
+      "type": "string",
+      "label": "模型",
+      "default": "",
+      "description": "留空用全局配置里的模型名"
+    },
+    {
+      "name": "fallback_models",
+      "type": "string",
+      "label": "备用模型",
+      "default": "",
+      "advanced": true,
+      "description": "JSON 数组字符串，如 [\"gpt-4o-mini\",\"gemini-2.0-flash\"]；主模型失败时按序回退"
+    },
+    {
+      "name": "temperature",
+      "type": "float",
+      "label": "温度",
+      "default": 0.4,
+      "min": 0.0,
+      "max": 2.0,
+      "step": 0.05,
+      "description": "越低越稳定；结构化抽取建议 0.1–0.4"
+    },
+    {
+      "name": "max_tokens",
+      "type": "int",
+      "label": "最大输出 Token",
+      "default": 4096,
+      "min": 64,
+      "max": 32768,
+      "description": "单次回复上限；长文本要调大"
+    },
+    {
+      "name": "json_mode",
+      "type": "bool",
+      "label": "JSON 输出",
+      "default": false,
+      "description": "要求模型返回合法 JSON；部分模型不支持时会被忽略"
+    },
+    {
+      "name": "schema",
+      "type": "text",
+      "label": "输出 Schema",
+      "default": "",
+      "advanced": true,
+      "description": "JSON Schema 字符串；填了会校验返回值，不合法时写进 warnings"
+    },
+    {
+      "name": "timeout",
+      "type": "int",
+      "label": "单次超时",
+      "default": 120,
+      "min": 5,
+      "max": 1800,
+      "unit": "秒",
+      "description": "每次请求的超时；视觉模型建议 180 以上"
+    },
+    {
+      "name": "backoff",
+      "type": "string",
+      "label": "退避序列",
+      "default": "[2,5,10]",
+      "advanced": true,
+      "description": "JSON 数组字符串，单位秒；重试间隔依次取用"
+    }
+  ],
+  "perm": {
+    "fs": {
+      "read": [],
+      "write": []
+    },
+    "net": {
+      "hosts": []
+    },
+    "model": [],
+    "exec": [],
+    "secret": [
+      "*"
+    ]
+  },
+  "deps": [],
+  "exposable": [
+    {
+      "param": "model",
+      "recipe_role": "模型",
+      "safe_for_wizard": true
+    },
+    {
+      "param": "temperature",
+      "recipe_role": "温度",
+      "safe_for_wizard": false
+    },
+    {
+      "param": "json_mode",
+      "recipe_role": "是否 JSON 输出",
+      "safe_for_wizard": false
+    }
+  ],
+  "search_aliases": [
+    "LLM",
+    "大模型",
+    "调用",
+    "GPT",
+    "Gemini",
+    "文本生成"
+  ],
+  "signature": {
+    "alg": "ed25519",
+    "key_id": "a8998646b062c170",
+    "value": "6SCq5WObYf/9lJHo/8eNB2suWzLL1SuXXJfMcJiczmRdYJUDCA5TOX34YiWQVBj+qo/J521coxpO8A0dFhkbAg==",
+    "over": "manifest"
+  }
+}
