@@ -1,9 +1,9 @@
 {
   "id": "local_ai_narrate_001",
   "name": "AI 写文案出片 · 切分→分块→视觉分析→写词→配音→配画面→字幕→渲染",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "kind": "workflow",
   "source": "official",
   "updated_at": 1793436386,
-  "workflow_sha256": "21fd74032dc2c7a006c3bcb618380a6aeff896a34579db51f3e441fe2055b399"
+  "workflow_sha256": "71faf2efd63a303904fe27b8b27d779980c3d53cd05105f838f965a045defe5b"
 }

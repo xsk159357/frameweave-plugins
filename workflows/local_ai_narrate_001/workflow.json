@@ -2,7 +2,7 @@
   "id": "local_ai_narrate_001",
   "name": "AI 写文案出片 · 切分→分块→视觉分析→写词→配音→配画面→字幕→渲染",
   "description": "给一段视频和 API Key，自动看懂画面并写出解说词，配上配音、画面与字幕，渲染成有声 MP4。",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "kind": "workflow",
   "tags": [
     "AI",
@@ -116,35 +116,25 @@
     },
     {
       "id": "n6",
-      "type": "core/match_clip",
+      "type": "core/match_visual",
       "x": 1340,
       "y": 360,
       "params": {
+        "embedder": "auto",
+        "model_dir": "",
+        "frame_positions": "0.1,0.5,0.9",
         "min_similarity": 0.2,
-        "top_k": 1,
-        "avoid_adjacent_repeat": true
+        "avoid_adjacent_repeat": true,
+        "allow_reuse": true,
+        "max_concurrent": 2,
+        "retries": 1,
+        "resume": true
       },
       "inputs": {
-        "narration": "n5",
+        "video": "n1",
+        "script": "n5",
         "scenes": "n2",
-        "desc": "n4"
-      }
-    },
-    {
-      "id": "n7",
-      "type": "core/timeline_build",
-      "x": 1600,
-      "y": 200,
-      "params": {
-        "chars_per_second": 4.5,
-        "min_clip_sec": 1.0,
-        "max_clip_sec": 12.0,
-        "fit_mode": "truncate"
-      },
-      "inputs": {
-        "match": "n6",
-        "scenes": "n2",
-        "voice_segments": "n11"
+        "items": "n5"
       }
     },
     {
@@ -283,7 +273,7 @@
       "source": "n5",
       "target": "n6",
       "sourceHandle": "script",
-      "targetHandle": "narration"
+      "targetHandle": "script"
     },
     {
       "source": "n2",
@@ -295,25 +285,7 @@
       "source": "n4",
       "target": "n6",
       "sourceHandle": "descriptions",
-      "targetHandle": "desc"
-    },
-    {
-      "source": "n6",
-      "target": "n7",
-      "sourceHandle": "match",
-      "targetHandle": "match"
-    },
-    {
-      "source": "n2",
-      "target": "n7",
-      "sourceHandle": "scenes",
-      "targetHandle": "scenes"
-    },
-    {
-      "source": "n7",
-      "target": "n8",
-      "sourceHandle": "timeline",
-      "targetHandle": "timeline"
+      "targetHandle": "items"
     },
     {
       "source": "n8",
@@ -326,12 +298,6 @@
       "target": "n10",
       "sourceHandle": "video",
       "targetHandle": "video"
-    },
-    {
-      "source": "n7",
-      "target": "n10",
-      "sourceHandle": "timeline",
-      "targetHandle": "timeline"
     },
     {
       "source": "n9",
@@ -347,15 +313,21 @@
     },
     {
       "source": "n11",
-      "target": "n7",
-      "sourceHandle": "segments",
-      "targetHandle": "voice_segments"
-    },
-    {
-      "source": "n11",
       "target": "n10",
       "sourceHandle": "audio",
       "targetHandle": "audio"
+    },
+    {
+      "source": "n6",
+      "target": "n8",
+      "sourceHandle": "timeline",
+      "targetHandle": "timeline"
+    },
+    {
+      "source": "n6",
+      "target": "n10",
+      "sourceHandle": "timeline",
+      "targetHandle": "timeline"
     }
   ]
 }
