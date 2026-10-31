@@ -552,7 +552,14 @@ async def _process_single(ctx, store, embedder: str, clip: _ClipBackend,
         cursor = max(cursor, end)
         timeline.append({
             "start": round(start, 3), "end": round(end, 3),
+            # text 是 v3 时间线的通用字段（subtitle_build / render 都读它）；
+            # narration 是解说猫时期的字段名，保留供旧下游继续用。
+            "text": m["sentence"],
             "narration": m["sentence"], "video": "",
+            # 源片时间与成片时间分开存（与 timeline_build 口径一致）：
+            # 下游排片只能用 out_*，用 start/end 会让复用的场景跳回片头。
+            "out_start": round(start, 3), "out_end": round(end, 3),
+            "duration": round(end - start, 3),
             "LAY_INDEX": len(timeline),
         })
 
