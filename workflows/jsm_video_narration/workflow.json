@@ -1,0 +1,346 @@
+{
+  "id": "jsm_video_narration",
+  "name": "视频解说 · AI 全链出片（官方模板）",
+  "description": "出厂模板：导入视频后自动跑完整解说链——切镜→智能分块→分块视觉分析→AI 写解说词→Chinese-CLIP 配画面→配音→时间线→字幕→渲染成片。填视频路径与 API Key 即可运行；无 Key 时改走 local_no_model_001 或 local_voice_001。",
+  "version": "3.0.0",
+  "kind": "workflow",
+  "tags": [
+    "解说猫复刻",
+    "影视解说",
+    "官方",
+    "AI"
+  ],
+  "nodes": [
+    {
+      "id": "n1",
+      "type": "core/media_import",
+      "x": 40,
+      "y": 200,
+      "params": {
+        "path": "",
+        "probe": true,
+        "proxy_height": 0
+      },
+      "inputs": {}
+    },
+    {
+      "id": "n2",
+      "type": "core/scene_detect",
+      "x": 300,
+      "y": 200,
+      "params": {
+        "engine": "auto",
+        "threshold": 0.3,
+        "min_scene_sec": 1.0,
+        "max_scene_sec": 12.0,
+        "fallback_interval": 5.0,
+        "model_dir": ""
+      },
+      "inputs": {
+        "video": "n1"
+      }
+    },
+    {
+      "id": "n3",
+      "type": "core/smart_chunk",
+      "x": 560,
+      "y": 200,
+      "params": {
+        "target_duration": 180.0,
+        "min_duration": 120.0,
+        "max_duration": 240.0,
+        "tail_policy": "merge_back"
+      },
+      "inputs": {
+        "video": "n1",
+        "scenes": "n2"
+      }
+    },
+    {
+      "id": "n4",
+      "type": "core/analyze_chunks",
+      "x": 820,
+      "y": 200,
+      "params": {
+        "provider": "auto",
+        "api_key": "",
+        "base_url": "",
+        "model": "",
+        "concurrency": 3,
+        "retries": 2,
+        "frames_per_chunk": 4,
+        "frame_scale": 512,
+        "temperature": 0.3,
+        "max_tokens": 2048,
+        "json_schema": true
+      },
+      "inputs": {
+        "video": "n1",
+        "chunks": "n3"
+      }
+    },
+    {
+      "id": "n5",
+      "type": "core/ai_narrate",
+      "x": 1080,
+      "y": 200,
+      "params": {
+        "mode": "上帝视角",
+        "style": "悬疑解说",
+        "custom_style": "",
+        "perspective": "第三人称",
+        "language": "中文",
+        "provider": "auto",
+        "api_key": "",
+        "base_url": "",
+        "model": "",
+        "target_duration": 0.0,
+        "target_chars": 0,
+        "avg_segment_chars": 25,
+        "temperature": 0.7,
+        "max_tokens": 4096,
+        "keyframes": 8,
+        "json_mode": true,
+        "local_match": true,
+        "retries": 2,
+        "llm_channel": "llm_call",
+        "hook_first": false,
+        "filter_intro_outro": false,
+        "ost_ratio": 0.0
+      },
+      "inputs": {
+        "video": "n1",
+        "scenes": "n2",
+        "descriptions": "n4"
+      }
+    },
+    {
+      "id": "n6",
+      "type": "core/match_visual",
+      "x": 1340,
+      "y": 360,
+      "params": {
+        "embedder": "auto",
+        "model_dir": "",
+        "frame_positions": "0.1,0.5,0.9",
+        "min_similarity": 0.2,
+        "avoid_adjacent_repeat": true,
+        "allow_reuse": true,
+        "max_concurrent": 2,
+        "retries": 1,
+        "resume": true
+      },
+      "inputs": {
+        "video": "n1",
+        "script": "n5",
+        "scenes": "n2",
+        "items": "n5"
+      }
+    },
+    {
+      "id": "n8",
+      "type": "core/subtitle_build",
+      "x": 1860,
+      "y": 120,
+      "params": {
+        "max_chars_per_line": 16,
+        "max_lines": 2,
+        "min_duration": 0.5,
+        "max_duration": 8.0
+      },
+      "inputs": {
+        "timeline": "n7"
+      }
+    },
+    {
+      "id": "n9",
+      "type": "core/subtitle_compose",
+      "x": 2120,
+      "y": 120,
+      "params": {
+        "manual_text": "",
+        "preset": "默认",
+        "font": "微软雅黑",
+        "size": 48,
+        "color": "#FFFFFF",
+        "stroke": "#000000",
+        "animation": "none",
+        "karaoke": true
+      },
+      "inputs": {
+        "subtitle": "n8"
+      }
+    },
+    {
+      "id": "n10",
+      "type": "core/video_render",
+      "x": 2380,
+      "y": 200,
+      "params": {
+        "aspect": "16:9",
+        "resolution": "1080p",
+        "fps": 30,
+        "burn_subtitle": true,
+        "transition": "fade",
+        "transition_duration": 0.5,
+        "scale_mode": "contain",
+        "audio_mix": "mix",
+        "original_volume": 0.25,
+        "overlay_alpha": 0.8,
+        "align_mode": "none",
+        "color_grade": "none",
+        "output_name": "chengpian",
+        "narration_volume": 1.0
+      },
+      "inputs": {
+        "video": "n1",
+        "timeline": "n7",
+        "styled_subtitle": "n9",
+        "audio": "n11"
+      }
+    },
+    {
+      "id": "n11",
+      "type": "core/tts_synthesize",
+      "x": 1080,
+      "y": 460,
+      "params": {
+        "engine": "indextts",
+        "lang": "ZH",
+        "voice": "",
+        "ref_audio": "",
+        "rate": 0,
+        "volume": 100,
+        "max_chars": 40,
+        "gap": 0.15,
+        "indextts_dir": ""
+      },
+      "inputs": {
+        "script": "n5",
+        "voice_ref": "n1"
+      }
+    }
+  ],
+  "edges": [
+    {
+      "source": "n1",
+      "target": "n2",
+      "sourceHandle": "video",
+      "targetHandle": "video"
+    },
+    {
+      "source": "n1",
+      "target": "n3",
+      "sourceHandle": "video",
+      "targetHandle": "video"
+    },
+    {
+      "source": "n2",
+      "target": "n3",
+      "sourceHandle": "scenes",
+      "targetHandle": "scenes"
+    },
+    {
+      "source": "n1",
+      "target": "n4",
+      "sourceHandle": "video",
+      "targetHandle": "video"
+    },
+    {
+      "source": "n3",
+      "target": "n4",
+      "sourceHandle": "chunks",
+      "targetHandle": "chunks"
+    },
+    {
+      "source": "n1",
+      "target": "n5",
+      "sourceHandle": "video",
+      "targetHandle": "video"
+    },
+    {
+      "source": "n2",
+      "target": "n5",
+      "sourceHandle": "scenes",
+      "targetHandle": "scenes"
+    },
+    {
+      "source": "n4",
+      "target": "n5",
+      "sourceHandle": "descriptions",
+      "targetHandle": "descriptions"
+    },
+    {
+      "source": "n5",
+      "target": "n6",
+      "sourceHandle": "script",
+      "targetHandle": "script"
+    },
+    {
+      "source": "n2",
+      "target": "n6",
+      "sourceHandle": "scenes",
+      "targetHandle": "scenes"
+    },
+    {
+      "source": "n4",
+      "target": "n6",
+      "sourceHandle": "descriptions",
+      "targetHandle": "items"
+    },
+    {
+      "source": "n8",
+      "target": "n9",
+      "sourceHandle": "subtitle",
+      "targetHandle": "subtitle"
+    },
+    {
+      "source": "n1",
+      "target": "n10",
+      "sourceHandle": "video",
+      "targetHandle": "video"
+    },
+    {
+      "source": "n9",
+      "target": "n10",
+      "sourceHandle": "styled_subtitle",
+      "targetHandle": "styled_subtitle"
+    },
+    {
+      "source": "n5",
+      "target": "n11",
+      "sourceHandle": "script",
+      "targetHandle": "script"
+    },
+    {
+      "source": "n11",
+      "target": "n10",
+      "sourceHandle": "audio",
+      "targetHandle": "audio"
+    },
+    {
+      "source": "n6",
+      "target": "n8",
+      "sourceHandle": "timeline",
+      "targetHandle": "timeline"
+    },
+    {
+      "source": "n6",
+      "target": "n10",
+      "sourceHandle": "timeline",
+      "targetHandle": "timeline"
+    },
+    {
+      "source": "n1",
+      "target": "n6",
+      "sourceHandle": "video",
+      "targetHandle": "video"
+    },
+    {
+      "source": "n1",
+      "target": "n11",
+      "sourceHandle": "audio",
+      "targetHandle": "voice_ref"
+    }
+  ]
+}
