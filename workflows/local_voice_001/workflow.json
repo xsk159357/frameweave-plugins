@@ -1,0 +1,277 @@
+{
+  "id": "local_voice_001",
+  "name": "本地出片 · 文案→配音→按配音排片→字幕→渲染成片",
+  "description": "用户给文案，机器配音，画面按配音实测时长排片（不再按字数估），出带样式的字幕与剪辑软件可直接用的片段包。配音与排片的时长口径统一，音画不会错位。",
+  "version": "1.1.0",
+  "kind": "workflow",
+  "tags": [
+    "本地",
+    "配音",
+    "解说",
+    "出片"
+  ],
+  "nodes": [
+    {
+      "id": "n1",
+      "type": "core/media_import",
+      "x": 40,
+      "y": 240,
+      "params": {
+        "path": "",
+        "probe": true,
+        "proxy_height": 0
+      },
+      "inputs": {}
+    },
+    {
+      "id": "n2",
+      "type": "core/script_input",
+      "x": 40,
+      "y": 460,
+      "params": {
+        "text": "",
+        "keep_empty_lines": false
+      },
+      "inputs": {}
+    },
+    {
+      "id": "n3",
+      "type": "core/scene_detect",
+      "x": 300,
+      "y": 240,
+      "params": {
+        "engine": "auto",
+        "threshold": 0.3,
+        "min_scene_sec": 1.0,
+        "max_scene_sec": 12.0,
+        "fallback_interval": 5.0
+      },
+      "inputs": {
+        "video": "n1"
+      }
+    },
+    {
+      "id": "n4",
+      "type": "core/match_clip",
+      "x": 560,
+      "y": 340,
+      "params": {
+        "min_similarity": 0.2,
+        "top_k": 1,
+        "avoid_adjacent_repeat": true
+      },
+      "inputs": {
+        "narration": "n2",
+        "scenes": "n3"
+      }
+    },
+    {
+      "id": "n5",
+      "type": "core/tts_synthesize",
+      "x": 300,
+      "y": 560,
+      "params": {
+        "engine": "auto",
+        "lang": "ZH",
+        "voice": "",
+        "ref_audio": "",
+        "rate": 0,
+        "volume": 100,
+        "max_chars": 40,
+        "gap": 0.15,
+        "indextts_dir": ""
+      },
+      "inputs": {
+        "script": "n2"
+      }
+    },
+    {
+      "id": "n6",
+      "type": "core/timeline_build",
+      "x": 820,
+      "y": 400,
+      "params": {
+        "chars_per_second": 4.5,
+        "min_clip_sec": 1.0,
+        "max_clip_sec": 12.0,
+        "fit_mode": "truncate"
+      },
+      "inputs": {
+        "match": "n4",
+        "scenes": "n3",
+        "voice_segments": "n5"
+      }
+    },
+    {
+      "id": "n7",
+      "type": "core/subtitle_build",
+      "x": 1080,
+      "y": 400,
+      "params": {},
+      "inputs": {
+        "timeline": "n6"
+      }
+    },
+    {
+      "id": "n8",
+      "type": "core/subtitle_compose",
+      "x": 1340,
+      "y": 400,
+      "params": {
+        "manual_text": "",
+        "preset": "默认",
+        "font": "微软雅黑",
+        "size": 48,
+        "color": "#FFFFFF",
+        "stroke": "#000000",
+        "animation": "none",
+        "karaoke": true
+      },
+      "inputs": {
+        "subtitle": "n7"
+      }
+    },
+    {
+      "id": "n9",
+      "type": "core/export_bundle",
+      "x": 1600,
+      "y": 400,
+      "params": {
+        "output_name": "voice",
+        "write_srt": true,
+        "aspect": "16:9"
+      },
+      "inputs": {
+        "timeline": "n6",
+        "subtitle": "n8",
+        "video": "n1"
+      }
+    },
+    {
+      "id": "n10",
+      "type": "core/video_render",
+      "x": 1860,
+      "y": 260,
+      "params": {
+        "aspect": "16:9",
+        "resolution": "1080p",
+        "fps": 30,
+        "burn_subtitle": true,
+        "transition": "fade",
+        "transition_duration": 0.5,
+        "scale_mode": "contain",
+        "audio_mix": "mix",
+        "narration_volume": 1.0,
+        "original_volume": 0.25,
+        "overlay_alpha": 0.8,
+        "align_mode": "none",
+        "color_grade": "none",
+        "output_name": "chengpian"
+      },
+      "inputs": {
+        "video": "n1",
+        "timeline": "n6",
+        "styled_subtitle": "n8",
+        "audio": "n5"
+      }
+    }
+  ],
+  "edges": [
+    {
+      "source": "n1",
+      "target": "n3",
+      "sourceHandle": "video",
+      "targetHandle": "video"
+    },
+    {
+      "source": "n2",
+      "target": "n4",
+      "sourceHandle": "script",
+      "targetHandle": "narration"
+    },
+    {
+      "source": "n3",
+      "target": "n4",
+      "sourceHandle": "scenes",
+      "targetHandle": "scenes"
+    },
+    {
+      "source": "n3",
+      "target": "n6",
+      "sourceHandle": "scenes",
+      "targetHandle": "scenes"
+    },
+    {
+      "source": "n4",
+      "target": "n6",
+      "sourceHandle": "match",
+      "targetHandle": "match"
+    },
+    {
+      "source": "n5",
+      "target": "n6",
+      "sourceHandle": "segments",
+      "targetHandle": "voice_segments"
+    },
+    {
+      "source": "n6",
+      "target": "n7",
+      "sourceHandle": "timeline",
+      "targetHandle": "timeline"
+    },
+    {
+      "source": "n7",
+      "target": "n8",
+      "sourceHandle": "subtitle",
+      "targetHandle": "subtitle"
+    },
+    {
+      "source": "n8",
+      "target": "n9",
+      "sourceHandle": "styled_subtitle",
+      "targetHandle": "subtitle"
+    },
+    {
+      "source": "n6",
+      "target": "n9",
+      "sourceHandle": "timeline",
+      "targetHandle": "timeline"
+    },
+    {
+      "source": "n1",
+      "target": "n9",
+      "sourceHandle": "video",
+      "targetHandle": "video"
+    },
+    {
+      "source": "n2",
+      "target": "n5",
+      "sourceHandle": "script",
+      "targetHandle": "script"
+    },
+    {
+      "source": "n1",
+      "target": "n10",
+      "sourceHandle": "video",
+      "targetHandle": "video"
+    },
+    {
+      "source": "n6",
+      "target": "n10",
+      "sourceHandle": "timeline",
+      "targetHandle": "timeline"
+    },
+    {
+      "source": "n8",
+      "target": "n10",
+      "sourceHandle": "styled_subtitle",
+      "targetHandle": "styled_subtitle"
+    },
+    {
+      "source": "n5",
+      "target": "n10",
+      "sourceHandle": "audio",
+      "targetHandle": "audio"
+    }
+  ]
+}

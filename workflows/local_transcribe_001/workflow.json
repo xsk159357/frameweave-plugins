@@ -1,8 +1,8 @@
 {
   "id": "local_transcribe_001",
-  "name": "本地转写 · 语音转字幕→样式化→片段包",
-  "description": "不需要用户写文案：自动识别视频里的语音生成带时间码的字幕，套上样式，导出可交给剪辑软件的片段包与 SRT。画面不重剪，成片就是原片加字幕。模型走首启下载，全程本地。",
-  "version": "1.0.0",
+  "name": "本地转写 · 语音转字幕→样式化→渲染成片",
+  "description": "不需要用户写文案：自动识别视频语音生成带时间码的字幕，套上样式后烧进画面并渲染成 MP4。画面不重剪，成片就是原片加字幕。",
+  "version": "1.1.0",
   "kind": "workflow",
   "tags": [
     "本地",
@@ -73,6 +73,31 @@
         "subtitle": "n3",
         "video": "n1"
       }
+    },
+    {
+      "id": "n5",
+      "type": "core/video_render",
+      "x": 1080,
+      "y": 260,
+      "params": {
+        "aspect": "16:9",
+        "resolution": "1080p",
+        "fps": 30,
+        "burn_subtitle": true,
+        "transition": "cut",
+        "transition_duration": 0.5,
+        "scale_mode": "contain",
+        "audio_mix": "original_only",
+        "original_volume": 0.8,
+        "overlay_alpha": 0.8,
+        "align_mode": "none",
+        "color_grade": "none",
+        "output_name": "transcribe"
+      },
+      "inputs": {
+        "video": "n1",
+        "styled_subtitle": "n3"
+      }
     }
   ],
   "edges": [
@@ -99,6 +124,18 @@
       "target": "n4",
       "sourceHandle": "video",
       "targetHandle": "video"
+    },
+    {
+      "source": "n1",
+      "target": "n5",
+      "sourceHandle": "video",
+      "targetHandle": "video"
+    },
+    {
+      "source": "n3",
+      "target": "n5",
+      "sourceHandle": "styled_subtitle",
+      "targetHandle": "styled_subtitle"
     }
   ]
 }

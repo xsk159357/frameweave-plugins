@@ -347,10 +347,25 @@ class VideoRenderNode(NodeBase):
         seg_asset = inputs.get("timeline")
         if video is None or not getattr(video, "path", "") or not os.path.exists(video.path):
             raise RuntimeError("需要源视频输入")
-        if seg_asset is None:
-            raise RuntimeError("需要片段列表输入")
         store = ctx["store"]
-        segs = store.read_json(seg_asset.id) or []
+        # 不接时间线时按源片整段直出：成片时间 = 源片时间，画面不重剪。
+        # 「转写加字幕」这类场景本来就不需要排片，硬要求接一条时间线反而
+        # 逼调用方去造数据。export_bundle 对同一场景就是这么做的，口径一致。
+        if seg_asset is None:
+            dur = 0.0
+            try:
+                dur = float((video.meta or {}).get("duration") or 0.0)
+            except (TypeError, ValueError):
+                dur = 0.0
+            if dur <= 0:
+                dur = _num((await probe_media(ctx, video.path)).get("duration"))
+            if dur <= 0:
+                raise RuntimeError("既没有时间线，也探不到源视频时长，无法整段直出")
+            segs = [{"index": 0, "start": 0.0, "end": dur,
+                     "out_start": 0.0, "out_end": dur,
+                     "duration": dur, "scene_index": None, "text": ""}]
+        else:
+            segs = store.read_json(seg_asset.id) or []
         if not isinstance(segs, list) or not segs:
             raise RuntimeError("片段列表为空")
 

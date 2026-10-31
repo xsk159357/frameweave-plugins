@@ -1,9 +1,9 @@
 {
   "id": "local_transcribe_001",
-  "name": "本地转写 · 语音转字幕→样式化→片段包",
-  "version": "1.0.0",
+  "name": "本地转写 · 语音转字幕→样式化→渲染成片",
+  "version": "1.1.0",
   "kind": "workflow",
   "source": "official",
   "updated_at": 1793342546,
-  "workflow_sha256": "907b8db04c252ad9c8a8e6ba82d7bf181c3c0bab804843f33b5ab826999220f0"
+  "workflow_sha256": "c2684f4f9f4048f1f5280e9411b6ec5857b8e7588881662a9916a5b5aa99c116"
 }

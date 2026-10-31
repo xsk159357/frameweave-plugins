@@ -1,0 +1,9 @@
+{
+  "id": "local_voice_001",
+  "name": "本地出片 · 文案→配音→按配音排片→字幕→渲染成片",
+  "version": "1.1.0",
+  "kind": "workflow",
+  "source": "official",
+  "updated_at": 1793374816,
+  "workflow_sha256": "ab911be4746c8c36732d19d0e8a39f76274ef9088c359608a3f03357db8883c6"
+}
