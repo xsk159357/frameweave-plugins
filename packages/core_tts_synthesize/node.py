@@ -4,14 +4,19 @@
   1. 下游要按配音时长排片（timeline_build 现在按字数估），只有逐句才有边界；
   2. 整段合成之后想在中间改一句、重读一句，做不到；逐句可以只重跑那一句。
 
-引擎：当前走 Windows SAPI（系统自带，零下载、秒出）。
-IndexTTS 2.5 的权重在本机是齐的（约 9.5 GB：gpt 3.1G / sffmel 396M / codec 580M
-/ hf_cache 5.2G），但它依赖的 transformers 版本与平台 venv 冲突
-（`OffloadedCache` 已被移除），需要给模型单独准备运行时才能用。
+引擎：三条可用路 + 一条兜底：
+- indextts: IndexTTS 2.5 的权重在本机是齐的（约 9.5 GB：gpt 3.1G / sffmel 396M / codec 580M
+  / hf_cache 5.2G），但它依赖的 transformers 版本与平台 venv 冲突
+  （`OffloadedCache` 已被移除），需要给模型单独准备运行时才能用。
+- edge:     edge-tts 免费在线配音（v1.4.0 从归档 core_tts 移植，FW-DEV-36 同源）。
+  零下载、无需 Key、只需联网；endpoint speech.platform.bing.com 已声明进 perm.net。
+  失败分流沿用归档口径：403/Sec-MS-GEC = 签名类（edge-tts<7.3.1 发 v1 令牌，
+  重试无效，直接报「请升级依赖」）；连接类 = network（指数退避重试）。
+- sapi:     Windows 系统语音（秒出，但部分机器没有可用中文语音）。
 
-所以 engine=auto 现在落到 SAPI，并写进 warnings——**不假装用了 IndexTTS**。
-显式选 indextts 而环境不满足时直接报错，不是静默降级：用户选了它，就该知道
-为什么没用上。
+所以 engine=auto 的降级链是 indextts → edge → sapi，每一步降级都写进 warnings
+——**不假装用了高优先级引擎**。显式选 indextts/edge 而环境不满足时直接报错，
+不是静默降级：用户选了它，就该知道为什么没用上。
 
 时长口径：以 ffprobe 读到的实际音频为准，不用字数估算。这是本节点在整条链里
 的核心价值——它是唯一知道「这句话读出来到底几秒」的地方。
@@ -42,6 +47,126 @@ SOFT = "，,、：:"
 # 统一采样口径：SAPI 输出的 wav 采样率随音色/系统版本变，
 # 不统一的话 concat 在混合来源上会直接报错或产出噪声
 AR = "22050"
+
+# ---- edge 引擎（v1.4.0，从归档 core_tts 移植，口径与 FW-DEV-36 一致）----
+# edge-tts 的 SentenceBoundary 用 100ns tick 记时间（offset=1000000 即 0.1 s），不是秒。
+_EDGE_100NS = 10_000_000.0
+_EDGE_DEFAULT_VOICE = "zh-CN-XiaoxiaoNeural"
+# endpoint 已声明进 manifest.perm.net.hosts；写在这里仅供报错提示与单测对账
+_EDGE_HOST = "speech.platform.bing.com"
+_EDGE_HINT_SIGNATURE = (
+    "配音服务签名已过期，请升级到新版本（需要 edge-tts>=7.3.1）。"
+    "这是配音服务端的安全令牌更新，重试无效。")
+_EDGE_HINT_NETWORK = "网络不通，无法连接配音服务。请检查网络/代理后重试。"
+
+
+def _edge_version() -> str:
+    try:
+        import edge_tts
+        return str(getattr(edge_tts, "__version__", "?"))
+    except Exception:  # noqa: BLE001 —— 版本只用于提示，取不到不影响分流
+        return "未安装"
+
+
+def _edge_http_status(exc: BaseException):
+    """尽力取 HTTP 状态：aiohttp/websockets 两族的字段名不同，两条都试。"""
+    for attr in ("status", "status_code"):
+        v = getattr(exc, attr, None)
+        if isinstance(v, int):
+            return v
+    resp = getattr(exc, "response", None)
+    if resp is not None:
+        for attr in ("status_code", "status"):
+            v = getattr(resp, attr, None)
+            if isinstance(v, int):
+                return v
+    return None
+
+
+def _edge_failure_kind(exc: BaseException) -> str:
+    """edge 失败分类（FW-DEV-36）：signature（令牌/403，不可重试）/ network（可重试）
+    / dependency / other。403 属于端点侧令牌版本问题，重试只是让用户多等几秒再看到
+    同一个「配音失败」，所以 signature/dependency 立刻失败并说清原因。"""
+    if _edge_http_status(exc) == 403:
+        return "signature"
+    text = "%s: %s" % (type(exc).__name__, exc)
+    if "Sec-MS-GEC" in text:
+        return "signature"
+    if isinstance(exc, (ImportError, AttributeError)) and "edge_tts" in text:
+        return "dependency"
+    low = type(exc).__name__.lower()
+    if isinstance(exc, (asyncio.TimeoutError, TimeoutError, ConnectionError, OSError)):
+        return "network"
+    if any(k in low for k in ("connector", "clientconnection", "servertimeout",
+                              "serverdisconnected", "clientoserror", "clientpayloaderror")):
+        return "network"
+    if "getaddrinfo" in text or "name resolution" in text.lower():
+        return "network"
+    return "other"
+
+
+def _edge_failure_message(kind: str, exc: BaseException, attempts: int) -> str:
+    if kind == "signature":
+        return "%s（当前 edge-tts %s）" % (_EDGE_HINT_SIGNATURE, _edge_version())
+    if kind == "dependency":
+        return ("配音依赖异常，请重新安装或升级 edge-tts（>=7.3.1）：%s（当前 %s）"
+                % (exc, _edge_version()))
+    if kind == "network":
+        return "%s（%s）" % (_EDGE_HINT_NETWORK, exc)
+    return "edge-tts 第 %d 次失败: %s" % (attempts, exc)
+
+
+def _edge_resolve_voice(voice: str) -> str:
+    """edge 引擎音色归一：edge:{native} → native；裸 id 按 edge 兼容处理；
+    其它引擎前缀明确报错（音色属于谁就该用谁的引擎）。空 → 默认晓晓。"""
+    v = str(voice or "").strip()
+    if not v:
+        return _EDGE_DEFAULT_VOICE
+    if ":" in v:
+        provider, native = v.split(":", 1)
+        if provider != "edge":
+            raise RuntimeError(
+                "invalid: 音色 %r 属于 %s 引擎，edge 引擎仅支持 edge:* 音色——"
+                "请切换到对应引擎" % (v, provider))
+        return native
+    return v
+
+
+async def _edge_one(text: str, out_path: str, voice: str, rate: int,
+                    volume: int, retries: int = 3) -> None:
+    """edge-tts 合成一句（不含分块——v3 逐句切分已由 _to_lines 完成）。
+
+    不能用 comm.save()：它只落音频，把服务端每次都在发的 SentenceBoundary 丢掉。
+    v3 逐句口径下单句边界暂不外抛（segments 以句为单位由 ffprobe 实测），但保留
+    读取路径，句子内多子句的时间轴后续要用时不再踩 100ns tick 这个坑。
+    """
+    import edge_tts
+    # SAPI 的 rate 是 -10~10 档位，edge 语法是 +N%/-N%：按档位×5% 线性映射
+    # （0 档=正常，±10 档=±50%，与 SAPI 档位感知大致对齐）。
+    rate_pct = "+%d%%" % (int(rate) * 5) if rate > 0 else \
+        ("%d%%" % (int(rate) * 5) if rate < 0 else "+0%")
+    # volume 是 0-100 的绝对值，edge 语法同样带符号：50 即 "+50%"（相对正常音量）。
+    vol_pct = "+%d%%" % int(volume) if volume > 0 else "-0%"
+    attempt = 0
+    while True:
+        attempt += 1
+        try:
+            comm = edge_tts.Communicate(text, voice=voice, rate=rate_pct,
+                                        volume=vol_pct)
+            with open(out_path, "wb") as f:
+                async for chunk in comm.stream():
+                    if chunk.get("type") == "audio" and chunk.get("data"):
+                        f.write(chunk["data"])
+            if not os.path.isfile(out_path) or os.path.getsize(out_path) == 0:
+                raise RuntimeError("edge-tts 输出为空")
+            return
+        except asyncio.CancelledError:
+            raise
+        except Exception as e:  # noqa: BLE001 —— 按 FW-DEV-36 分流
+            kind = _edge_failure_kind(e)
+            if kind in ("signature", "dependency") or attempt > retries:
+                raise RuntimeError(_edge_failure_message(kind, e, attempt)) from e
+            await asyncio.sleep(min(30, 0.25 * (2 ** attempt)))
 
 
 def _app_root() -> str:
@@ -385,8 +510,29 @@ class TtsSynthesizeNode(NodeBase):
             elif engine == "indextts":
                 raise RuntimeError("IndexTTS 不可用：%s" % why)
             else:
-                warnings.append("IndexTTS 不可用（%s），本次使用系统语音合成" % why)
-                engine = "sapi"
+                warnings.append("IndexTTS 不可用（%s），退 Edge 在线配音" % why)
+                engine = "edge"
+
+        edge_voice = ""
+        if engine in ("auto", "edge"):
+            # auto 链第二级：edge 依赖检查（装没装、版本对不对）。真正的连通性
+            # 到合成时才知道——第一句失败时按 FW-DEV-36 分流，network 类才降 sapi。
+            try:
+                edge_voice = _edge_resolve_voice(voice)
+            except RuntimeError as e:
+                if engine == "edge":
+                    raise
+                warnings.append(str(e))
+                engine = "sapi" if engine == "auto" else engine
+            if engine == "auto" or engine == "edge":
+                try:
+                    import edge_tts  # noqa: F401 —— 依赖探测
+                except ImportError as e:
+                    if engine == "edge":
+                        raise RuntimeError(
+                            "Edge 配音依赖缺失：%s。请安装 edge-tts>=7.3.1" % e)
+                    warnings.append("edge-tts 未安装，退系统语音合成")
+                    engine = "sapi"
 
         ff = ffmpeg_path()
         fp = ffprobe_path()
@@ -405,6 +551,33 @@ class TtsSynthesizeNode(NodeBase):
             if engine == "indextts":
                 raw = await asyncio.to_thread(_indextts_speak_all, idx_base, lines, work,
                                               ref_audio, lang)
+            elif engine == "edge":
+                # 逐句合成（与 SAPI/IndexTTS 同构）；首句就摊上 network 类失败时
+                # 降 sapi（仅 auto；显式选 edge 则直接抛）。
+                import edge_tts  # noqa: F401 —— 此处确认已可用
+                sapi_fallback: Exception | None = None
+                try:
+                    for i, one in enumerate(lines):
+                        p = os.path.join(work, "l%03d.wav" % i)
+                        await _edge_one(one, p, edge_voice, rate, volume)
+                        raw.append(p)
+                except RuntimeError as e:
+                    if engine == "edge" or _edge_failure_kind(
+                            RuntimeError(str(e))) not in ("network", "other") \
+                            and "网络不通" not in str(e):
+                        raise
+                    # auto 链第三级：edge 网络不通 → sapi。signature/dependency
+                    # 类错误不属于"网络不通"，不降级——升级依赖才能解决。
+                    if "网络不通" not in str(e):
+                        raise
+                    sapi_fallback = e
+                    warnings.append("Edge 配音网络不通（%s），退系统语音合成" % str(e)[:80])
+                if sapi_fallback is not None:
+                    engine = "sapi"
+                    for i, one in enumerate(lines):
+                        p = os.path.join(work, "l%03d.wav" % i)
+                        await asyncio.to_thread(_sapi_one, one, p, voice, rate, volume, work)
+                        raw.append(p)
             else:
                 for i, one in enumerate(lines):
                     p = os.path.join(work, "l%03d.wav" % i)
@@ -461,7 +634,8 @@ class TtsSynthesizeNode(NodeBase):
 
             meta = {
                 "engine": engine,
-                "voice": voice or "(系统默认)",
+                "voice": (edge_voice if engine == "edge"
+                          else voice or "(系统默认)"),
                 "rate": rate,
                 "volume": volume,
                 "gap": gap,

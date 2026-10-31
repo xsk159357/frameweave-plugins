@@ -4,7 +4,7 @@
   "title": "语音合成",
   "category": "音频",
   "description": "把文案逐句合成为配音，并给出每句的真实时长。它是整条链里唯一知道「这句话读出来到底几秒」的节点，时间线据此排片比按字数估算准",
-  "version": "1.3.0",
+  "version": "1.4.0",
   "kind": "python",
   "entrypoint": "node.py",
   "class_name": "TtsSynthesizeNode",
@@ -48,7 +48,11 @@
       "options": [
         {
           "value": "auto",
-          "label": "自动（可用就用 IndexTTS，否则退系统语音）"
+          "label": "自动（优先 IndexTTS，不可用退 Edge 在线配音，再退系统语音）"
+        },
+        {
+          "value": "edge",
+          "label": "Edge 在线配音（免费多音色，需联网，无需 Key）"
         },
         {
           "value": "sapi",
@@ -59,7 +63,7 @@
           "label": "IndexTTS（音质好，需本地权重与独立运行时）"
         }
       ],
-      "description": "auto：IndexTTS 可用就用，否则退系统语音；选 indextts 但环境不满足（缺模型/运行时，或没给参考音频）会明确报错，不会静默换引擎"
+      "description": "auto：IndexTTS 可用就用；不可用退 Edge 在线配音（免费、需联网、无需 Key）；Edge 也不通再退系统语音。选 indextts 但环境不满足（缺模型/运行时，或没给参考音频）会明确报错，不会静默换引擎"
     },
     {
       "name": "lang",
@@ -83,7 +87,7 @@
       "type": "string",
       "label": "音色",
       "default": "",
-      "description": "留空用系统默认中文音色（本机是 Microsoft Huihui Desktop）"
+      "description": "配音音色：留空用各引擎默认（SAPI=系统默认中文音色；Edge=zh-CN-XiaoxiaoNeural）。Edge 引擎也可填 edge: 前缀音色 id，如 edge:zh-CN-YunxiNeural"
     },
     {
       "name": "ref_audio",
@@ -99,7 +103,7 @@
       "default": 0,
       "min": -10,
       "max": 10,
-      "description": "SAPI 语速档位，0 为正常；负数更慢，正数更快"
+      "description": "语速档位：SAPI 按 -10~10 的档位理解；Edge 引擎映射为 +N%（0 为正常）"
     },
     {
       "name": "volume",
@@ -143,7 +147,9 @@
       "write": []
     },
     "net": {
-      "hosts": []
+      "hosts": [
+        "speech.platform.bing.com"
+      ]
     },
     "model": [],
     "exec": [
@@ -193,7 +199,7 @@
   "signature": {
     "alg": "ed25519",
     "key_id": "a8998646b062c170",
-    "value": "qyCeAB3BnwqtLfVV2oAmHhmmI2kLbU9u05IV+HRy+g1bv8bICEsdCCTgyIcmC9NtBln9sS0GeR4ZMDxvPO60Dw==",
+    "value": "WDPoVqowwRZ5JQVlVnKc10n6xynexqfc8VsO0was3Ol8hwW+6KyDcnYjHTS6BZwiL7k5id4w0o4pBTZjq+18AQ==",
     "over": "manifest"
   }
 }

@@ -1,7 +1,7 @@
 {
   "tool": "sdk/hygiene_dist.py (t32)",
   "packages_checked": 18,
-  "pycache_cleaned": 4,
+  "pycache_cleaned": 18,
   "ok": [
     {
       "pkg": "core_ai_narrate",
@@ -150,8 +150,8 @@
     {
       "pkg": "core_tts_synthesize",
       "zip": "core_tts_synthesize.zip",
-      "bytes": 13852,
-      "zip_sha256": "2c07cdcb3d97ea2179918a8ea711d008f2f77d403eab0ee895fc3214e7b16b34",
+      "bytes": 17138,
+      "zip_sha256": "6f23ba20ffdb47ccc9a8ecfc1e3e0af361e22ddd6d024c4498497b3459b53f70",
       "sig": "core_tts_synthesize.zip.sig",
       "signed_manifest": true,
       "consistent": true
