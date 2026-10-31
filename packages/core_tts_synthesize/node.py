@@ -21,6 +21,7 @@ from __future__ import annotations
 import asyncio
 import json
 import os
+import re
 import shutil
 import subprocess
 import time
@@ -28,6 +29,9 @@ from typing import Any, Dict, List, Tuple
 
 from app.assets import Asset
 from app.media_tools import ffmpeg_path, ffprobe_path
+
+# 句末标点（后向零宽切分）：一行里有多句时要拆开，否则逐句时长只剩一句。
+_SENT_END = re.compile(r"(?<=[。！？!?；;])")
 from app.nodespec import NodeBase, PortType
 
 # 句末标点：遇到这些就断句
@@ -74,7 +78,13 @@ def _split_long(piece: str, max_chars: int) -> List[str]:
 
 
 def _to_lines(payload: Any, max_chars: int) -> List[str]:
-    """SCRIPT 载荷 → 逐句。兼容 {text, lines}、纯字符串、字符串数组三种形态。"""
+    """SCRIPT 载荷 → 逐句。兼容 {text, lines}、纯字符串、字符串数组三种形态。
+
+    按句末标点再切一次：本节点的核心价值是「逐句真实时长」，一行里塞两句话
+    却合成成一段，下游排片就拿不到句子边界，等于白做。上游 script_input /
+    ai_narrate 产出的 lines 本来就是按句切好的，这里兜的是用户直接粘一段
+    文案进 text 的情况。
+    """
     lines: List[str] = []
     if isinstance(payload, dict):
         raw = payload.get("lines")
@@ -92,11 +102,18 @@ def _to_lines(payload: Any, max_chars: int) -> List[str]:
     for one in lines:
         out.extend(_split_long(one, max_chars))
 
+    # 按句末标点再切：同一行里的「第一句。第二句。」要拆成两句，
+    # 否则逐句时长只剩一句，下游按它排片就是错的。
+    resplit: List[str] = []
+    for one in out:
+        parts = [p for p in _SENT_END.split(one) if p.strip()]
+        resplit.extend(parts or [one])
+
     # 只剩标点的碎片并到下一句，避免合成出一堆 0.3 秒的气口。
     # 判断用 _is_fragment（按去标点后的字数），不是按原始长度——
     # 按长度会把「走吧。」这类正常短句一并并掉。
     merged: List[str] = []
-    for one in out:
+    for one in resplit:
         if merged and _is_fragment(merged[-1]):
             merged[-1] = merged[-1] + one
         else:
@@ -145,8 +162,20 @@ def _sapi_one(text: str, out_wav: str, voice: str, rate: int, volume: int, work:
                        capture_output=True, text=True, timeout=180,
                        encoding="utf-8", errors="replace")
     if r.returncode != 0 or not os.path.isfile(out_wav) or os.path.getsize(out_wav) < 128:
-        raise RuntimeError("系统语音合成失败（%s…）: %s"
-                           % (text[:16], (r.stderr or r.stdout or "").strip()[:300]))
+        raw = (r.stderr or r.stdout or "").strip()
+        # PowerShell 的输出是 GBK，经 utf-8 解码后是乱码——直接抛给用户等于没报错。
+        # 按已知的失败形态翻成人话，剩下的才原样附上供排查。
+        low = raw.lower()
+        if "no voice installed" in low or "未安装语音" in raw or "安全设置" in raw \
+                or "speak" in low and "exception" in low:
+            hint = ("系统语音不可用：这台机器上找不到可用的中文语音，或当前权限读不到它。"
+                    "改用 engine=indextts（需先配好模型），或在能联网的机器上用云端 TTS。")
+        elif "cannot find path" in low or "找不到路径" in raw:
+            hint = "系统语音合成脚本没有跑起来（PowerShell 脚本路径问题），请检查系统环境。"
+        else:
+            hint = "系统语音合成失败，原因见下方原始输出。"
+        raise RuntimeError("系统语音合成失败（%s…）：%s\n原始输出：%s"
+                           % (text[:16], hint, raw[:300]))
 
 
 def _run(cmd: List[str], timeout: int) -> subprocess.CompletedProcess:

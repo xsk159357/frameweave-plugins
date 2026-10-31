@@ -4,7 +4,7 @@
   "title": "语音合成",
   "category": "音频",
   "description": "把文案逐句合成为配音，并给出每句的真实时长。它是整条链里唯一知道「这句话读出来到底几秒」的节点，时间线据此排片比按字数估算准",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "kind": "python",
   "entrypoint": "node.py",
   "class_name": "TtsSynthesizeNode",
@@ -52,7 +52,7 @@
           "label": "IndexTTS（音质好，需本地权重与独立运行时）"
         }
       ],
-      "description": "选了 indextts 但环境不满足时会明确报错，不会静默换成别的引擎"
+      "description": "auto：IndexTTS 可用就用，否则退系统语音；选 indextts 但环境不满足（缺模型/运行时，或没给参考音频）会明确报错，不会静默换引擎"
     },
     {
       "name": "lang",
@@ -83,7 +83,7 @@
       "type": "asset",
       "label": "音色参考音频",
       "default": "",
-      "description": "IndexTTS 的零样本克隆要一段参考音频（几秒即可）；留空则用模型自带音色。系统语音引擎忽略此项"
+      "description": "IndexTTS 的零样本克隆需要一段音色参考音频（几秒人声即可）。用 engine=indextts 时**必填**——IndexTTS 的合成接口必须拿到参考音频，没有它会明确报错而不是用默认音色。系统语音引擎忽略此项"
     },
     {
       "name": "rate",
@@ -186,7 +186,7 @@
   "signature": {
     "alg": "ed25519",
     "key_id": "a8998646b062c170",
-    "value": "QHkQ6sIc07kKMUfnGiQFgsDvSnVLE4FwAdOkprTiXxZVNJP95iQJqkaC1qFiyyYAMghFlttPlFStmK6ygpk0Cw==",
+    "value": "5UwfUGFymlCyM3BLyd6vr4QeYpvd4LDZXGIB2TejE5wRwERCaDPu4qQU0Ity1zi7e/1Id/p3cf4RiBQFeTrbCw==",
     "over": "manifest"
   }
 }

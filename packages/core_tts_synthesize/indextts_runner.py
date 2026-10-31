@@ -69,16 +69,23 @@ def main() -> int:
         return 4
 
     ref = a.ref if (a.ref and os.path.isfile(a.ref)) else ""
+    # IndexTTS 的 spk_audio_prompt 是**必需**的：infer_generator 会把它交给
+    # _load_and_cut_audio() 读音频，传 None 直接炸在文件打开那一步
+    # （实测报 "Invalid file: None"）。use_random 是控制情绪随机的，
+    # 不能替代音色参考——这两个概念在 API 里是分开的。
+    #
+    # 所以没有参考音频就别装作能跑：明确告诉用户要什么，而不是让他等
+    # 模型加载完 20 秒再看到一个原生异常。
+    if not ref:
+        print("IndexTTS 需要一段音色参考音频（几秒的人声 wav 即可）。"
+              "请设置「音色参考音频」参数，或改用 engine=sapi / 云端 TTS。",
+              file=sys.stderr)
+        return 7
     files = []
     for i, text in enumerate(lines):
         out = os.path.join(a.out_dir, "l%03d.wav" % i)
-        kwargs = {"text": text, "lang": a.lang, "output_path": out, "verbose": False}
-        if ref:
-            kwargs["spk_audio_prompt"] = ref
-        else:
-            # 没给参考音色时让模型自己选（否则零样本克隆无参考可用）
-            kwargs["spk_audio_prompt"] = None
-            kwargs["use_random"] = True
+        kwargs = {"text": text, "lang": a.lang, "output_path": out, "verbose": False,
+                  "spk_audio_prompt": ref}
         try:
             tts.infer(**kwargs)
         except Exception as e:  # noqa: BLE001
