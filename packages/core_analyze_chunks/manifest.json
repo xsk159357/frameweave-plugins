@@ -1,0 +1,197 @@
+{
+  "manifest_version": 3,
+  "id": "core/analyze_chunks",
+  "title": "分块视觉分析",
+  "category": "分析",
+  "description": "把分块视频逐块抽帧交给视觉模型，产出「镜头类型 + 画面描述 + 听觉内容」；并发受控、失败降级并如实记录",
+  "version": "2.0.0",
+  "kind": "python",
+  "entrypoint": "node.py",
+  "class_name": "AnalyzeChunksNode",
+  "min_engine": "3.0",
+  "inputs": [
+    {
+      "name": "video",
+      "type": "VIDEO",
+      "label": "视频",
+      "required": true,
+      "description": "原始视频；抽帧时间按分块记录里的 offset 换算到它上面"
+    },
+    {
+      "name": "chunks",
+      "type": "SEGMENTS",
+      "label": "分块列表",
+      "required": true,
+      "description": "智能分块节点的输出；每块带 start/end，分析按块进行"
+    }
+  ],
+  "outputs": [
+    {
+      "name": "descriptions",
+      "type": "SEGMENTS",
+      "label": "场景描述",
+      "description": "每块一条：start/end/镜头类型/画面描述/听觉内容。统计、失败块与 Token 估算在 asset.meta"
+    }
+  ],
+  "params": [
+    {
+      "name": "provider",
+      "type": "enum",
+      "label": "Provider",
+      "default": "auto",
+      "options": [
+        {
+          "value": "auto",
+          "label": "自动（按 API 地址判断）"
+        },
+        {
+          "value": "openai",
+          "label": "OpenAI 兼容（视觉）"
+        },
+        {
+          "value": "gemini",
+          "label": "Gemini"
+        }
+      ],
+      "description": "视觉模型必须支持图片输入；auto 看 base_url 里有没有 generativelanguage"
+    },
+    {
+      "name": "api_key",
+      "type": "string",
+      "label": "API Key",
+      "default": "",
+      "description": "可直接填，也可写 @secret:名称 引用保险箱；留空用全局配置"
+    },
+    {
+      "name": "base_url",
+      "type": "string",
+      "label": "API 地址",
+      "default": "",
+      "description": "留空按 provider 取默认端点"
+    },
+    {
+      "name": "model",
+      "type": "string",
+      "label": "模型",
+      "default": "",
+      "description": "必须是能看图的多模态模型；留空用全局配置"
+    },
+    {
+      "name": "concurrency",
+      "type": "int",
+      "label": "并发数",
+      "default": 3,
+      "min": 1,
+      "max": 16,
+      "description": "同时分析几块；太高容易触发限流，建议 3–5"
+    },
+    {
+      "name": "retries",
+      "type": "int",
+      "label": "每块重试",
+      "default": 2,
+      "min": 0,
+      "max": 5,
+      "description": "单块失败后的重试次数；用尽后写占位描述并记入 warnings"
+    },
+    {
+      "name": "frames_per_chunk",
+      "type": "int",
+      "label": "每块抽帧数",
+      "default": 4,
+      "min": 1,
+      "max": 16,
+      "description": "每块取几张图给模型；越多越准也越贵"
+    },
+    {
+      "name": "frame_scale",
+      "type": "int",
+      "label": "抽帧宽度",
+      "default": 512,
+      "min": 144,
+      "max": 1920,
+      "advanced": true,
+      "unit": "像素",
+      "description": "喂给模型前把帧缩到这个宽度；越高细节越多、Token 越贵"
+    },
+    {
+      "name": "temperature",
+      "type": "float",
+      "label": "温度",
+      "default": 0.3,
+      "min": 0.0,
+      "max": 2.0,
+      "step": 0.05,
+      "description": "描述类任务建议低温度，保持稳定"
+    },
+    {
+      "name": "max_tokens",
+      "type": "int",
+      "label": "最大输出 Token",
+      "default": 2048,
+      "min": 128,
+      "max": 32768,
+      "description": "单块描述的输出上限"
+    },
+    {
+      "name": "json_schema",
+      "type": "bool",
+      "label": "结构化输出校验",
+      "default": true,
+      "description": "校验 shot_type / visual_description / audio_content 三个字段；关掉则宽松解析"
+    }
+  ],
+  "perm": {
+    "fs": {
+      "read": [],
+      "write": []
+    },
+    "net": {
+      "hosts": []
+    },
+    "model": [],
+    "exec": [
+      {
+        "bin": "ffmpeg"
+      },
+      {
+        "bin": "ffprobe"
+      }
+    ],
+    "secret": [
+      "*"
+    ]
+  },
+  "deps": [],
+  "exposable": [
+    {
+      "param": "model",
+      "recipe_role": "视觉模型",
+      "safe_for_wizard": true
+    },
+    {
+      "param": "frames_per_chunk",
+      "recipe_role": "每块抽帧数",
+      "safe_for_wizard": false
+    },
+    {
+      "param": "concurrency",
+      "recipe_role": "并发数",
+      "safe_for_wizard": false
+    }
+  ],
+  "search_aliases": [
+    "分析",
+    "理解",
+    "视觉",
+    "场景描述",
+    "多模态",
+    "vision"
+  ],
+  "signature": {
+    "alg": "ed25519",
+    "key_id": "a8998646b062c170",
+    "value": "x42yVCRZWGLCQvBCUHYn5Egwt1FsT0rnWrUCXn27TzcpQTh6p6neCYHHyJZA40Jt3dvwc/8hMGvyUreK9UOuDA==",
+    "over": "manifest"
+  }
+}
