@@ -1,0 +1,115 @@
+{
+  "id": "jianji_onekey",
+  "name": "一键剪辑 · 选素材出片",
+  "description": "选一段素材就能出片：自动按镜头切分，短于「最小片段」的碎镜头（转场、闪白、零碎 B-roll）被丢弃，剩余镜头按场景边界拼成成片，保留原声、不烧字幕。素材里没有短镜头时这条工作流等于没剪；觉得丢太多就把「最小片段」往上调（比如 1.5、2.0）。",
+  "version": "2.0.0",
+  "kind": "workflow",
+  "tags": [
+    "官方",
+    "剪辑"
+  ],
+  "nodes": [
+    {
+      "id": "n1",
+      "type": "core/media_import",
+      "x": 40,
+      "y": 320,
+      "params": {
+        "path": "",
+        "probe": true,
+        "proxy_height": 0
+      },
+      "inputs": {}
+    },
+    {
+      "id": "n2",
+      "type": "core/scene_detect",
+      "x": 300,
+      "y": 320,
+      "params": {
+        "engine": "auto",
+        "threshold": 0.3,
+        "min_scene_sec": 1.2,
+        "max_scene_sec": 8.0,
+        "fallback_interval": 5.0,
+        "model_dir": ""
+      },
+      "inputs": {
+        "video": "n1"
+      }
+    },
+    {
+      "id": "n3",
+      "type": "core/timeline_build",
+      "x": 560,
+      "y": 320,
+      "params": {
+        "chars_per_second": 4.5,
+        "min_clip_sec": 1.2,
+        "max_clip_sec": 8.0,
+        "fit_mode": "truncate"
+      },
+      "inputs": {
+        "match": "n2",
+        "scenes": "n2"
+      }
+    },
+    {
+      "id": "n4",
+      "type": "core/video_render",
+      "x": 820,
+      "y": 320,
+      "params": {
+        "aspect": "16:9",
+        "resolution": "1080p",
+        "fps": 30,
+        "burn_subtitle": false,
+        "transition": "fade",
+        "transition_duration": 0.3,
+        "scale_mode": "contain",
+        "audio_mix": "original_only",
+        "original_volume": 0.8,
+        "overlay_alpha": 0.8,
+        "align_mode": "none",
+        "color_grade": "none",
+        "output_name": "jianji_onekey"
+      },
+      "inputs": {
+        "video": "n1",
+        "timeline": "n3"
+      }
+    }
+  ],
+  "edges": [
+    {
+      "source": "n1",
+      "target": "n2",
+      "sourceHandle": "video",
+      "targetHandle": "video"
+    },
+    {
+      "source": "n2",
+      "target": "n3",
+      "sourceHandle": "scenes",
+      "targetHandle": "match"
+    },
+    {
+      "source": "n2",
+      "target": "n3",
+      "sourceHandle": "scenes",
+      "targetHandle": "scenes"
+    },
+    {
+      "source": "n1",
+      "target": "n4",
+      "sourceHandle": "video",
+      "targetHandle": "video"
+    },
+    {
+      "source": "n3",
+      "target": "n4",
+      "sourceHandle": "timeline",
+      "targetHandle": "timeline"
+    }
+  ]
+}

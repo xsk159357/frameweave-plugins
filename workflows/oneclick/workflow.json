@@ -1,0 +1,168 @@
+{
+  "id": "oneclick",
+  "name": "一条龙 · AI 解说出片",
+  "description": "导入视频后按流程跑到成片：切镜 → AI 写解说词 → 配音 → 渲染 MP4。填视频路径与 API Key 即可运行；需要更完整的分块分析与画面匹配时用「视频解说」模板。",
+  "version": "2.0.0",
+  "kind": "workflow",
+  "tags": [
+    "一条龙",
+    "官方"
+  ],
+  "nodes": [
+    {
+      "id": "n1",
+      "type": "core/media_import",
+      "x": 40,
+      "y": 320,
+      "params": {
+        "path": "",
+        "probe": true,
+        "proxy_height": 0
+      },
+      "inputs": {}
+    },
+    {
+      "id": "n2",
+      "type": "core/scene_detect",
+      "x": 300,
+      "y": 320,
+      "params": {
+        "engine": "auto",
+        "threshold": 0.3,
+        "min_scene_sec": 1.0,
+        "max_scene_sec": 12.0,
+        "fallback_interval": 5.0,
+        "model_dir": ""
+      },
+      "inputs": {
+        "video": "n1"
+      }
+    },
+    {
+      "id": "n3",
+      "type": "core/ai_narrate",
+      "x": 560,
+      "y": 320,
+      "params": {
+        "mode": "上帝视角",
+        "style": "悬疑解说",
+        "custom_style": "",
+        "perspective": "第三人称",
+        "language": "中文",
+        "provider": "auto",
+        "api_key": "",
+        "base_url": "",
+        "model": "",
+        "target_duration": 0.0,
+        "target_chars": 0,
+        "avg_segment_chars": 25,
+        "temperature": 0.7,
+        "max_tokens": 4096,
+        "keyframes": 8,
+        "json_mode": true,
+        "local_match": true,
+        "retries": 2,
+        "llm_channel": "llm_call",
+        "hook_first": false,
+        "filter_intro_outro": false,
+        "ost_ratio": 0.0
+      },
+      "inputs": {
+        "video": "n1",
+        "scenes": "n2"
+      }
+    },
+    {
+      "id": "n4",
+      "type": "core/tts_synthesize",
+      "x": 820,
+      "y": 320,
+      "params": {
+        "engine": "indextts",
+        "lang": "ZH",
+        "voice": "",
+        "ref_audio": "",
+        "rate": 0,
+        "volume": 100,
+        "max_chars": 40,
+        "gap": 0.15,
+        "indextts_dir": ""
+      },
+      "inputs": {
+        "script": "n3",
+        "voice_ref": "n1"
+      }
+    },
+    {
+      "id": "n5",
+      "type": "core/video_render",
+      "x": 1080,
+      "y": 320,
+      "params": {
+        "aspect": "16:9",
+        "resolution": "1080p",
+        "fps": 30,
+        "burn_subtitle": false,
+        "transition": "fade",
+        "transition_duration": 0.5,
+        "scale_mode": "contain",
+        "audio_mix": "narration_only",
+        "narration_volume": 1.0,
+        "original_volume": 0.25,
+        "bgm_volume": 0.3,
+        "overlay_alpha": 0.8,
+        "align_mode": "none",
+        "color_grade": "none",
+        "output_name": "chengpian"
+      },
+      "inputs": {
+        "video": "n1",
+        "audio": "n4"
+      }
+    }
+  ],
+  "edges": [
+    {
+      "source": "n1",
+      "target": "n2",
+      "sourceHandle": "video",
+      "targetHandle": "video"
+    },
+    {
+      "source": "n1",
+      "target": "n3",
+      "sourceHandle": "video",
+      "targetHandle": "video"
+    },
+    {
+      "source": "n2",
+      "target": "n3",
+      "sourceHandle": "scenes",
+      "targetHandle": "scenes"
+    },
+    {
+      "source": "n3",
+      "target": "n4",
+      "sourceHandle": "script",
+      "targetHandle": "script"
+    },
+    {
+      "source": "n1",
+      "target": "n4",
+      "sourceHandle": "audio",
+      "targetHandle": "voice_ref"
+    },
+    {
+      "source": "n1",
+      "target": "n5",
+      "sourceHandle": "video",
+      "targetHandle": "video"
+    },
+    {
+      "source": "n4",
+      "target": "n5",
+      "sourceHandle": "audio",
+      "targetHandle": "audio"
+    }
+  ]
+}
