@@ -193,7 +193,7 @@ def run(dist_dir: str, packages_dir: str, only_pkgs: list, check_pairing: bool) 
 
 def print_human(report: dict) -> int:
     if report.get("env_error"):
-        print(f"[dist-parity] 环境缺失：{report['env_error']}")
+        print(f"[dist-parity] 环境缺失：{report['env_error']}（未实际判定（无归档），不代表通过）")
         return EXIT_ENV
     print(f"[dist-parity] dist: {report['dist_dir']}")
     print(f"[dist-parity] 正本: {report['packages_dir']}")

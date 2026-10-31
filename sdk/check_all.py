@@ -47,7 +47,7 @@ KNOWN_FLAGS = {"--with-workflows", "--only-workflows", "--with-signature", "--on
 
 def check_packages(packages_dir: str) -> int:
     if not os.path.isdir(packages_dir):
-        print(f"[check_all] 目录不存在: {packages_dir}")
+        print(f"[check_all] 目录不存在: {packages_dir} " + "（未实际判定（无包），不代表通过）")
         return 2
     entries = []
     for name in sorted(os.listdir(packages_dir)):
@@ -55,7 +55,7 @@ def check_packages(packages_dir: str) -> int:
         if os.path.isfile(mpath):
             entries.append(name)
     if not entries:
-        print(f"[check_all] {packages_dir} 下没有插件包（缺 manifest.json）")
+        print(f"[check_all] {packages_dir} 下没有插件包（缺 manifest.json）（未实际判定（无包），不代表通过）")
         return 2
     failed, ok = [], []
     for name in entries:
