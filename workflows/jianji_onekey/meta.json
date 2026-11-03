@@ -1,9 +1,0 @@
-{
-  "id": "jianji_onekey",
-  "name": "一键剪辑 · 选素材出片",
-  "version": "2.0.0",
-  "kind": "workflow",
-  "source": "official",
-  "updated_at": 1793458454,
-  "workflow_sha256": "9c5b48a654a57b67ac573d277d4d10abaff815fb96469c2c9df026bbbc2c97d7"
-}

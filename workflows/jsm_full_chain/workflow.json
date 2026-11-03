@@ -1,0 +1,528 @@
+{
+  "id": "jsm_full_chain",
+  "name": "视频解说 · 解说猫等价全链（官方模板）",
+  "description": "逐步骤对齐解说猫九步主链：切镜→语音转写→分块→分块视频分析（Gemini 整段带音轨）→场景×对白融合→AI 写解说词（黄金3秒+原片标记）→Chinese-CLIP 配画面→配音→真实时长排片→原片区间编排→字幕→渲染→片段包。需要 Gemini 视觉 Key；无 Key 改走 local_no_model_001。",
+  "version": "1.0.0",
+  "kind": "workflow",
+  "tags": [
+    "解说猫复刻",
+    "影视解说",
+    "官方",
+    "全链",
+    "AI",
+    "对白融合",
+    "原片穿插"
+  ],
+  "nodes": [
+    {
+      "id": "n1",
+      "type": "core/media_import",
+      "x": 40,
+      "y": 240,
+      "params": {
+        "path": "",
+        "probe": true,
+        "proxy_height": 0
+      },
+      "inputs": {}
+    },
+    {
+      "id": "n2",
+      "type": "core/scene_detect",
+      "x": 300,
+      "y": 120,
+      "params": {
+        "engine": "auto",
+        "threshold": 0.3,
+        "min_scene_sec": 1.0,
+        "max_scene_sec": 12.0,
+        "fallback_interval": 5.0,
+        "model_dir": ""
+      },
+      "inputs": {
+        "video": "n1"
+      }
+    },
+    {
+      "id": "n3",
+      "type": "core/asr_whisper",
+      "x": 300,
+      "y": 400,
+      "params": {
+        "model": "base",
+        "language": "zh",
+        "vad_filter": true,
+        "beam_size": 5,
+        "initial_prompt": "",
+        "simplified": true
+      },
+      "inputs": {
+        "audio": "n1"
+      }
+    },
+    {
+      "id": "n4",
+      "type": "core/smart_chunk",
+      "x": 560,
+      "y": 120,
+      "params": {
+        "target_duration": 180.0,
+        "min_duration": 120.0,
+        "max_duration": 240.0,
+        "tail_policy": "merge_back"
+      },
+      "inputs": {
+        "video": "n1",
+        "scenes": "n2"
+      }
+    },
+    {
+      "id": "n5",
+      "type": "core/analyze_chunks",
+      "x": 820,
+      "y": 120,
+      "params": {
+        "provider": "gemini",
+        "api_key": "",
+        "base_url": "",
+        "model": "",
+        "analysis_mode": "video",
+        "video_fps": 1.0,
+        "video_height": 360,
+        "concurrency": 3,
+        "max_concurrency": 8,
+        "adaptive_concurrency": true,
+        "retries": 2,
+        "frames_per_chunk": 4,
+        "frame_scale": 512,
+        "temperature": 0.3,
+        "max_tokens": 2048,
+        "json_schema": true
+      },
+      "inputs": {
+        "video": "n1",
+        "chunks": "n4"
+      }
+    },
+    {
+      "id": "n6",
+      "type": "core/dialogue_fuse",
+      "x": 820,
+      "y": 400,
+      "params": {
+        "audio_strategy": "fill",
+        "min_overlap_ratio": 0.15,
+        "merge_gap": 0.35,
+        "unmatched_policy": "nearest",
+        "speaker_prefix": true,
+        "max_lines_per_scene": 0
+      },
+      "inputs": {
+        "scenes": "n2",
+        "subtitle": "n3",
+        "desc": "n5"
+      }
+    },
+    {
+      "id": "n7",
+      "type": "core/ai_narrate",
+      "x": 1080,
+      "y": 260,
+      "params": {
+        "mode": "上帝视角",
+        "style": "悬疑解说",
+        "custom_style": "",
+        "perspective": "第三人称",
+        "language": "中文",
+        "provider": "auto",
+        "api_key": "",
+        "base_url": "",
+        "model": "",
+        "target_duration": 0.0,
+        "target_chars": 0,
+        "avg_segment_chars": 25,
+        "temperature": 0.7,
+        "max_tokens": 4096,
+        "keyframes": 8,
+        "json_mode": true,
+        "local_match": true,
+        "retries": 2,
+        "llm_channel": "llm_call",
+        "hook_first": true,
+        "filter_intro_outro": true,
+        "ost_ratio": 0.2
+      },
+      "inputs": {
+        "video": "n1",
+        "scenes": "n2",
+        "descriptions": "n6"
+      }
+    },
+    {
+      "id": "n8",
+      "type": "core/match_visual",
+      "x": 1340,
+      "y": 400,
+      "params": {
+        "embedder": "auto",
+        "model_dir": "",
+        "frame_positions": "0.1,0.5,0.9",
+        "min_similarity": 0.2,
+        "avoid_adjacent_repeat": true,
+        "allow_reuse": true,
+        "max_concurrent": 2,
+        "retries": 1,
+        "resume": true
+      },
+      "inputs": {
+        "video": "n1",
+        "script": "n7",
+        "scenes": "n2",
+        "items": "n5"
+      }
+    },
+    {
+      "id": "n9",
+      "type": "core/tts_synthesize",
+      "x": 1340,
+      "y": 100,
+      "params": {
+        "engine": "auto",
+        "lang": "ZH",
+        "voice": "",
+        "ref_audio": "",
+        "rate": 0,
+        "volume": 100,
+        "max_chars": 40,
+        "gap": 0.15,
+        "indextts_dir": ""
+      },
+      "inputs": {
+        "script": "n7"
+      }
+    },
+    {
+      "id": "n10",
+      "type": "core/timeline_build",
+      "x": 1600,
+      "y": 400,
+      "params": {
+        "chars_per_second": 4.5,
+        "min_clip_sec": 1.0,
+        "max_clip_sec": 12.0,
+        "fit_mode": "truncate"
+      },
+      "inputs": {
+        "match": "n8",
+        "scenes": "n2",
+        "voice_segments": "n9"
+      }
+    },
+    {
+      "id": "n11",
+      "type": "core/ost_plan",
+      "x": 1600,
+      "y": 640,
+      "params": {
+        "source": "mixed",
+        "ost_ratio": 0.2,
+        "padding": 0.2,
+        "min_clip": 1.5,
+        "max_clip": 20.0,
+        "merge_gap": 0.3
+      },
+      "inputs": {
+        "narration": "n7",
+        "descriptions": "n6",
+        "timeline": "n10"
+      }
+    },
+    {
+      "id": "n12",
+      "type": "core/subtitle_build",
+      "x": 1860,
+      "y": 400,
+      "params": {
+        "max_chars_per_line": 16,
+        "max_lines": 2,
+        "min_duration": 0.5,
+        "max_duration": 8.0
+      },
+      "inputs": {
+        "timeline": "n10"
+      }
+    },
+    {
+      "id": "n13",
+      "type": "core/subtitle_compose",
+      "x": 2120,
+      "y": 400,
+      "params": {
+        "manual_text": "",
+        "preset": "默认",
+        "font": "微软雅黑",
+        "size": 48,
+        "color": "#FFFFFF",
+        "stroke": "#000000",
+        "animation": "none",
+        "karaoke": true
+      },
+      "inputs": {
+        "subtitle": "n12",
+        "script": "n7"
+      }
+    },
+    {
+      "id": "n14",
+      "type": "core/video_render",
+      "x": 2380,
+      "y": 400,
+      "params": {
+        "aspect": "16:9",
+        "resolution": "1080p",
+        "fps": 30,
+        "burn_subtitle": true,
+        "transition": "fade",
+        "transition_duration": 0.5,
+        "scale_mode": "contain",
+        "audio_mix": "mix",
+        "narration_volume": 1.0,
+        "original_volume": 1.0,
+        "bgm_volume": 0.3,
+        "overlay_alpha": 0.8,
+        "align_mode": "none",
+        "color_grade": "none",
+        "output_name": "chengpian"
+      },
+      "inputs": {
+        "video": "n1",
+        "timeline": "n10",
+        "audio": "n9",
+        "styled_subtitle": "n13",
+        "layout": "n11"
+      }
+    },
+    {
+      "id": "n15",
+      "type": "core/export_bundle",
+      "x": 2640,
+      "y": 620,
+      "params": {
+        "output_name": "bundle",
+        "write_srt": true,
+        "aspect": "16:9"
+      },
+      "inputs": {
+        "timeline": "n10",
+        "subtitle": "n12",
+        "video": "n1"
+      }
+    }
+  ],
+  "edges": [
+    {
+      "source": "n1",
+      "target": "n2",
+      "sourceHandle": "video",
+      "targetHandle": "video"
+    },
+    {
+      "source": "n1",
+      "target": "n3",
+      "sourceHandle": "audio",
+      "targetHandle": "audio"
+    },
+    {
+      "source": "n1",
+      "target": "n4",
+      "sourceHandle": "video",
+      "targetHandle": "video"
+    },
+    {
+      "source": "n2",
+      "target": "n4",
+      "sourceHandle": "scenes",
+      "targetHandle": "scenes"
+    },
+    {
+      "source": "n1",
+      "target": "n5",
+      "sourceHandle": "video",
+      "targetHandle": "video"
+    },
+    {
+      "source": "n4",
+      "target": "n5",
+      "sourceHandle": "chunks",
+      "targetHandle": "chunks"
+    },
+    {
+      "source": "n2",
+      "target": "n6",
+      "sourceHandle": "scenes",
+      "targetHandle": "scenes"
+    },
+    {
+      "source": "n3",
+      "target": "n6",
+      "sourceHandle": "subtitle",
+      "targetHandle": "subtitle"
+    },
+    {
+      "source": "n5",
+      "target": "n6",
+      "sourceHandle": "descriptions",
+      "targetHandle": "desc"
+    },
+    {
+      "source": "n1",
+      "target": "n7",
+      "sourceHandle": "video",
+      "targetHandle": "video"
+    },
+    {
+      "source": "n2",
+      "target": "n7",
+      "sourceHandle": "scenes",
+      "targetHandle": "scenes"
+    },
+    {
+      "source": "n6",
+      "target": "n7",
+      "sourceHandle": "descriptions",
+      "targetHandle": "descriptions"
+    },
+    {
+      "source": "n1",
+      "target": "n8",
+      "sourceHandle": "video",
+      "targetHandle": "video"
+    },
+    {
+      "source": "n7",
+      "target": "n8",
+      "sourceHandle": "script",
+      "targetHandle": "script"
+    },
+    {
+      "source": "n2",
+      "target": "n8",
+      "sourceHandle": "scenes",
+      "targetHandle": "scenes"
+    },
+    {
+      "source": "n5",
+      "target": "n8",
+      "sourceHandle": "descriptions",
+      "targetHandle": "items"
+    },
+    {
+      "source": "n7",
+      "target": "n9",
+      "sourceHandle": "script",
+      "targetHandle": "script"
+    },
+    {
+      "source": "n8",
+      "target": "n10",
+      "sourceHandle": "matches",
+      "targetHandle": "match"
+    },
+    {
+      "source": "n2",
+      "target": "n10",
+      "sourceHandle": "scenes",
+      "targetHandle": "scenes"
+    },
+    {
+      "source": "n9",
+      "target": "n10",
+      "sourceHandle": "segments",
+      "targetHandle": "voice_segments"
+    },
+    {
+      "source": "n7",
+      "target": "n11",
+      "sourceHandle": "narration",
+      "targetHandle": "narration"
+    },
+    {
+      "source": "n6",
+      "target": "n11",
+      "sourceHandle": "descriptions",
+      "targetHandle": "descriptions"
+    },
+    {
+      "source": "n10",
+      "target": "n11",
+      "sourceHandle": "timeline",
+      "targetHandle": "timeline"
+    },
+    {
+      "source": "n10",
+      "target": "n12",
+      "sourceHandle": "timeline",
+      "targetHandle": "timeline"
+    },
+    {
+      "source": "n12",
+      "target": "n13",
+      "sourceHandle": "subtitle",
+      "targetHandle": "subtitle"
+    },
+    {
+      "source": "n7",
+      "target": "n13",
+      "sourceHandle": "script",
+      "targetHandle": "script"
+    },
+    {
+      "source": "n1",
+      "target": "n14",
+      "sourceHandle": "video",
+      "targetHandle": "video"
+    },
+    {
+      "source": "n10",
+      "target": "n14",
+      "sourceHandle": "timeline",
+      "targetHandle": "timeline"
+    },
+    {
+      "source": "n9",
+      "target": "n14",
+      "sourceHandle": "audio",
+      "targetHandle": "audio"
+    },
+    {
+      "source": "n13",
+      "target": "n14",
+      "sourceHandle": "styled_subtitle",
+      "targetHandle": "styled_subtitle"
+    },
+    {
+      "source": "n11",
+      "target": "n14",
+      "sourceHandle": "layout",
+      "targetHandle": "layout"
+    },
+    {
+      "source": "n10",
+      "target": "n15",
+      "sourceHandle": "timeline",
+      "targetHandle": "timeline"
+    },
+    {
+      "source": "n12",
+      "target": "n15",
+      "sourceHandle": "subtitle",
+      "targetHandle": "subtitle"
+    },
+    {
+      "source": "n1",
+      "target": "n15",
+      "sourceHandle": "video",
+      "targetHandle": "video"
+    }
+  ]
+}

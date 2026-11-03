@@ -1,9 +1,0 @@
-{
-  "id": "local_no_model_001",
-  "name": "本地出片 · 切分→配画面→时间线→字幕→渲染成片",
-  "version": "1.2.0",
-  "kind": "workflow",
-  "source": "official",
-  "updated_at": 1793436386,
-  "workflow_sha256": "c3ad977b174773cf066c7145c299a700338d21f7a9874865e813c61bb4cb75e5"
-}

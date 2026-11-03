@@ -32,9 +32,9 @@
 
 ```
 frameweave-plugins/
-├── packages/                 # 节点包源码正本（v3 现役 18 包，全部 core_*）
-├── workflows/                # 工作流源码正本（4 条，每条含 workflow.json + meta.json）
-├── dist/                     # 发布产物快照：18 个 <pkg>.zip + .sig + hygiene_report.json
+├── packages/                 # 节点包源码正本（v3 现役 20 包，全部 core_*）
+├── workflows/                # 工作流源码正本（2 条，每条含 workflow.json + meta.json）
+├── dist/                     # 发布产物快照：20 个 <pkg>.zip + .sig + hygiene_report.json
 ├── docs/                     # 节点/工作流文档（索引见 docs/README.md）
 ├── sdk/                      # 校验 / 打包 / 签名 / 卫生工具（含 check_manifest_v3.py）
 ├── scripts/                  # 一次性运维脚本（模型拉取、包内单测）
@@ -48,13 +48,13 @@ frameweave-plugins/
 
 | 梯队 | 包（type_id / 版本） | 说明 |
 |---|---|---|
-| AI 核心 | `core/ai_narrate` 3.0.0（1097 行） | 六模式解说词：上帝视角/扩写/配画面/仿写/神回复/透传；OpenAI+Gemini 双协议 |
-| | `core/llm_call` 2.0.0 | 统一 LLM 调用通道 |
-| | `core/analyze_chunks` 2.0.0 | 分块多模态视觉分析 |
+| AI 核心 | `core/ai_narrate` 3.0.1（1109 行） | 六模式解说词：上帝视角/扩写/配画面/仿写/神回复/透传；OpenAI+Gemini 双协议 |
+| | `core/llm_call` 2.0.1 | 统一 LLM 调用通道 |
+| | `core/analyze_chunks` 2.0.1 | 分块多模态视觉分析 |
 | | `core/match_visual` 2.0.0 | Chinese-CLIP 视觉配画面 |
-| 媒体 | `core/media_import` 1.0.0 ｜ `core/scene_detect` 1.1.0（TransNetV2）｜ `core/smart_chunk` 3.0.0 ｜ `core/asr_whisper` 1.0.0（faster-whisper） | 导入 → 切镜 → 分块 → 转写 |
-| 音频 | `core/tts_synthesize` 1.3.0 | 多引擎配音；`voice_ref` 端口可自动从视频抽参考音 |
-| 剪辑/输出 | `core/script_input` ｜ `core/script_extract` ｜ `core/match_clip` ｜ `core/timeline_build` ｜ `core/subtitle_build` ｜ `core/subtitle_compose` ｜ `core/export_bundle` ｜ `core/export_premiere_xml` ｜ `core/video_render` 1.1.0 | 文案 → 排片 → 字幕 → 片段包 / Pr XML / MP4 |
+| 媒体 | `core/media_import` 1.0.1 ｜ `core/scene_detect` 1.1.1（TransNetV2）｜ `core/smart_chunk` 3.0.0 ｜ `core/asr_whisper` 1.0.0（faster-whisper） | 导入 → 切镜 → 分块 → 转写 |
+| 音频 | `core/tts_synthesize` 1.4.1 | 多引擎配音；`voice_ref` 端口可自动从视频抽参考音 |
+| 剪辑/输出 | `core/script_input` ｜ `core/script_extract` ｜ `core/match_clip` ｜ `core/timeline_build` ｜ `core/subtitle_build` ｜ `core/subtitle_compose` ｜ `core/export_bundle` ｜ `core/export_premiere_xml` ｜ `core/video_render` 1.1.1 | 文案 → 排片 → 字幕 → 片段包 / Pr XML / MP4 |
 
 ### 2.2 `packages/<pkg>/` 目录约定（v3 契约）
 
@@ -70,14 +70,32 @@ frameweave-plugins/
 命名规则：目录名 `snake_case`；`manifest.id` 用 `前缀/名字`（如 `core/video_render`），
 前缀与目录前缀一致；版本 `semver`，任何影响行为的改动必须升版本。
 
-### 2.3 `workflows/<id>/` 工作流正本（现役 4 条）
+### 2.3 `workflows/<id>/` 工作流正本（现役 2 条）
 
-| 工作流 | 节点/边 | 用户路径（05 审查实测） |
-|---|---|---|
-| `local_ai_narrate_001` | 10 / 20 | AI 写文案出片——填视频 + API Key 可跑，最完整 |
-| `local_no_model_001` | 9 / 13 | ✅ 填视频 + 文案两个框就能出片 |
-| `local_transcribe_001` | 5 / 6 | 原片加字幕；需先下 faster-whisper 模型（139MB） |
-| `local_voice_001` | 10 / 17 | 文案 → 机器配音 → 按实测时长排片 → 渲染 |
+**全部 2 条都是正本**，分两类：前 1 条同步为平台出厂模板（`backend/app/builtin_templates/`），
+后 1 条只在本仓维护、不作出厂模板（用户经导入自行取用）。
+
+***内置模板（1 条，`sync-builtin-templates.py` 单向同步到平台）***
+
+| 工作流 | 节点/边 | 版本 | 用户路径 |
+|---|---|---|---|
+| `jsm_video_narration` | 16 / 34 | 4.0.0 | 视频解说 · AI 全链出片（官方主线，全链最完整） |
+
+***本仓专用（1 条，不作出厂模板）***
+
+| 工作流 | 节点/边 | 版本 | 用户路径 |
+|---|---|---|---|
+| `jsm_full_chain` | 15 / 34 | 1.0.0 | 解说猫等价对照基线——视觉走 Gemini video 通道（需 Gemini Key） |
+
+> **2026-11-03 清理（两轮）+ C 方案终局**：
+> 第一轮删 `local_ai_narrate_001`（10 个节点类型全部 ⊂ 主线且被严格覆盖——同一份活主线干得更好）。
+> 第二轮按用户决策**只保留解说猫翻版两条**，再删 6 条：`oneclick` / `minimal` / `jianji_onekey`
+> 与 `local_no_model_001` / `local_voice_001` / `local_transcribe_001`。
+> **同日 C 方案终局收口**：平台出厂零内置（`build_seed.BASIC_NODE_DIRS=[]`、平台
+> `builtin_templates/` 清空），本仓 20 个签名 dist zip + `dist_workflows/` 两个工作流 zip
+> 已全部上架韩服商城（`/opt/frameweave-cloud/market_items.json`，22 条 official；
+> 8 个基础包走 FREE_BASE_TYPES 永久免费）。节点与工作流的**唯一分发通道 = 商城**；
+> 本仓 `workflows/` 仍是正本，改版后重新打 zip 上架。
 
 | 文件 | 内容 |
 |---|---|
@@ -153,14 +171,23 @@ python sdk/check_all.py --with-workflows --with-signature --with-dist   # 四门
    `workflows/<id>/workflow.json`；平台 `scripts/sync-builtin-templates.py --check/--write`
    单向同步（改模板先改本仓，再 `--write`，禁止手改平台侧）。
 
-## 5. 现状基线（2026-10-31，v3）
+## 5. 现状基线（2026-11-03，v3）
 
-- `packages/` **18 包**：全 `core_*`；`check_all --with-workflows --with-signature --with-dist`
-  **四门全绿**（18 OK / 4 工作流 meta OK / 18 SIG_OK / 18 zip 零 drift）。
-- `workflows/` **4 条**：`meta.json` 的 `workflow_sha256` / `updated_at` 4/4 一致。
-- `dist/` **18 zip + 18 sig**；`hygiene_report.json` 18 条全 consistent。
+- `packages/` **20 包（git 跟踪）**：全 `core_*`；`check_all --with-workflows --with-signature --with-dist`
+  包 / 验签 / dist 三门 **全绿**（20 SIG_OK / 20 zip 零 drift）；workflows-meta 1 OK / 1 FAILED
+  （`jsm_full_chain` 未入库自动 SKIP；`jsm_video_narration` 是 M4 时序项，`updated_at`
+  要等该文件最后一次提交后才定得下来，提交后跑 `check_workflow_meta.py --print-desired`
+  回填即可）。
+- **样例包在 `examples/`，不在 `packages/`**（2026-11-03 迁移）。原因写在 `examples/README.md`：
+  `packages/` 里的包必须带签名，而 `check_signature.py` 的 `NO_SIG` **永不豁免** ——
+  先前 `packages/hello/`（未跟踪、无签名）会让四门之一判红，**一个本地样例就能把发布门禁判红**。
+  现在 `check_all` 的结论只由版本库内容决定，与本地是否留有样例无关。
+- `workflows/` **2 条**（1 条内置模板 + 1 条本仓专用）：`meta.json` 的 `workflow_sha256` 2/2 一致；
+  `check_workflow_meta` 实测 **1 OK / 1 FAILED**（唯一 FAIL 是 `jsm_video_narration` 的 M4
+  时序项，等提交后回填；`jsm_full_chain` 未入库自动 SKIP）。
+- `dist/` **20 zip + 20 sig**；`hygiene_report.json` 20 zip 全 consistent。
 - 官方锚 `key_id=a8998646b062c170`；allowlist `entries: []`。
-- 运行时缓存 `FrameWeave/backend/user_nodes/` 18 包与正本逐文件一致（分离守卫 PASS）。
+- 运行时缓存 `FrameWeave/backend/user_nodes/` 20 包与正本逐文件一致（分离守卫 PASS）。
 
 ## 6. 参考
 

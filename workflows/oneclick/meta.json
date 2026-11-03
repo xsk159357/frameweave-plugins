@@ -1,9 +1,0 @@
-{
-  "id": "oneclick",
-  "name": "一条龙 · AI 解说出片",
-  "version": "2.0.0",
-  "kind": "workflow",
-  "source": "official",
-  "updated_at": 1793458454,
-  "workflow_sha256": "69ffbfa5b6306dcbf92f0f9c5d2e8748e2d68f0497ffd762596f76ff4a9ecc48"
-}

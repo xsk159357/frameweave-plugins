@@ -1,9 +1,9 @@
 {
   "id": "jsm_video_narration",
   "name": "视频解说 · AI 全链出片（官方模板）",
-  "version": "3.0.0",
+  "version": "4.0.0",
   "kind": "workflow",
   "source": "official",
-  "updated_at": 1793446213,
-  "workflow_sha256": "46f44a8f759f0d75ddfd4894c0d23aeb9d37b090f270f24e60f97ab7643fbe8e"
+  "updated_at": 1793694100,
+  "workflow_sha256": "93118d1667d23daca8ef9a7d00ab387e4313d2c87d5a8dbaff994f85c089fa91"
 }

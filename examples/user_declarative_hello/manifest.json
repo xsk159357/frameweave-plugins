@@ -1,0 +1,45 @@
+{
+  "manifest_version": 3,
+  "id": "user/declarative_hello",
+  "min_engine": "3.0",
+  "title": "问候生成",
+  "category": "控制",
+  "description": "声明式示例节点：拼接问候语，零 Python 代码。可作为自写声明式包的最小模板。",
+  "version": "1.0.0",
+  "kind": "transform",
+  "perm": {
+    "fs": {"read": [], "write": []},
+    "net": {"hosts": []},
+    "model": [],
+    "exec": [],
+    "secret": []
+  },
+  "inputs": [
+    {"name": "name", "type": "STRING", "label": "名字", "required": true}
+  ],
+  "outputs": [
+    {"name": "greeting", "type": "STRING", "label": "问候语"},
+    {"name": "length", "type": "INT", "label": "名字长度"}
+  ],
+  "params": [
+    {
+      "name": "prefix",
+      "type": "string",
+      "label": "前缀",
+      "default": "你好",
+      "description": "拼在名字前面的称呼，例如「你好」「早上好」"
+    }
+  ],
+  "transform": {
+    "greeting": {
+      "op": "concat",
+      "sources": [{"$param": "prefix"}, {"$input": "name"}],
+      "sep": "，",
+      "suffix": "！"
+    },
+    "length": {
+      "op": "len",
+      "source": {"$input": "name"}
+    }
+  }
+}

@@ -1,9 +1,0 @@
-{
-  "id": "minimal",
-  "name": "离线最小链 · 导入即出片",
-  "version": "2.0.0",
-  "kind": "workflow",
-  "source": "official",
-  "updated_at": 1793458454,
-  "workflow_sha256": "f4021a0651cc1afa8f983c9e1f6887a289cb577fb7b7da1fe369abc9b782a4da"
-}
