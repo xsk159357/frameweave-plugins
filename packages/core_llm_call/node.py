@@ -42,10 +42,22 @@ class LLMCallError(RuntimeError):
 
 
 def _resolve_secret(ctx: Any, raw: str) -> str:
+    """@secret:名称 → 明文；非引用原样返回。
+
+    优先用 ctx 自带的解析器：worker 侧它是 RPC 回宿主 + gate 白名单的唯一正路。
+    判据**不能**用 isinstance(ctx, dict)（C 链根因②）：ctx 有三种承载形态——
+      · inprocess：NodeContext.make().to_dict() → dict，靠 get("resolve_secret") 取；
+      · worker   ：WorkerContext 对象，有 resolve_secret 方法（也实现了 get 映射协议）；
+      · 对象直传 ：NodeContext 实例，有 resolve_secret 方法但**没有 get()**。
+    旧写法对后两种恒 False，静默落回进程内直读 app.secrets —— 既绕开
+    gate.check_secret 白名单，worker 的 DATA_DIR 又与宿主不同 ⇒ 隔离模式下密钥永远读不到。
+    """
     if not raw or not str(raw).startswith("@secret:"):
         return str(raw or "")
     ref = str(raw).split(":", 1)[1]
-    resolver = ctx.get("resolve_secret") if isinstance(ctx, dict) else None
+    resolver = getattr(ctx, "resolve_secret", None)
+    if resolver is None and hasattr(ctx, "get"):
+        resolver = ctx.get("resolve_secret")
     if resolver is not None:
         return str(resolver(ref) or "")
     from app.secrets import read_secret

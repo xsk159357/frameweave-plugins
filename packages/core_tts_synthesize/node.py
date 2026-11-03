@@ -202,7 +202,39 @@ def _split_long(piece: str, max_chars: int) -> List[str]:
     return final
 
 
-def _extract_ref_audio(src: str, workdir: str, seconds: float = 8.0) -> str:
+def _ctx_get(ctx: Any, name: str) -> Any:
+    """从 ctx 取成员，三种承载形态一次覆盖。
+
+    inprocess 传的是 NodeContext.make().to_dict()（dict，靠 get）；
+    worker 传的是 WorkerContext（有 get 映射协议）；也可能直接是 NodeContext
+    实例（dataclass，**没有 get**，只能 getattr）。
+    """
+    if hasattr(ctx, "get"):
+        return ctx.get(name)
+    return getattr(ctx, name, None)
+
+
+async def _spawn(ctx: Any, cmd: List[str], timeout: float, *, full: bool = False) -> Any:
+    """平台托管子进程：worker 内经 gate 白名单 + RPC 回宿主，宿主侧走 to_thread。
+
+    为什么必须走这条：裸 subprocess 在 worker 里既绕开 argv 白名单，也拿不到
+    宿主的进程树回收（超时/取消只会留下孤儿 ffmpeg）。
+
+    full=True 用于**输出要拿去解析**的调用：worker 侧 run_tracked 只回「诊断尾巴」
+    （默认最后 4,000 字符），拿它做 findall/float() 会静默丢数据、还不报错
+    （FW-DEV-42 同型事故）。宿主侧没有 *_full 这个名字，但 run_tracked 本就是
+    完整 communicate 输出，语义等价，直接回落。
+    """
+    fn = _ctx_get(ctx, "run_tracked_full") if full else None
+    if fn is None:
+        fn = _ctx_get(ctx, "run_tracked")
+    if fn is None:
+        raise RuntimeError("contract: 运行上下文缺少 run_tracked（节点必须在平台引擎内运行）")
+    return await fn(cmd, timeout=timeout, text=True, encoding="utf-8",
+                    errors="replace", stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+
+
+async def _extract_ref_audio(ctx: Any, src: str, workdir: str, seconds: float = 8.0) -> str:
     """从视频里抽一段音频当音色参考。失败返回空串。
 
     为什么需要：IndexTTS 内部用 librosa.load() 读参考音频，它读不了 mp4。
@@ -216,11 +248,10 @@ def _extract_ref_audio(src: str, workdir: str, seconds: float = 8.0) -> str:
     os.makedirs(out_dir, exist_ok=True)
     out = os.path.join(out_dir, "ref.wav")
     try:
-        r = subprocess.run(
-            [exe, "-v", "error", "-y", "-i", src, "-t", str(seconds),
-             "-vn", "-ac", "1", "-ar", "24000", "-c:a", "pcm_s16le", out],
-            capture_output=True, text=True, timeout=120, errors="replace")
-    except (OSError, subprocess.SubprocessError):
+        r = await _spawn(ctx, [
+            exe, "-v", "error", "-y", "-i", src, "-t", str(seconds),
+            "-vn", "-ac", "1", "-ar", "24000", "-c:a", "pcm_s16le", out], 120)
+    except (OSError, subprocess.SubprocessError, TimeoutError):
         return ""
     if r.returncode != 0 or not os.path.isfile(out) or os.path.getsize(out) < 1024:
         return ""
@@ -289,7 +320,8 @@ def _ps_quote(s: str) -> str:
     return "'" + str(s).replace("'", "''") + "'"
 
 
-def _sapi_one(text: str, out_wav: str, voice: str, rate: int, volume: int, work: str) -> None:
+async def _sapi_one(ctx: Any, text: str, out_wav: str, voice: str, rate: int,
+                    volume: int, work: str) -> None:
     """用系统 SAPI 合成一句。文本直接嵌进脚本，不走临时文件——少一层编码坑。"""
     body = [
         "Add-Type -AssemblyName System.Speech",
@@ -308,9 +340,8 @@ def _sapi_one(text: str, out_wav: str, voice: str, rate: int, volume: int, work:
     # PowerShell 5.1 读**无 BOM** 的 .ps1 会按系统 ANSI 解码，中文直接变乱码
     with open(ps, "w", encoding="utf-8-sig", newline="\n") as f:
         f.write("\n".join(body) + "\n")
-    r = subprocess.run(["powershell", "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", ps],
-                       capture_output=True, text=True, timeout=180,
-                       encoding="utf-8", errors="replace")
+    r = await _spawn(ctx, ["powershell", "-NoProfile", "-ExecutionPolicy", "Bypass",
+                           "-File", ps], 180)
     if r.returncode != 0 or not os.path.isfile(out_wav) or os.path.getsize(out_wav) < 128:
         raw = (r.stderr or r.stdout or "").strip()
         # PowerShell 的输出是 GBK，经 utf-8 解码后是乱码——直接抛给用户等于没报错。
@@ -328,34 +359,43 @@ def _sapi_one(text: str, out_wav: str, voice: str, rate: int, volume: int, work:
                            % (text[:16], hint, raw[:300]))
 
 
-def _run(cmd: List[str], timeout: int) -> subprocess.CompletedProcess:
-    return subprocess.run(cmd, capture_output=True, text=True, timeout=timeout,
-                          encoding="utf-8", errors="replace")
+async def _run(ctx: Any, cmd: List[str], timeout: int, *,
+               full: bool = False) -> Any:
+    return await _spawn(ctx, cmd, timeout, full=full)
 
 
-def _norm(src: str, dst: str, ff: str) -> None:
-    r = _run([ff, "-y", "-v", "error", "-i", src, "-ar", AR, "-ac", "1",
-              "-c:a", "pcm_s16le", dst], 180)
+async def _norm(ctx: Any, src: str, dst: str, ff: str) -> None:
+    r = await _run(ctx, [ff, "-y", "-v", "error", "-i", src, "-ar", AR, "-ac", "1",
+                         "-c:a", "pcm_s16le", dst], 180)
     if r.returncode != 0 or not os.path.isfile(dst):
         raise RuntimeError("音频格式统一失败: %s" % (r.stderr or "").strip()[:300])
 
 
-def _silence(dst: str, seconds: float, ff: str) -> None:
-    _run([ff, "-y", "-v", "error", "-f", "lavfi", "-i",
-          "anullsrc=r=%s:cl=mono" % AR, "-t", "%.3f" % seconds,
-          "-c:a", "pcm_s16le", dst], 60)
+async def _silence(ctx: Any, dst: str, seconds: float, ff: str) -> None:
+    await _run(ctx, [ff, "-y", "-v", "error", "-f", "lavfi", "-i",
+                     "anullsrc=r=%s:cl=mono" % AR, "-t", "%.3f" % seconds,
+                     "-c:a", "pcm_s16le", dst], 60)
 
 
-def _concat(list_file: str, dst: str, ff: str) -> None:
-    r = _run([ff, "-y", "-v", "error", "-f", "concat", "-safe", "0",
-              "-i", list_file, "-c", "copy", dst], 300)
+async def _concat(ctx: Any, list_file: str, dst: str, ff: str) -> None:
+    r = await _run(ctx, [ff, "-y", "-v", "error", "-f", "concat", "-safe", "0",
+                         "-i", list_file, "-c", "copy", dst], 300)
     if r.returncode != 0 or not os.path.isfile(dst):
         raise RuntimeError("配音拼接失败: %s" % (r.stderr or "").strip()[:300])
 
 
-def _dur(path: str, fp: str) -> float:
-    r = _run([fp, "-v", "error", "-show_entries", "format=duration",
-              "-of", "csv=p=0", path], 60)
+async def _dur(ctx: Any, path: str, fp: str) -> float:
+    """读实际时长；读不出来返回 0.0。
+
+    0.0 是「不知道」，不是「零秒」——调用方必须据此补一条 warning（见 run）。
+    旧契约（core_tts._probe_duration，pre-remake-20261029）就写死了这条：
+    失败不许静默，否则下游排片拿到 0 时长只会得到一条错的时间轴，查不到原因。
+
+    full=True 是硬要求：ffprobe 的 stdout 要拿去 float()，而 worker 侧
+    run_tracked 只回最后 4,000 字符的诊断尾巴（FW-DEV-42），截断后就是空串。
+    """
+    r = await _run(ctx, [fp, "-v", "error", "-show_entries", "format=duration",
+                         "-of", "csv=p=0", path], 60, full=True)
     try:
         return float((r.stdout or "").strip())
     except (TypeError, ValueError):
@@ -412,8 +452,8 @@ def _indextts_ready(params: Optional[Dict[str, Any]] = None) -> Tuple[bool, str]
     return True, ""
 
 
-def _indextts_speak_all(base: str, lines: List[str], out_dir: str,
-                        ref: str, lang: str) -> List[str]:
+async def _indextts_speak_all(ctx: Any, base: str, lines: List[str], out_dir: str,
+                              ref: str, lang: str) -> List[str]:
     """调独立运行时一次把整段合成完，返回逐句 wav 路径。
 
     为什么一次进程：模型加载约 9.5 GB，每句重加载不可接受。runner 里一次加载、
@@ -433,9 +473,15 @@ def _indextts_speak_all(base: str, lines: List[str], out_dir: str,
         cmd += ["--ref", ref]
     env = dict(os.environ, PYTHONUTF8="1", PYTHONIOENCODING="utf-8")
     try:
-        r = subprocess.run(cmd, capture_output=True, text=True, timeout=1800,
-                           encoding="utf-8", errors="replace", env=env)
-    except subprocess.TimeoutExpired:
+        # 宿主侧 env 传给 Popen 生效；worker 侧 run_tracked 不接受 popen_kw，
+        # 由平台自己保证 UTF-8（这条差异已在规范里记过，不是本次引入）
+        fn = _ctx_get(ctx, "run_tracked")
+        if fn is None:
+            raise RuntimeError("contract: 运行上下文缺少 run_tracked（节点必须在平台引擎内运行）")
+        r = await fn(cmd, timeout=1800, text=True, encoding="utf-8",
+                     errors="replace", stdout=subprocess.PIPE,
+                     stderr=subprocess.PIPE, env=env)
+    except (subprocess.SubprocessError, TimeoutError):
         raise RuntimeError("IndexTTS 合成超时（30 分钟）——文案过长或显存不足")
 
     if r.returncode != 0:
@@ -497,7 +543,7 @@ class TtsSynthesizeNode(NodeBase):
         # 所以非 wav/mp3/flac 的先抽成 wav，抽不出来就当作没有参考。
         if ref_audio and os.path.splitext(ref_audio)[1].lower() \
                 not in (".wav", ".mp3", ".flac", ".m4a"):
-            _ref_wav = _extract_ref_audio(ref_audio, ctx.get("workdir", "."))
+            _ref_wav = await _extract_ref_audio(ctx, ref_audio, ctx.get("workdir", "."))
             ref_audio = _ref_wav or ""
             if not ref_audio:
                 warnings.append("音色参考是视频文件，抽音频失败；本次不使用音色克隆")
@@ -549,8 +595,8 @@ class TtsSynthesizeNode(NodeBase):
         try:
             raw: List[str] = []
             if engine == "indextts":
-                raw = await asyncio.to_thread(_indextts_speak_all, idx_base, lines, work,
-                                              ref_audio, lang)
+                raw = await _indextts_speak_all(ctx, idx_base, lines, work,
+                                                ref_audio, lang)
             elif engine == "edge":
                 # 逐句合成（与 SAPI/IndexTTS 同构）；首句就摊上 network 类失败时
                 # 降 sapi（仅 auto；显式选 edge 则直接抛）。
@@ -576,26 +622,32 @@ class TtsSynthesizeNode(NodeBase):
                     engine = "sapi"
                     for i, one in enumerate(lines):
                         p = os.path.join(work, "l%03d.wav" % i)
-                        await asyncio.to_thread(_sapi_one, one, p, voice, rate, volume, work)
+                        await _sapi_one(ctx, one, p, voice, rate, volume, work)
                         raw.append(p)
             else:
                 for i, one in enumerate(lines):
                     p = os.path.join(work, "l%03d.wav" % i)
-                    await asyncio.to_thread(_sapi_one, one, p, voice, rate, volume, work)
+                    await _sapi_one(ctx, one, p, voice, rate, volume, work)
                     raw.append(p)
 
             norm: List[str] = []
             for i, p in enumerate(raw):
                 q = os.path.join(work, "n%03d.wav" % i)
-                await asyncio.to_thread(_norm, p, q, ff)
+                await _norm(ctx, p, q, ff)
                 norm.append(q)
 
-            durs = [await asyncio.to_thread(_dur, p, fp) for p in norm]
+            durs = [await _dur(ctx, p, fp) for p in norm]
+            missing = sum(1 for d in durs if d <= 0)
+            if missing:
+                # 不许静默：0 时长会让下游排片得到一条错轴，用户只会看到「时间不对」
+                warnings.append(
+                    "有 %d 句实测时长读不出来（ffprobe 无输出），这些句子按 0 秒计，"
+                    "排片会偏" % missing)
 
             sil = ""
             if gap > 0 and len(norm) > 1:
                 sil = os.path.join(work, "gap.wav")
-                await asyncio.to_thread(_silence, sil, gap, ff)
+                await _silence(ctx, sil, gap, ff)
 
             parts: List[str] = []
             for i, p in enumerate(norm):
@@ -610,7 +662,7 @@ class TtsSynthesizeNode(NodeBase):
                     f.write("file '%s'\n" % p.replace("\\", "/").replace("'", "'\\''"))
 
             final = os.path.join(files_dir, "voice_%d.wav" % int(time.time() * 1000))
-            await asyncio.to_thread(_concat, lst, final, ff)
+            await _concat(ctx, lst, final, ff)
 
             segs: List[Dict[str, Any]] = []
             cursor = 0.0
@@ -626,9 +678,12 @@ class TtsSynthesizeNode(NodeBase):
                     cursor += d
 
             summed = round(cursor, 3)
-            actual = await asyncio.to_thread(_dur, final, fp)
+            actual = await _dur(ctx, final, fp)
             total = round(float(actual or summed), 3)
-            if actual and abs(actual - summed) > 0.5:
+            if not actual:
+                warnings.append("终稿时长读不出来（ffprobe 无输出），改用逐句累加值 %.2fs"
+                                % summed)
+            elif abs(actual - summed) > 0.5:
                 warnings.append("拼接后实测时长 %.2fs 与逐句累加 %.2fs 不符，以实测为准"
                                 % (actual, summed))
 

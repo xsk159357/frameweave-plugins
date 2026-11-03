@@ -30,12 +30,35 @@ _PROBE_TIMEOUT = 30
 _PTS_RE = re.compile(r"pts_time:\s*([0-9]+(?:\.[0-9]+)?)")
 
 
-def _run(cmd: List[str], timeout: int) -> Optional[subprocess.CompletedProcess]:
-    """跑外部命令；任何执行期异常都折叠成 None（由调用方决定降级）。"""
+def _ctx_get(ctx: Any, name: str) -> Any:
+    """从 ctx 取成员：dict / WorkerContext / NodeContext 实例三种承载都覆盖。"""
+    if hasattr(ctx, "get"):
+        return ctx.get(name)
+    return getattr(ctx, name, None)
+
+
+async def _run(ctx: Any, cmd: List[str], timeout: int, *,
+               full: bool = False) -> Optional[Any]:
+    """跑外部命令；任何执行期异常都折叠成 None（由调用方决定降级）。
+
+    走平台托管：worker 内经 gate 白名单 + RPC 回宿主，宿主侧 to_thread。
+    裸 subprocess 在 worker 里既绕开白名单，也不进进程树回收（超时留孤儿）。
+
+    full=True 在这里不是可选项：`_detect` 用 `_PTS_RE.findall(p.stderr)` 解析
+    ffmpeg showinfo 的**全部**切点，每个镜头一行。worker 侧 run_tracked 只回
+    最后 4,000 字符（_WorkerProcResult 的「诊断尾巴」），10 分钟片子会被静默
+    截掉大半切点——段数变少、时间轴错位，而且完全不报错（FW-DEV-42 同型）。
+    """
+    fn = _ctx_get(ctx, "run_tracked_full") if full else None
+    if fn is None:
+        fn = _ctx_get(ctx, "run_tracked")
+    if fn is None:
+        raise RuntimeError("contract: 运行上下文缺少 run_tracked（节点必须在平台引擎内运行）")
     try:
-        return subprocess.run(cmd, capture_output=True, text=True,
-                              timeout=timeout, errors="replace")
-    except (OSError, subprocess.SubprocessError):
+        return await fn(cmd, timeout=timeout, text=True, encoding="utf-8",
+                        errors="replace", stdout=subprocess.PIPE,
+                        stderr=subprocess.PIPE)
+    except (OSError, subprocess.SubprocessError, TimeoutError):
         return None
 
 
@@ -77,15 +100,15 @@ def _build(cuts: List[float], total: float, min_sec: float,
     return segs
 
 
-def _detect(path: str, threshold: float, min_sec: float,
-            max_sec: float) -> Tuple[Optional[List[Dict[str, Any]]], str]:
+async def _detect(ctx: Any, path: str, threshold: float, min_sec: float,
+                  max_sec: float) -> Tuple[Optional[List[Dict[str, Any]]], str]:
     """ffmpeg 场景检测。返回 (段列表 或 None, 原因)。"""
     exe = media_tools.ffmpeg_path()
     if not exe:
         return None, "未找到 ffmpeg（内置目录 / PATH / imageio_ffmpeg 都没有）"
-    p = _run([exe, "-hide_banner", "-nostats", "-i", path,
-              "-filter:v", "select='gt(scene,%g)',showinfo" % threshold,
-              "-an", "-f", "null", "-"], _FFMPEG_TIMEOUT)
+    p = await _run(ctx, [exe, "-hide_banner", "-nostats", "-i", path,
+                         "-filter:v", "select='gt(scene,%g)',showinfo" % threshold,
+                         "-an", "-f", "null", "-"], _FFMPEG_TIMEOUT, full=True)
     if p is None:
         return None, "ffmpeg 执行失败或超时"
     times = [float(x) for x in _PTS_RE.findall(p.stderr or "")]
@@ -223,7 +246,7 @@ def _transnet_blocker_error(supply: Dict[str, Any]) -> RuntimeError:
     return RuntimeError("TransNetV2 不可用：%s（%s）" % (", ".join(blockers), hint))
 
 
-def _extract_transnet_frames(path: str, workdir: str) -> Any:
+async def _extract_transnet_frames(ctx: Any, path: str, workdir: str) -> Any:
     """按 27x48 抽帧供 TransNetV2。返回 numpy 数组 [N,27,48,3]，失败返回 None。"""
     try:
         import numpy as np
@@ -239,8 +262,8 @@ def _extract_transnet_frames(path: str, workdir: str) -> Any:
             os.remove(os.path.join(out_dir, f))
         except OSError:
             pass
-    p = _run([exe, "-v", "error", "-i", path, "-vf", "scale=48:27",
-              os.path.join(out_dir, "f_%06d.jpg")], _FFMPEG_TIMEOUT)
+    p = await _run(ctx, [exe, "-v", "error", "-i", path, "-vf", "scale=48:27",
+                         os.path.join(out_dir, "f_%06d.jpg")], _FFMPEG_TIMEOUT)
     if p is None or p.returncode != 0:
         return None
     files = sorted(os.listdir(out_dir))
@@ -254,22 +277,24 @@ def _extract_transnet_frames(path: str, workdir: str) -> Any:
             arr.append(np.asarray(im, dtype=np.uint8))
     except ImportError:
         # 没有 PIL 就交给 ffmpeg 直接吐 rawvideo
-        p2 = _run([exe, "-v", "error", "-i", path, "-vf", "scale=48:27",
-                   "-f", "rawvideo", "-pix_fmt", "rgb24", "-"], _FFMPEG_TIMEOUT)
+        p2 = await _run(ctx, [exe, "-v", "error", "-i", path, "-vf", "scale=48:27",
+                              "-f", "rawvideo", "-pix_fmt", "rgb24", "-"],
+                        _FFMPEG_TIMEOUT)
         if p2 is None or p2.returncode != 0:
             return None
         return None   # 文本模式捕获不到二进制，走 PIL 路径才是正路
     return np.asarray(arr) if arr else None
 
 
-def _detect_transnet(path: str, workdir: str, model_dir: str, threshold: float,
-                     min_sec: float, max_sec: float) -> Tuple[Optional[List[Dict[str, Any]]], str]:
+async def _detect_transnet(ctx: Any, path: str, workdir: str, model_dir: str,
+                           threshold: float, min_sec: float,
+                           max_sec: float) -> Tuple[Optional[List[Dict[str, Any]]], str]:
     """TransNetV2 检测。返回 (段列表 或 None, 原因)。"""
     try:
         import numpy as np
     except ImportError:
         return None, "缺少 numpy（TransNetV2 需要）"
-    frames = _extract_transnet_frames(path, workdir)
+    frames = await _extract_transnet_frames(ctx, path, workdir)
     if frames is None or frames.size == 0:
         return None, "抽帧失败（需要 ffmpeg 与 PIL）"
     fd, npy = tempfile.mkstemp(prefix="fw_tn_", suffix=".npy")
@@ -347,8 +372,8 @@ class SceneDetectNode(NodeBase):
         if engine in ("auto", "transnetv2"):
             supply = await asyncio.to_thread(transnet_supply, model_path)
             if supply.get("usable"):
-                segs, reason = await asyncio.to_thread(
-                    _detect_transnet, path, ctx.get("workdir", "."),
+                segs, reason = await _detect_transnet(
+                    ctx, path, ctx.get("workdir", "."),
                     supply.get("model_dir", ""), threshold, min_sec, max_sec)
                 if segs:
                     used = "transnetv2"
@@ -361,8 +386,7 @@ class SceneDetectNode(NodeBase):
                 warnings.append("TransNetV2 不可用，改用 ffmpeg：%s" % detail)
 
         if not segs and engine in ("auto", "ffmpeg"):
-            segs, reason = await asyncio.to_thread(
-                _detect, path, threshold, min_sec, max_sec)
+            segs, reason = await _detect(ctx, path, threshold, min_sec, max_sec)
             if segs:
                 used = "ffmpeg"
             elif engine == "ffmpeg":

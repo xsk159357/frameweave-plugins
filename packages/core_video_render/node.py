@@ -536,15 +536,12 @@ class VideoRenderNode(NodeBase):
             expr += f";[{final_label}]ass=filename='{esc}'[vsub]"
             final_label = "vsub"
 
-        # ---- 覆盖视频轨 ----
+        # ---- 覆盖视频轨：此处只探可用性，filter 串延迟到音频块之后拼接 ----
+        # 原因：cmd 里 overlay 的 -i 追加在所有 extra_inputs 之后，故
+        # ov_idx = n + len(extra_inputs) 只有等音频块把 audio/bgm 全部 append 完才是最终值。
+        # 旧实现就地取值有两个错：①本行在 extra_inputs 定义之前 ⇒ UnboundLocalError；
+        # ②即便挪到定义之后，此时长度仍偏小 ⇒ overlay 指向错误输入（-map 错轨）。
         has_overlay = overlay is not None and getattr(overlay, "path", "") and os.path.exists(overlay.path)
-        if has_overlay:
-            alpha = f"{overlay_alpha:.3f}"
-            ov_label = "ov0"
-            ov_idx = n + len(extra_inputs)  # 覆盖轨输入下标（所有额外输入追加之后）
-            expr += f";[{ov_idx}:v]scale={w}:{h}:force_original_aspect_ratio=decrease,pad={w}:{h}:(ow-iw)/2:(oh-ih)/2,format=rgba,colorchannelmixer=aa={alpha}[{ov_label}]"
-            expr += f";[{final_label}][{ov_label}]overlay=0:0[vout]"
-            final_label = "vout"
 
         # ---- 音频 ----
         narration_ok = audio is not None and getattr(audio, "path", "") and os.path.exists(audio.path)
@@ -642,6 +639,15 @@ class VideoRenderNode(NodeBase):
                 else:
                     expr += ";" + "".join(labels) + f"concat=n={len(labels)}:v=0:a=1[aout]"
                     audio_label = "aout"
+
+        # ---- 覆盖视频轨（延迟拼接）：此处 extra_inputs 已定型，ov_idx 才是真值 ----
+        if has_overlay:
+            alpha = f"{overlay_alpha:.3f}"
+            ov_label = "ov0"
+            ov_idx = n + len(extra_inputs)   # cmd 的 -i 顺序：video×n → extra_inputs → overlay
+            expr += f";[{ov_idx}:v]scale={w}:{h}:force_original_aspect_ratio=decrease,pad={w}:{h}:(ow-iw)/2:(oh-ih)/2,format=rgba,colorchannelmixer=aa={alpha}[{ov_label}]"
+            expr += f";[{final_label}][{ov_label}]overlay=0:0[vout]"
+            final_label = "vout"
 
         # ---- 组装命令 ----
         # AI 生成合成内容：显式标识追加到 filter_complex 末尾（同一次编码，不额外转码）

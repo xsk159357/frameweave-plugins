@@ -4,7 +4,7 @@
   "title": "镜头切分",
   "category": "分析",
   "description": "把视频按画面突变切成场景段。降级链：ffmpeg 场景检测 → ffprobe 时长 + 固定间隔 → 明确报错（不返回空场景假装成功）",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "kind": "python",
   "entrypoint": "node.py",
   "class_name": "SceneDetectNode",
@@ -154,7 +154,7 @@
   "signature": {
     "alg": "ed25519",
     "key_id": "a8998646b062c170",
-    "value": "LOPirZiqrHAxmBkE6shGdK+RFWpBZVLqWhcDPH7KHOePfEjLebFh+hs3Z0quMa626rK/xBi+34It3lK3aIilCg==",
+    "value": "2lNk4T274Y60CAyU8AEBo3//36OIptsuNqV2566SkTEGDD+1PHGToaC47btPfd7IGNRkmmcg9uDK+jDB3hAECw==",
     "over": "manifest"
   }
 }

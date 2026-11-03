@@ -8,7 +8,7 @@
 
 插件包是一个目录（发布时为 zip），至少包含顶层目录下的 `manifest.json`。声明式插件使用 `kind=transform`，只执行白名单数据运算；Python 插件使用 `kind=python`，提供 `entrypoint` 和 `class_name`。`manifest.json` 是唯一契约来源，`inputs`、`outputs`、`params` 三字段必须存在（可为空数组）；**Python 类不要写 `spec()`**：NodeSpec 由平台从 manifest 生成（见 §4「为什么不要写 spec()」），node.py 只实现 `run()`。
 
-扫描、安装和 SDK 打包均通过 G1-G10 强校验。失败必须返回稳定错误码，不能静默降级。插件不得使用 `core/` 前缀（官方签名包专用）；社区插件使用 `user/` 或已登记前缀。安装包的 zip 本体最多 2 GiB、解压总量最多 8 GiB、单文件最多 4 GiB、成员最多 20,000，且拒绝路径穿越、符号链接、加密和特殊成员。
+扫描、安装和 SDK 打包均通过 G1-G11 强校验。失败必须返回稳定错误码，不能静默降级。插件不得使用 `core/` 前缀（官方签名包专用）；社区插件使用 `user/` 或已登记前缀。安装包的 zip 本体最多 2 GiB、解压总量最多 8 GiB、单文件最多 4 GiB、成员最多 20,000，且拒绝路径穿越、符号链接、加密和特殊成员。
 
 ## 1. 包结构、位置与加载
 
@@ -54,7 +54,85 @@ zip 必须只有一个顶层目录 `<pkg>/`，不得在根级混入文件；顶�
 
 v2 严格模式 `additionalProperties=false`；未知顶层字段和未知 PortSpec 字段均拒绝。PortSpec 允许字段为 `name/type/label/required/default/widget/options/description/min/max/step/placeholder/hint`。
 
+### 2.1.1 新增或改名 manifest 字段时的强制动作
+
+`manifest.json` 在平台侧被 10 处以上读取，且分成两种用途：**校验/验签读磁盘原样，
+使用/查找读归一化字典**。漏改一处的表现是**静默失效**，不是报错。
+
+v3 改名（`type_id`→`id`、`permission`→`perm`、`engine_api`→`min_engine`）时，
+平台侧有 4 处仍在读旧名并拿到空值，其中 `pkg_dir()` 恒返回 `None` ⇒ 权限门在拿到
+manifest 之前就退出，`exposable` 一条也没校验过。这类缺陷的共同点是：
+**装得上、跑得起来、结果错，且没有任何一处报错。**
+
+所以改字段必须按顺序做四件事：
+
+1. **改三份实现**：`backend/schemas/manifest_v2.json`（结构层）、
+   `backend/app/plugin/manifest_v2.py`（语义门 + `V3_TOP_LEVEL_KEYS` 白名单）、
+   本仓 `sdk/check_manifest_v3.py`（V 门）。缺一处就是「SDK 拒了平台收」或反过来。
+2. **改归一化，不改下游**：新名 → 旧名的投影只写在 `manifest_v2.normalize_manifest()`
+   一处；下游继续读旧名。**不要**在十几个调用点各加一个 `.get("新名") or .get("旧名")`——
+   §6.7 的实测结论是「同一个文件里都会一处兼容一处没兼容」。
+3. **数一遍读点**：`grep -rn 'manifest\.json' backend/app --include=*.py`，
+   按「读原始 / 读归一化」两张清单归位。新增读点必须走
+   `backend/app/plugin/manifest_io.py` 的 `read_raw` / `load_normalized` / `load_validated`
+   之一；否则 `backend/tests/test_manifest_io_normalized_20261103.py` 会红。
+4. **两侧对拍**：平台 G 门与本仓 V 门用同一批夹具各跑一遍，结论必须逐例一致。
+   样板两份：`test_manifest_exposable_v11.py`（V11/G11，14 例）与
+   `test_manifest_gate_parity_20261103.py`（V1/V2/V5/V7/V12/V13，30 例 +
+   9 组常量逐字对拍 + 反证）。**先跑探针再写测试**：只看「某门是否开火」会漏掉
+   「平台报 G5、节点仓储报 V12」这类门号错位，主断言必须是「拒 / 放是否一致」。
+
+判据（**用测试，不要用 grep**）：
+
+```
+cd ../FrameWeave
+backend/.venv/Scripts/python.exe -m pytest backend/tests/test_manifest_io_normalized_20261103.py -q -k bare_manifest
+```
+
+→ `1 passed`。这条测试用 AST 排除文档字符串与 `#` 注释后扫描真实读点，
+白名单只保留 `plugin/manifest_io.py`（唯一实现）、`signatures.py`（zip 成员）、
+`routes/export.py`（只写）、`runtime_component.py`（另一个文件名）。
+
+> `grep -rn 'manifest\.json' backend/app --include=*.py | grep -v '#\|"""'` 只能当粗筛：
+> 多行 docstring 的后续行不以 `"""` 开头，会照样命中（2026-11-03 实测：12 行命中里
+> 6 行是文档），所以那个数字不能当判据——见平台仓 §7.4「判据骗人的三种形态」。
+
+### 2.1.2 v3 门禁的强制约束（2026-11-03 两侧对齐后）
+
+下面这些规则**平台侧现在会拒**，而之前只在本仓 V 门拒（或两边都没查）。
+写 v3 包时按这张表自查；`sdk/check_manifest_v3.py` 与平台 `manifest_v2.py` 的判定
+已由 30 例对拍钉死，任一侧单独改会被 `test_manifest_gate_parity_20261103.py` 打红。
+
+| 位置 | 约束 | 之前的状态 |
+|---|---|---|
+| 顶层 | `perm` **必填**（缺 = 拒，不是"默认全拒就放行"） | 平台 `_check_perm_v3` 直接 return |
+| `perm.net.hosts` | 不允许 `"*"`，逐个域名列出 | 平台只查类型 |
+| `perm.model` | 每项必须是 `{name, sha256}`，**sha256 必填** 64 位十六进制 | 平台 sha256 可选；字符串写法也放过 |
+| `perm.exec` | 每项 `{bin, args_policy?}`；`args_policy` 只允许 `"argv_only"`，可省略 | 平台只查「是字符串」；本仓完全不查 |
+| `perm.fs.read` / `perm.fs.write` | 必须字符串数组 | 本仓只查键名 |
+| `perm.secret` | 必须字符串数组 | 本仓完全不查 |
+| 端口 `type` | 必须是**大写**枚举，只接受 v3 的 16 种；`JSON` / `ANY` 已移除 | 平台用 v2 集合且 `.upper()`，`JSON`、`string` 都能过 |
+| 端口 `label` | 必填非空 | 平台不检查 |
+| `outputs[].required` | **不允许出现**（输出没有"可选"语义） | 平台不检查 |
+| 端口 `name` | 同节点内唯一——**跨 inputs/outputs 也算** | 本仓把作用域缩到单侧 |
+| `params[].label` / `description` | 必填非空（`""` 不算填了） | 平台不检查 |
+| `params[].default` | **必须出现**（确实没有就写 `null`） | 平台不检查 |
+| `params[].type` | 严格小写枚举，`"String"` 不算 `"string"` | 平台 `.lower()` 后放过 |
+| `params[] type=enum` | 必须提供非空 `options` | 平台不检查 |
+
+**为什么平台也要拒。** 「SDK 拒、平台收」的后果比两边都松更糟：作者按本文档写完，
+`check_manifest` 报错，改到过为止；换个人直接打 zip 上传，同样的包平台装着跑起来了
+——于是「文档说的规则」和「实际能装的包」变成两套标准，文档先失效。
+
+**为什么 `category` 不在上表。** 平台允许 `用户节点`、本仓不允许，这是**唯一**允许的差异
+（平台要在插件管理器里单独分组）。`test_categories_is_documented_superset` 把差值
+写死成 `{"用户节点"}`，多一个就会红。
+
 ### 2.2 可直接校验的 Python manifest 示例
+
+> **这份示例是 v2 的**（`schema_version: 2`，端口可以用 `JSON`）。写 v3 包请按
+> `docs/reports/节点重做_20261029/manifest_v3规格.md` 与上表 §2.1.2：
+> v3 端口没有 `JSON`/`ANY`，`permission` 改名 `perm` 且必填，`params[]` 多了 `default` 必填。
 
 ```json
 {
@@ -141,7 +219,7 @@ v2 只接受 canonical 形式；取值源为字面量、`{"$const": value}`、`{
 
 manifest 缺少 `schema_version` 或为 1 时，只在内存副本注入 `schema_version=2`、`engine_api="1.0"`、默认权限和布尔字段，并探测 kind、归一化旧 op；磁盘文件不改写。v1 Python 包缺少端口时兼容通道补空数组并警告，生产插件仍应立即迁移到 v2；v1 transform 缺端口不能通过校验。新插件禁止依赖兼容通道。
 
-## 3. G1-G10 校验门与错误码
+## 3. G1-G11 校验门与错误码
 
 扫描、上传安装、生命周期启用和 SDK 打包必须共享同一契约语义。错误码按首个失败门返回，问题列表同时保留。
 
@@ -157,6 +235,12 @@ manifest 缺少 `schema_version` 或为 1 时，只在内存副本注入 `schema
 |G8|dependencies 与 ui、web（S1-T7：web 目录声明）|`manifest_dependencies`、`manifest_ui`、`manifest_web`|
 |G9|zip 资源限制与安全成员|`zip_too_large`、`total_size_exceeded`、`file_size_exceeded`、`member_count_exceeded`、`zip_bomb_ratio`、`path_traversal`、`symlink_member`、`encrypted_member`、`special_member`、`empty_zip`、`pkg_layout`|
 |G10|signature 占位结构|`manifest_signature`；无签名为警告|
+|G11|`exposable` 引用完整性（仅 v3；对应节点仓 V11）|`manifest_exposable`：`param` 必须存在于 `params` 且不重复、`recipe_role` 非空、`safe_for_wizard` 为布尔、`params[].advanced:true` 的项 `safe_for_wizard` 必须为 `false`；条目含三键（`param`/`recipe_role`/`safe_for_wizard`）之外的字段即拒。**`advanced:false` + `safe_for_wizard:false` 合法**（2026-11-03 取消原先的 WARN 规则：`advanced` 只管画布，不能拿来满足向导规则）|
+
+> G11 是 2026-11-03 补的（此前平台侧只有字段白名单、没有校验，向导会渲染空控件）。
+> 它与节点仓 `sdk/check_manifest_v3.py` 的 V11 由平台测试
+> `backend/tests/test_manifest_exposable_v11.py` 逐例对拍——两仓各有一份实现，
+> 所以「结论一致」这件事必须由测试保证，不能靠两边各写一遍规则。
 
 其它兜底码为 `manifest_gate`、`bad_manifest`、`not_zip`、`staging_failed`、`install_failed`。后端错误定义见 `backend/app/plugin/errors.py` 与 `backend/app/worker/limits.py`。
 
@@ -211,6 +295,26 @@ ctx 公开字段：`workdir`、`store`、`logger`、`progress(0..1)`、`spawn_tr
 `Asset` 字段：`id`、`kind`、`path`、`meta`、`fingerprint`、`node_id`、`created_at`、`size`。媒体资产的 path 是文件路径；结构化资产调用 `store.save_asset(asset, payload=data)` 自动写 JSON。`AssetStore`（默认 `LocalAssetStore`）公开：`save_asset`、`get`、`read_json`、`delete`、`root`、`files_dir`、`meta_dir`、`prune_orphans`。第三方存储可实现 `StoreAdapter` 并通过 `register_store_adapter/create_store` 注册。
 
 Python 节点接收上游 Asset 原样；transform 节点由引擎将 JSON 解包为载荷，媒体转换为 `{kind,path,meta}` 视图。不要把 Asset 的 dataclass repr 当成业务文本。
+
+### 5.1 两种执行模式下的 `path` 语义（2026-11-03 实测补）
+
+平台有两种执行模式，**同一条媒体资产在两种模式下 `path` 指向不同地方**。节点必须能同时活在这两种模式下。
+
+| 模式 | 怎么触发 | 媒体落盘 | 源片被移动/删除 |
+|---|---|---|---|
+| **worker（默认，发布形态）** | 不设 `FW_PLUGIN_EXEC` | 产物与「scratch 外」的资产会**复制**进资产库（自包含）；媒体输入也会复制进 `in/`（隔离，节点只在 scratch 内读写） | 工程照常 |
+| **inprocess（调试降级）** | `FW_PLUGIN_EXEC=inprocess` | **直接引用原路径**，零复制 | 工程静默断链 |
+
+三条据此得出的硬约束：
+
+1. **不要用 `path` 判断「是不是同一个文件」**。用 `asset.fingerprint`（内容指纹，平台已算好）。
+   同一份内容导入两次不一定得到同一个 `path`：同一路径重复导入会命中执行缓存复用资产，
+   但**内容相同、路径不同**的两个文件目前会各存一份（资产库没有内容去重，实测 `2.00x`）。
+2. **不要「原地写回」输入文件**。inprocess 改的是原件；worker 改的是隔离副本，原件不动——
+   同一个节点在两种模式下结果会不一样，而且 inprocess 那次会污染用户素材。
+   要改就在 `ctx.workdir` 下写新文件，再 `store.save_asset`。
+3. **同一路径供多个输出端口是允许的**（`core/media_import` 的 `video`/`audio` 就是这样）。
+   宿主按 scratch 内路径去重，只搬一次，不会因为两个端口多复制一份。
 
 ## 6. PortType 与连线
 

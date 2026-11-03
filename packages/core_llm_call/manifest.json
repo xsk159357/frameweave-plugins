@@ -4,7 +4,7 @@
   "title": "统一 LLM 调用",
   "category": "语义",
   "description": "提示词进、响应出；统一超时、退避、备用模型回退、JSON 模式与 schema 校验；OpenAI / Gemini 双协议",
-  "version": "2.0.0",
+  "version": "2.0.1",
   "kind": "python",
   "entrypoint": "node.py",
   "class_name": "LLMCallNode",
@@ -187,7 +187,7 @@
   "signature": {
     "alg": "ed25519",
     "key_id": "a8998646b062c170",
-    "value": "6SCq5WObYf/9lJHo/8eNB2suWzLL1SuXXJfMcJiczmRdYJUDCA5TOX34YiWQVBj+qo/J521coxpO8A0dFhkbAg==",
+    "value": "HWhO+NauSBkX20jISmykFL0sgg54QjzAH8AnY49cUKha9MSMZGinJZgBHD0k38i5Ya2pz1nX2kObC144dz2BCw==",
     "over": "manifest"
   }
 }

@@ -82,6 +82,10 @@ def _is_nonempty_str(v: Any) -> bool:
     return isinstance(v, str) and v.strip() != ""
 
 
+def _is_str_list(v: Any) -> bool:
+    return isinstance(v, list) and all(isinstance(x, str) for x in v)
+
+
 def check(path: str) -> Tuple[List[Tuple[str, str, str]], bool]:
     """返回 (结果行, 是否有 FAIL)。结果行 = (级别, 码, 说明)。"""
     rows: List[Tuple[str, str, str]] = []
@@ -183,10 +187,15 @@ def check(path: str) -> Tuple[List[Tuple[str, str, str]], bool]:
                     fail("V5", f"{where}.type={t!r} 是参数值类型，端口类型须用大写枚举")
             nm = p.get("name")
             if isinstance(nm, str):
-                key = f"{side}:{nm}"
-                if key in port_names:
-                    fail("V5", f"端口名重复: {nm}")
-                port_names[key] = where
+                # 规格 §1.2：「端口名，同节点内唯一」——**跨 inputs/outputs 也算**。
+                # 曾经把 key 写成 f"{side}:{nm}"，等于把作用域缩到单侧：
+                # 一个包同时有 inputs.video 和 outputs.video 能过 SDK 检查，
+                # 而平台 G5 拒它。同一个名字在上游下游各指一件事，
+                # 连线时会取到哪一边取决于遍历顺序——这正是要拦的那种"看起来能跑"。
+                if nm in port_names:
+                    fail("V5", f"端口名重复: {nm!r}"
+                               f"（{port_names[nm]} 与 {where}；v3 要求同节点内唯一）")
+                port_names[nm] = where
     passed("V5", f"端口 {len(m.get('inputs') or [])} 入 / {len(m.get('outputs') or [])} 出")
 
     # ---------- params: V12 / V13 ----------
@@ -284,6 +293,10 @@ def check(path: str) -> Tuple[List[Tuple[str, str, str]], bool]:
             for k in fs:
                 if k not in ("read", "write"):
                     fail("V7", f"perm.fs 只允许 read/write，出现 {k!r}")
+                # 规格 §1.4：read/write「都是数组」。写 {"read": "x"} 时执行层
+                # 要么把它当单条路径、要么当空——两种都猜，猜错就是越权或功能失效。
+                elif not _is_str_list(fs[k]):
+                    fail("V7", f"perm.fs.{k} 必须是字符串数组，实际 {type(fs[k]).__name__}")
         net = perm.get("net", {})
         hosts = net.get("hosts", []) if isinstance(net, dict) else []
         if "*" in (hosts or []):
@@ -293,6 +306,28 @@ def check(path: str) -> Tuple[List[Tuple[str, str, str]], bool]:
             for i, mm in enumerate(models):
                 if not isinstance(mm, dict) or not _is_nonempty_str(mm.get("sha256")):
                     fail("V7", f"perm.model[{i}] 必须含 sha256（与 deps 同源校验）")
+        # 规格 §1.4：secret 是字符串数组（密钥名），不是单个名字、不是对象
+        secret = perm.get("secret")
+        if secret is not None and not _is_str_list(secret):
+            fail("V7", f"perm.secret 必须是字符串数组，实际 {type(secret).__name__}")
+        # 规格 §1.4：exec = [{bin, args_policy}]，args_policy 只允许 "argv_only"
+        ex = perm.get("exec")
+        if ex is not None:
+            if not isinstance(ex, list):
+                fail("V7", f"perm.exec 必须是数组 [{{bin,args_policy}}]，实际 {type(ex).__name__}")
+            else:
+                for i, item in enumerate(ex):
+                    if not isinstance(item, dict):
+                        fail("V7", f"perm.exec[{i}] 必须是对象（bin 为白名单可执行）")
+                        continue
+                    for k in item:
+                        if k not in ("bin", "args_policy"):
+                            fail("V7", f"perm.exec[{i}] 未知键 {k!r}（只允许 bin/args_policy）")
+                    if not _is_nonempty_str(item.get("bin")):
+                        fail("V7", f"perm.exec[{i}].bin 必填且非空")
+                    ap = item.get("args_policy")
+                    if ap is not None and ap not in ("argv_only",):
+                        fail("V7", f"perm.exec[{i}].args_policy 只允许 'argv_only'，实际 {ap!r}")
         if isinstance(perm, dict) and not extra and not lost:
             passed("V7", f"perm 五键齐全（net.hosts={hosts}）")
 

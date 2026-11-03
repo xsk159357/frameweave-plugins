@@ -3,8 +3,8 @@
   "id": "core/ai_narrate",
   "title": "AI 文案生成",
   "category": "语义",
-  "description": "生成带时间戳的解说词：上帝视角（读视频/场景/描述）· 扩写 · 配画面 · 仿写 · 神回复 · 透传；OpenAI/Gemini 双协议",
-  "version": "3.0.0",
+  "description": "生成带时间戳的解说词：上帝视角（读视频/场景/描述）· 扩写 · 配画面 · 仿写 · 神回复 · 透传；原片标记自动摘成结构化字段（正文不留【原片:s-e】）；OpenAI/Gemini 双协议",
+  "version": "3.1.0",
   "kind": "python",
   "entrypoint": "node.py",
   "class_name": "AINarrateNode",
@@ -361,7 +361,7 @@
   "signature": {
     "alg": "ed25519",
     "key_id": "a8998646b062c170",
-    "value": "Jca0Ky+CeZodSF/xNqG3YBRno7vlArMtGnc5RWNGJ4juCpaZC5dPjAWp8MSi3wilt2wRql3I8y1XX7xbfj7rDA==",
+    "value": "5sN5Eg/lB82uOu4H5XeqdM/j4gb0uqWvVoDrWaVRQ1mFk5Yl7q6DbFw1yibLbx+NVKned56AOImOgvuLe8ZLDA==",
     "over": "manifest"
   }
 }

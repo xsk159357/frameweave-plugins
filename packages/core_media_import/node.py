@@ -73,19 +73,40 @@ def _pick(probe: Dict[str, Any]) -> Tuple[Dict[str, Any], List[str]]:
     return meta, warns
 
 
-def _make_proxy(path: str, out_dir: str, height: int) -> Tuple[str, str]:
+def _ctx_get(ctx: Any, name: str) -> Any:
+    """从 ctx 取成员：dict / WorkerContext / NodeContext 实例三种承载都覆盖。"""
+    if hasattr(ctx, "get"):
+        return ctx.get(name)
+    return getattr(ctx, name, None)
+
+
+async def _spawn(ctx: Any, cmd: List[str], timeout: float) -> Any:
+    """平台托管子进程（worker 内经 gate 白名单 + RPC 回宿主，宿主侧 to_thread）。
+
+    裸 subprocess 在 worker 里绕开 argv 白名单、也不进进程树回收：用户取消任务时
+    这个代理转码进程会活到跑完为止。
+    """
+    fn = _ctx_get(ctx, "run_tracked")
+    if fn is None:
+        raise RuntimeError("contract: 运行上下文缺少 run_tracked（节点必须在平台引擎内运行）")
+    return await fn(cmd, timeout=timeout, text=True, encoding="utf-8",
+                    errors="replace", stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+
+
+async def _make_proxy(ctx: Any, path: str, out_dir: str,
+                      height: int) -> Tuple[str, str]:
     """生成低分辨率代理。返回 (代理路径 或 "", 失败原因)。"""
     exe = media_tools.ffmpeg_path()
     if not exe:
         return "", "未找到 ffmpeg"
     dst = os.path.join(out_dir, "proxy_%dp.mp4" % height)
     try:
-        p = subprocess.run(
-            [exe, "-y", "-hide_banner", "-loglevel", "error", "-i", path,
-             "-vf", "scale=-2:%d" % height, "-c:v", "libx264", "-crf", "28",
-             "-preset", "veryfast", "-c:a", "aac", "-b:a", "128k", dst],
-            capture_output=True, text=True, timeout=_FFMPEG_TIMEOUT, errors="replace")
-    except (OSError, subprocess.SubprocessError) as e:
+        p = await _spawn(ctx, [
+            exe, "-y", "-hide_banner", "-loglevel", "error", "-i", path,
+            "-vf", "scale=-2:%d" % height, "-c:v", "libx264", "-crf", "28",
+            "-preset", "veryfast", "-c:a", "aac", "-b:a", "128k", dst],
+            _FFMPEG_TIMEOUT)
+    except (OSError, subprocess.SubprocessError, TimeoutError) as e:
         return "", "ffmpeg 执行失败: %s" % e
     if p.returncode != 0 or not os.path.isfile(dst):
         return "", "ffmpeg 返回码 %d: %s" % (p.returncode, (p.stderr or "")[:160])
@@ -122,7 +143,7 @@ class MediaImportNode(NodeBase):
         video_path = path
         if proxy_h > 0:
             out_dir = getattr(store, "root", None) or os.path.dirname(path)
-            pp, why = await asyncio.to_thread(_make_proxy, path, out_dir, proxy_h)
+            pp, why = await _make_proxy(ctx, path, out_dir, proxy_h)
             if pp:
                 video_path = pp
                 meta["proxy_of"] = path

@@ -28,6 +28,11 @@ from app.nodespec import NodeBase, PortType
 CPS = 4.5  # 默认语速（字/秒，r1 §4.3 实测）
 DEFAULT_STYLE = "悬疑解说"
 
+# 原片标记（与 core/ost_plan 同一套写法）：【原片:12.5-18】/【原片：12.5~18】/[原片:12-18]
+# 3.1.0 起必须从这里摘出来，否则会被 TTS 念成正文、被字幕烧进画面。
+_OST_MARK = re.compile(r"[【\[]\s*原片\s*[:：]\s*([0-9]+(?:\.[0-9]+)?)\s*[-~－—至]\s*"
+                       r"([0-9]+(?:\.[0-9]+)?)\s*[】\]]")
+
 # ---------------------------------------------------------------- 资源目录（S3-T14：data/ 资产动态加载）
 _DATA_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data")
 
@@ -234,10 +239,22 @@ def _chat_gemini(messages: List[Dict[str, Any]], api_key: str, base_url: str, mo
 
 
 def _resolve_secret(ctx: Any, raw: str) -> str:
+    """@secret:名称 → 明文；非引用原样返回。
+
+    优先用 ctx 自带的解析器：worker 侧它是 RPC 回宿主 + gate 白名单的唯一正路。
+    判据**不能**用 isinstance(ctx, dict)（C 链根因②）：ctx 有三种承载形态——
+      · inprocess：NodeContext.make().to_dict() → dict，靠 get("resolve_secret") 取；
+      · worker   ：WorkerContext 对象，有 resolve_secret 方法（也实现了 get 映射协议）；
+      · 对象直传 ：NodeContext 实例，有 resolve_secret 方法但**没有 get()**。
+    旧写法对后两种恒 False，静默落回进程内直读 app.secrets —— 既绕开
+    gate.check_secret 白名单，worker 的 DATA_DIR 又与宿主不同 ⇒ 隔离模式下密钥永远读不到。
+    """
     if not raw or not str(raw).startswith("@secret:"):
         return str(raw or "")
     ref = str(raw).split(":", 1)[1]
-    resolver = ctx.get("resolve_secret") if isinstance(ctx, dict) else None
+    resolver = getattr(ctx, "resolve_secret", None)
+    if resolver is None and hasattr(ctx, "get"):
+        resolver = ctx.get("resolve_secret")
     if resolver is not None:
         return str(resolver(ref) or "")
     from app.secrets import read_secret
@@ -1026,6 +1043,60 @@ class AINarrateNode(NodeBase):
                                                "start": round(t0, 3), "end": round(t0 + tts, 3),
                                                "tts_duration": tts})
                     t0 += tts
+        # ---- 原片标记抽取（3.1.0）
+        # V2 输出协议允许模型在叙事停顿处写【原片:s-e】。这些标记此前只进 prompt、
+        # 不进数据：落进 text 会被 TTS 念出来、被字幕烧进画面，而原声一秒都没放。
+        # 这里摘成结构化字段（ost / ost_before / ost_after），正文只留解说词；
+        # 换算成渲染端 layout 区间是 core/ost_plan 的事。
+        ost_marks = 0
+        ost_segments = 0
+        if narration_segments:
+            kept: List[Dict[str, Any]] = []
+            pending_ost: List[Dict[str, float]] = []
+            for seg in narration_segments:
+                raw_text = str(seg.get("text") or "")
+                hits = _OST_MARK.findall(raw_text)
+                stripped = _OST_MARK.sub("", raw_text).strip()
+                seg_marks: List[Dict[str, float]] = []
+                for a, b in hits:
+                    try:
+                        ea, eb = float(a), float(b)
+                    except (TypeError, ValueError):
+                        continue
+                    if eb > ea:
+                        seg_marks.append({"start": ea, "end": eb})
+                ost_marks += len(seg_marks)
+                if not stripped:
+                    # 纯原片段：它自己不是一句话。留成空条目会被下游当成
+                    # 一条「无字的配音」，于是时间线上多出一段空白。
+                    pending_ost.extend(seg_marks)
+                    continue
+                if pending_ost:
+                    seg["ost_before"] = list(pending_ost)
+                    seg["ost"] = pending_ost[-1]
+                    pending_ost = []
+                if seg_marks:
+                    seg["ost"] = seg_marks[0]
+                    if len(seg_marks) > 1:
+                        seg["ost_extra"] = seg_marks[1:]
+                seg["text"] = stripped
+                if seg.get("ost"):
+                    ost_segments += 1
+                kept.append(seg)
+            if pending_ost:
+                if kept:
+                    kept[-1].setdefault("ost_after", []).extend(pending_ost)
+                    warnings.append("结尾 %d 处原片标记没有后继解说句，已挂到最后一段"
+                                    % len(pending_ost))
+                else:
+                    warnings.append("%d 处原片标记没有任何解说句承接，已丢弃"
+                                    % len(pending_ost))
+            narration_segments = kept
+            # 摘掉纯原片段后 index 会留洞（0, 2, 3…），下游按 index 对齐会错位
+            for _new_i, _sg in enumerate(narration_segments):
+                _sg["index"] = _new_i
+            result_text = "\n".join(sg["text"] for sg in narration_segments)
+
         # 结构化段落补 scene_ids（时间重叠 → 场景索引，供下游时间线/剪映装配复用）
         if narration_segments and scenes_sorted:
             for seg in narration_segments:
@@ -1082,6 +1153,7 @@ class AINarrateNode(NodeBase):
                         "target": {"duration": round(target_duration, 1), "chars": target_chars,
                                    "segments": target_segments},
                         "coverage": coverage,
+                        "ost": {"marks": ost_marks, "segments": ost_segments},
                         "stats": {"llm_calls": llm_calls, "api_base": base_url,
                                   "finished_at": time.time()},
                         "degraded": bool(warnings),

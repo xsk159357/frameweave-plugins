@@ -4,7 +4,7 @@
   "title": "语音合成",
   "category": "音频",
   "description": "把文案逐句合成为配音，并给出每句的真实时长。它是整条链里唯一知道「这句话读出来到底几秒」的节点，时间线据此排片比按字数估算准",
-  "version": "1.4.0",
+  "version": "1.4.1",
   "kind": "python",
   "entrypoint": "node.py",
   "class_name": "TtsSynthesizeNode",
@@ -199,7 +199,7 @@
   "signature": {
     "alg": "ed25519",
     "key_id": "a8998646b062c170",
-    "value": "WDPoVqowwRZ5JQVlVnKc10n6xynexqfc8VsO0was3Ol8hwW+6KyDcnYjHTS6BZwiL7k5id4w0o4pBTZjq+18AQ==",
+    "value": "tgjawd6pCXq0DKQuaHofk28pbGDJPwQsXZ5M3p6Sqf8qfHeqJsHF45KYQd5T7RIeS0ea91ziDt6CXbWjE/rXDQ==",
     "over": "manifest"
   }
 }

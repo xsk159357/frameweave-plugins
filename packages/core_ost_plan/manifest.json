@@ -1,0 +1,160 @@
+{
+  "manifest_version": 3,
+  "id": "core/ost_plan",
+  "title": "原片穿插编排",
+  "category": "剪辑",
+  "description": "把解说词里的原片标记与台词密度算成渲染端认的 layout 区间：只在区间内放出原声，落在画面之外的片段先夹掉并告警",
+  "version": "1.0.0",
+  "kind": "python",
+  "entrypoint": "node.py",
+  "class_name": "OstPlanNode",
+  "min_engine": "3.0",
+  "inputs": [
+    {
+      "name": "narration",
+      "type": "SEGMENTS",
+      "label": "解说文案",
+      "required": false,
+      "description": "AI 文案产出；每段的 ost 字段或正文里的【原片:s-e】标记就是选段依据"
+    },
+    {
+      "name": "descriptions",
+      "type": "SEGMENTS",
+      "label": "融合描述（可选）",
+      "required": false,
+      "description": "对白融合产出（带 lines）；没有标记时按台词密度补位，保留信息量最大的原话"
+    },
+    {
+      "name": "timeline",
+      "type": "TIMELINE",
+      "label": "时间线（可选）",
+      "required": false,
+      "description": "画面切片结果；接了就把原声区间夹到实际用到的画面里，放不出来的先摘掉"
+    }
+  ],
+  "outputs": [
+    {
+      "name": "layout",
+      "type": "SEGMENTS",
+      "label": "原声区间",
+      "description": "渲染端 layout 契约 {original_clips:[{start,end,...}]}（源时间轴）；v3 无 JSON 类型，按平台既有约定用 SEGMENTS 承载，接 video_render 的 layout 端口并把 audio_mix 设为 mix 才生效"
+    }
+  ],
+  "params": [
+    {
+      "name": "source",
+      "type": "enum",
+      "label": "选段来源",
+      "default": "mixed",
+      "options": [
+        {
+          "value": "marker",
+          "label": "只用解说词标记"
+        },
+        {
+          "value": "dialogue",
+          "label": "按台词密度选"
+        },
+        {
+          "value": "mixed",
+          "label": "标记优先，不足时按台词补"
+        }
+      ],
+      "advanced": true,
+      "description": "标记是模型的语义判断；台词密度是没有标记时的有据兜底。mixed 两种都用"
+    },
+    {
+      "name": "ost_ratio",
+      "type": "float",
+      "label": "目标原片占比",
+      "default": 0.15,
+      "min": 0.0,
+      "max": 0.6,
+      "step": 0.05,
+      "description": "用于判断「标记给够了没有」与补位目标；0 表示只做标记搬运，不补位也不校验"
+    },
+    {
+      "name": "padding",
+      "type": "float",
+      "label": "前后留白",
+      "default": 0.2,
+      "min": 0.0,
+      "max": 3.0,
+      "step": 0.05,
+      "unit": "秒",
+      "description": "原声区间前后各多留一点，避免切在字中间"
+    },
+    {
+      "name": "min_clip",
+      "type": "float",
+      "label": "最短原片",
+      "default": 1.5,
+      "min": 0.2,
+      "max": 10.0,
+      "step": 0.1,
+      "unit": "秒",
+      "description": "短于此值会补长到下限并告警：一闪而过的原声听不清是什么"
+    },
+    {
+      "name": "max_clip",
+      "type": "float",
+      "label": "最长原片",
+      "default": 20.0,
+      "min": 1.0,
+      "max": 120.0,
+      "step": 1.0,
+      "unit": "秒",
+      "description": "单段原声上限，超过就截断到上限"
+    },
+    {
+      "name": "merge_gap",
+      "type": "float",
+      "label": "合并间隔",
+      "default": 0.3,
+      "min": 0.0,
+      "max": 3.0,
+      "step": 0.05,
+      "unit": "秒",
+      "description": "两段原声间隔小于此值时并成一段，避免原声忽大忽小地反复切换"
+    }
+  ],
+  "perm": {
+    "fs": {
+      "read": [],
+      "write": []
+    },
+    "net": {
+      "hosts": []
+    },
+    "model": [],
+    "exec": [],
+    "secret": []
+  },
+  "deps": [],
+  "exposable": [
+    {
+      "param": "ost_ratio",
+      "recipe_role": "原片穿插占比",
+      "safe_for_wizard": true
+    },
+    {
+      "param": "source",
+      "recipe_role": "选段来源",
+      "safe_for_wizard": false
+    }
+  ],
+  "search_aliases": [
+    "原片",
+    "原声",
+    "穿插",
+    "留白",
+    "ost",
+    "layout"
+  ],
+  "signature": {
+    "alg": "ed25519",
+    "key_id": "a8998646b062c170",
+    "value": "UidY71/b5waOnLhtxgI/Z6Amlr3KIhx2p0iOOzEAMqG7cE0HrwZpnd6yyMfyaFIen4AGCI6WwAdYBTdGcnOVBA==",
+    "over": "manifest"
+  }
+}

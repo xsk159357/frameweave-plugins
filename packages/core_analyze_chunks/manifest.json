@@ -3,8 +3,8 @@
   "id": "core/analyze_chunks",
   "title": "分块视觉分析",
   "category": "分析",
-  "description": "把分块视频逐块抽帧交给视觉模型，产出「镜头类型 + 画面描述 + 听觉内容」；并发受控、失败降级并如实记录",
-  "version": "2.0.0",
+  "description": "把分块逐块交给视觉模型产出「镜头类型 + 画面描述 + 听觉内容」：抽帧或整段视频（video 走 Gemini，带音轨）二选一，并发自适应升降并带熔断，失败降级如实记录",
+  "version": "2.1.0",
   "kind": "python",
   "entrypoint": "node.py",
   "class_name": "AnalyzeChunksNode",
@@ -83,6 +83,7 @@
       "default": 3,
       "min": 1,
       "max": 16,
+      "advanced": true,
       "description": "同时分析几块；太高容易触发限流，建议 3–5"
     },
     {
@@ -101,6 +102,7 @@
       "default": 4,
       "min": 1,
       "max": 16,
+      "advanced": true,
       "description": "每块取几张图给模型；越多越准也越贵"
     },
     {
@@ -139,6 +141,62 @@
       "label": "结构化输出校验",
       "default": true,
       "description": "校验 shot_type / visual_description / audio_content 三个字段；关掉则宽松解析"
+    },
+    {
+      "name": "analysis_mode",
+      "type": "enum",
+      "label": "分析通道",
+      "default": "frames",
+      "options": [
+        {
+          "value": "frames",
+          "label": "抽帧（省 Token，看图猜声）"
+        },
+        {
+          "value": "video",
+          "label": "整段视频（Gemini，真听得到）"
+        }
+      ],
+      "description": "frames 每块抽 N 帧；video 切带音轨的压缩片段整段交给 Gemini，听觉信息才是真的。video 只支持 Gemini 协议"
+    },
+    {
+      "name": "video_fps",
+      "type": "float",
+      "label": "视频通道帧率",
+      "default": 1.0,
+      "min": 0.5,
+      "max": 5.0,
+      "step": 0.5,
+      "advanced": true,
+      "description": "video 模式切片帧率；1fps 对齐解说猫压缩口径，调高更贵"
+    },
+    {
+      "name": "video_height",
+      "type": "int",
+      "label": "视频通道高度",
+      "default": 360,
+      "min": 180,
+      "max": 720,
+      "advanced": true,
+      "description": "video 模式切片分辨率高度；360p 足够模型理解画面"
+    },
+    {
+      "name": "adaptive_concurrency",
+      "type": "bool",
+      "label": "并发自适应",
+      "default": true,
+      "advanced": true,
+      "description": "从「并发数」起跑：成功就加一、失败减半；失败多时熔断其余块，避免整链被 502 拖死"
+    },
+    {
+      "name": "max_concurrency",
+      "type": "int",
+      "label": "并发上限",
+      "default": 5,
+      "min": 1,
+      "max": 10,
+      "advanced": true,
+      "description": "自适应并发能升到的上限；配额小就调低"
     }
   ],
   "perm": {
@@ -165,6 +223,11 @@
   "deps": [],
   "exposable": [
     {
+      "param": "analysis_mode",
+      "recipe_role": "分析通道",
+      "safe_for_wizard": true
+    },
+    {
       "param": "model",
       "recipe_role": "视觉模型",
       "safe_for_wizard": true
@@ -177,6 +240,11 @@
     {
       "param": "concurrency",
       "recipe_role": "并发数",
+      "safe_for_wizard": false
+    },
+    {
+      "param": "adaptive_concurrency",
+      "recipe_role": "并发自适应",
       "safe_for_wizard": false
     }
   ],
@@ -191,7 +259,7 @@
   "signature": {
     "alg": "ed25519",
     "key_id": "a8998646b062c170",
-    "value": "x42yVCRZWGLCQvBCUHYn5Egwt1FsT0rnWrUCXn27TzcpQTh6p6neCYHHyJZA40Jt3dvwc/8hMGvyUreK9UOuDA==",
+    "value": "yQTvXajj8AGjWh/juopqf/qPeVP7mAj0kVnKpW16oMAo7vZ9H+ePnYKNUA0bc8G2svYVBNSb9RLDPFfCK3C9AA==",
     "over": "manifest"
   }
 }

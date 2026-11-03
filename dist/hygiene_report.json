@@ -1,13 +1,13 @@
 {
   "tool": "sdk/hygiene_dist.py (t32)",
-  "packages_checked": 18,
+  "packages_checked": 20,
   "pycache_cleaned": 18,
   "ok": [
     {
       "pkg": "core_ai_narrate",
       "zip": "core_ai_narrate.zip",
-      "bytes": 39588,
-      "zip_sha256": "9932f33c01cadcb9a08fe1af70fea73a5af35c95648372667606036e94a2ec66",
+      "bytes": 41129,
+      "zip_sha256": "f2109f2e17379e123711cad009ebfeb07288a574d55c089b13fde0aaa24701ab",
       "sig": "core_ai_narrate.zip.sig",
       "signed_manifest": true,
       "consistent": true
@@ -15,8 +15,8 @@
     {
       "pkg": "core_analyze_chunks",
       "zip": "core_analyze_chunks.zip",
-      "bytes": 10654,
-      "zip_sha256": "755aa3d07164f9e8d6bca65dcf8a6b197dcdc5e1ab1fc435377d45737c934326",
+      "bytes": 14443,
+      "zip_sha256": "7b581f0c331ef7806daa1ae322946926f78bfac4e6e7a467486d3a9af69cccbb",
       "sig": "core_analyze_chunks.zip.sig",
       "signed_manifest": true,
       "consistent": true
@@ -27,6 +27,15 @@
       "bytes": 4999,
       "zip_sha256": "f3c3320ef3a1a78607dce0a6c5de93eef6d9d2361672c1b39a4c3010eae94b6a",
       "sig": "core_asr_whisper.zip.sig",
+      "signed_manifest": true,
+      "consistent": true
+    },
+    {
+      "pkg": "core_dialogue_fuse",
+      "zip": "core_dialogue_fuse.zip",
+      "bytes": 7743,
+      "zip_sha256": "748fd9bba9345f4ace68b90309a817107f3210fd6fc4885d59662d6ec80d5d96",
+      "sig": "core_dialogue_fuse.zip.sig",
       "signed_manifest": true,
       "consistent": true
     },
@@ -51,8 +60,8 @@
     {
       "pkg": "core_llm_call",
       "zip": "core_llm_call.zip",
-      "bytes": 9801,
-      "zip_sha256": "5835190e87c46a698bb7404b8f13cf30fcdece407b3fc9f647cbdddc1d6c81de",
+      "bytes": 10258,
+      "zip_sha256": "7f376c333bd1cb2c1edbdd3539d3a1c1cfc46a153a8d966a261e6a66e61e0d81",
       "sig": "core_llm_call.zip.sig",
       "signed_manifest": true,
       "consistent": true
@@ -78,17 +87,26 @@
     {
       "pkg": "core_media_import",
       "zip": "core_media_import.zip",
-      "bytes": 4046,
-      "zip_sha256": "03967ff65d38fb6decb473b1baf07f6173ef5827e6078a3359dff08d9318e786",
+      "bytes": 4481,
+      "zip_sha256": "4559fc91e3e02517a97a697ba72daa337ec91ee93e1b3ee0387f219468034222",
       "sig": "core_media_import.zip.sig",
+      "signed_manifest": true,
+      "consistent": true
+    },
+    {
+      "pkg": "core_ost_plan",
+      "zip": "core_ost_plan.zip",
+      "bytes": 6868,
+      "zip_sha256": "70cf82f787a9cda6f1eddcee9cd774b2972736ec5b1958072c2ff71eb98c2c63",
+      "sig": "core_ost_plan.zip.sig",
       "signed_manifest": true,
       "consistent": true
     },
     {
       "pkg": "core_scene_detect",
       "zip": "core_scene_detect.zip",
-      "bytes": 10964,
-      "zip_sha256": "4bad73d627572837f7e0f23e57c5e82eaf032c1fb9c908b134ae3e3c58b26340",
+      "bytes": 11567,
+      "zip_sha256": "a49575ba9562a3c45967e20be90a3a9df8567984ccebe3d098bd5542615b0e3f",
       "sig": "core_scene_detect.zip.sig",
       "signed_manifest": true,
       "consistent": true
@@ -150,8 +168,8 @@
     {
       "pkg": "core_tts_synthesize",
       "zip": "core_tts_synthesize.zip",
-      "bytes": 17138,
-      "zip_sha256": "6f23ba20ffdb47ccc9a8ecfc1e3e0af361e22ddd6d024c4498497b3459b53f70",
+      "bytes": 18375,
+      "zip_sha256": "d7b82febd7201d941b239bf016969e62107985b592c578beeac6f75ebc0d12dd",
       "sig": "core_tts_synthesize.zip.sig",
       "signed_manifest": true,
       "consistent": true
@@ -159,8 +177,8 @@
     {
       "pkg": "core_video_render",
       "zip": "core_video_render.zip",
-      "bytes": 15682,
-      "zip_sha256": "8b0d64d17ec4737d881e304945baa0b60149b92b808adbc2323785a3806bb6a3",
+      "bytes": 16001,
+      "zip_sha256": "bca311714dac75d7a89629928cd11eb5bfd1c754e6be5301e06a69c65d1068a2",
       "sig": "core_video_render.zip.sig",
       "signed_manifest": true,
       "consistent": true
@@ -168,8 +186,8 @@
   ],
   "failed": [],
   "summary": {
-    "total": 18,
-    "ok": 18,
+    "total": 20,
+    "ok": 20,
     "failed": 0
   }
 }

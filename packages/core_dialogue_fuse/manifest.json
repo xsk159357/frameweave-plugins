@@ -1,0 +1,162 @@
+{
+  "manifest_version": 3,
+  "id": "core/dialogue_fuse",
+  "title": "对白融合",
+  "category": "分析",
+  "description": "把语音转写的句级台词按时间重叠归属到场景，写回「听觉」字段：让只看静帧的视觉分析也能拿到有据的对白，跨场景长句按比例切开不丢话",
+  "version": "1.0.0",
+  "kind": "python",
+  "entrypoint": "node.py",
+  "class_name": "DialogueFuseNode",
+  "min_engine": "3.0",
+  "inputs": [
+    {
+      "name": "scenes",
+      "type": "SEGMENTS",
+      "label": "场景片段",
+      "required": true,
+      "description": "镜头切分产出的场景边界；台词按与这些区间的重叠时长归属"
+    },
+    {
+      "name": "subtitle",
+      "type": "SUBTITLE",
+      "label": "语音转写",
+      "required": true,
+      "description": "ASR 产出的句级字幕（带 start/end/text）；没有台词时不需要本节点"
+    },
+    {
+      "name": "desc",
+      "type": "SEGMENTS",
+      "label": "场景描述（可选）",
+      "required": false,
+      "description": "视觉分析产出的描述；接了就是「视觉 + 对白」合并，不接只产出对白字段"
+    }
+  ],
+  "outputs": [
+    {
+      "name": "descriptions",
+      "type": "SEGMENTS",
+      "label": "融合描述",
+      "description": "每场景一条，字段与分块分析同构（index/start/end/shot_type/visual_description/audio_content），可直接喂解说词生成"
+    }
+  ],
+  "params": [
+    {
+      "name": "audio_strategy",
+      "type": "enum",
+      "label": "融合策略",
+      "default": "fill",
+      "options": [
+        {
+          "value": "fill",
+          "label": "补位（模型没给听觉时才用台词）"
+        },
+        {
+          "value": "merge",
+          "label": "叠加（模型听觉 + 台词原话）"
+        },
+        {
+          "value": "replace",
+          "label": "台词为准（覆盖模型听觉）"
+        }
+      ],
+      "advanced": true,
+      "description": "模型听得到情绪、音效、配乐，转写只听得清字。默认补位，不抢模型的活"
+    },
+    {
+      "name": "min_overlap_ratio",
+      "type": "float",
+      "label": "归属重叠比",
+      "default": 0.15,
+      "min": 0.0,
+      "max": 1.0,
+      "step": 0.05,
+      "advanced": true,
+      "description": "一句台词与场景的重叠时长占该句的比例达到此值才归属；多个场景都达到时按比例切分文本"
+    },
+    {
+      "name": "merge_gap",
+      "type": "float",
+      "label": "断句间隔",
+      "default": 0.35,
+      "min": 0.0,
+      "max": 5.0,
+      "step": 0.05,
+      "unit": "秒",
+      "description": "同一场景内相邻台词间隔超过此值就用 / 断开，读起来有停顿感"
+    },
+    {
+      "name": "unmatched_policy",
+      "type": "enum",
+      "label": "未归属处理",
+      "default": "nearest",
+      "options": [
+        {
+          "value": "nearest",
+          "label": "按时间就近归到最近的场景"
+        },
+        {
+          "value": "drop",
+          "label": "丢弃（只保留达阈值的台词）"
+        }
+      ],
+      "description": "重叠不足的台词怎么处理；就近归属会写明告警，不静默"
+    },
+    {
+      "name": "speaker_prefix",
+      "type": "bool",
+      "label": "加「对白:」前缀",
+      "default": true,
+      "description": "输出成 对白: \"台词\" 的形式；关掉只留台词原文"
+    },
+    {
+      "name": "max_lines_per_scene",
+      "type": "int",
+      "label": "每场景台词上限",
+      "default": 0,
+      "min": 0,
+      "max": 50,
+      "description": "0 = 不限；超过上限会丢弃靠后的台词并在告警里记条数"
+    }
+  ],
+  "perm": {
+    "fs": {
+      "read": [],
+      "write": []
+    },
+    "net": {
+      "hosts": []
+    },
+    "model": [],
+    "exec": [],
+    "secret": []
+  },
+  "deps": [],
+  "exposable": [
+    {
+      "param": "audio_strategy",
+      "recipe_role": "对白融合方式",
+      "safe_for_wizard": false
+    },
+    {
+      "param": "min_overlap_ratio",
+      "recipe_role": "台词归属松紧",
+      "safe_for_wizard": false
+    }
+  ],
+  "search_aliases": [
+    "对白",
+    "台词",
+    "融合",
+    "字幕归属",
+    "音频",
+    "dialogue",
+    "fuse"
+  ],
+  "signature": {
+    "alg": "ed25519",
+    "key_id": "a8998646b062c170",
+    "value": "ye3eq1PmKIzhS1DJRNATGTCiJNVT/7ghleyt7TBcjQEk9QXz2hV6+zeJ/M28Mrg7eV86Af+PBRYpTASumcAaAw==",
+    "over": "manifest"
+  }
+}

@@ -101,15 +101,23 @@ def check_desc_item(it: Any) -> Tuple[bool, str]:
 
 
 def _resolve_secret(ctx: Any, raw: str) -> str:
+    """@secret:名称 → 明文；非引用原样返回。
+
+    优先用 ctx 自带的解析器：worker 侧它是 RPC 回宿主 + gate 白名单的唯一正路。
+    判据**不能**用 isinstance(ctx, dict)（C 链根因②）：ctx 有三种承载形态——
+      · inprocess：NodeContext.make().to_dict() → dict，靠 get("resolve_secret") 取；
+      · worker   ：WorkerContext 对象，有 resolve_secret 方法（也实现了 get 映射协议）；
+      · 对象直传 ：NodeContext 实例，有 resolve_secret 方法但**没有 get()**。
+    getattr 优先再回落 get()，三种形态一次覆盖；旧写法对后两种恒 False，
+    静默落回进程内直读 app.secrets——既绕开 gate.check_secret 白名单，
+    worker 的 DATA_DIR 又与宿主不同 ⇒ 隔离模式下密钥永远读不到。
+    """
     if not raw or not str(raw).startswith("@secret:"):
         return str(raw or "")
     ref = str(raw).split(":", 1)[1]
-    # C 链根因②（2026-10-26）：旧判定 isinstance(ctx, dict) 对 WorkerContext 恒 False
-    # （它有 keys()/get() 映射协议但不是 dict）→ 永远走 fallback 直读 app.secrets
-    # （worker 进程）。改鸭子类型：有 get 即按映射协议取 resolve_secret——worker 侧
-    # 命中 WorkerContext.resolve_secret（RPC 回宿主，宿主 DATA_DIR 生效），隔离 key
-    # 才能读到；inprocess 侧行为不变（to_dict 本就含 resolve_secret）。
-    resolver = ctx.get("resolve_secret") if hasattr(ctx, "get") else None
+    resolver = getattr(ctx, "resolve_secret", None)
+    if resolver is None and hasattr(ctx, "get"):
+        resolver = ctx.get("resolve_secret")
     if resolver is not None:
         return str(resolver(ref) or "")
     from app.secrets import read_secret
@@ -175,6 +183,146 @@ async def _vision(ctx: dict, images_b64: List[str], prompt: str, provider: str,
     return await asyncio.to_thread(
         _chat_openai_vision, images_b64, prompt, api_key, base_url, model,
         temperature, max_tokens)
+
+
+# ---------------------------------------------------------------- video 通道
+# 解说猫的「上帝视角」默认把**带音轨的视频分块**直接喂模型（use_chunked=False 时
+# 整段上传），它描述出来的听觉信息是真的听到的；抽帧路径只能看图猜声音。
+# 这里补上视频通道：分块切片保留音轨（1fps / 360p / crf=32，与解说猫压缩口径一致），
+# 走 Gemini 的 inline_data。OpenAI 兼容协议没有视频输入，选了就早失败，不半路降级。
+_VIDEO_MAX_BYTES = 18 * 1024 * 1024   # inline_data 上限 20MB，留 2MB 余量
+
+
+def _chat_gemini_video(video_b64: str, prompt: str, api_key: str, base_url: str,
+                       model: str, temperature: float, max_tokens: int) -> str:
+    import urllib.request
+    parts: List[Dict[str, Any]] = [
+        {"text": prompt},
+        {"inline_data": {"mime_type": "video/mp4", "data": video_b64}},
+    ]
+    payload = {
+        "contents": [{"role": "user", "parts": parts}],
+        "generationConfig": {"temperature": temperature, "maxOutputTokens": max_tokens},
+    }
+    sep = "&" if "?" in base_url else "?"
+    url = f"{base_url.rstrip('/')}/models/{model}:generateContent{sep}key={api_key}"
+    req = urllib.request.Request(url, data=json.dumps(payload).encode("utf-8"), method="POST")
+    req.add_header("Content-Type", "application/json")
+    with urllib.request.urlopen(req, timeout=600) as resp:
+        data = json.loads(resp.read().decode("utf-8"))
+    try:
+        return "".join(p.get("text", "") for p in data["candidates"][0]["content"]["parts"])
+    except (KeyError, IndexError, TypeError) as e:
+        raise RuntimeError("gemini(video): 响应解析失败: "
+                           + json.dumps(data, ensure_ascii=False)[:300]) from e
+
+
+async def _vision_video(ctx: dict, video_b64: str, prompt: str, api_key: str,
+                        base_url: str, model: str, temperature: float,
+                        max_tokens: int) -> str:
+    return await asyncio.to_thread(_chat_gemini_video, video_b64, prompt, api_key,
+                                   base_url, model, temperature, max_tokens)
+
+
+async def _cut_chunk_clip(ctx: dict, video_path: str, start: float, end: float,
+                          out_dir: str, fps: float, height: int) -> Optional[str]:
+    """切一段带音轨的分块（解说猫压缩口径：降采样 + crf 32 + AAC）。
+
+    **必须保留音轨**：这条通道的价值全在「听得见」。无声视频喂给模型，等于
+    又退回抽帧，只是多花了 token。
+    """
+    from app.plugin import deps
+    r = deps.resolve_binary("ffmpeg", env=os.environ)
+    ff = r["path"] if r.get("ready") else ""
+    if not ff:
+        return None
+    os.makedirs(out_dir, exist_ok=True)
+    dur = max(end - start, 0.0)
+    if dur <= 0:
+        return None
+    out = os.path.join(out_dir, "clip_%08d_%08d.mp4" % (int(start * 100), int(end * 100)))
+    cmd = [ff, "-v", "error", "-ss", f"{start:.3f}", "-t", f"{dur:.3f}", "-i", video_path,
+           "-vf", f"fps={max(fps, 0.5):.2f},scale=-2:{int(height)}",
+           "-c:v", "libx264", "-crf", "32", "-preset", "veryfast",
+           "-c:a", "aac", "-b:a", "64k", "-ac", "1", "-ar", "16000",
+           "-movflags", "+faststart", "-y", out]
+    rt = ctx.get("run_tracked")
+    ok = False
+    try:
+        if rt is not None:
+            import subprocess as _sp
+            try:
+                proc = await rt(cmd, timeout=180.0, text=True,
+                                stdout=_sp.PIPE, stderr=_sp.PIPE)
+                ok = proc.returncode == 0
+            except Exception:  # noqa: BLE001
+                ok = False
+        if not ok:
+            import subprocess as _sp2
+            proc = await asyncio.to_thread(
+                lambda: _sp2.run(cmd, capture_output=True, timeout=180))
+            ok = proc.returncode == 0
+    except Exception:  # noqa: BLE001
+        ok = False
+    if ok and os.path.isfile(out) and os.path.getsize(out) > 0:
+        return out
+    return None
+
+
+class AdaptiveLimiter:
+    """边跑边调并发：成功就加一，失败就减半，触发熔断后不再发请求。
+
+    解说猫的 `_adaptive_parallel_gemini` 是同一条思路（10 起、遇 502 降、
+    连续成功回升、熔断兜底）。固定并发的问题是：设 10 会一片 502，
+    设 3 又白白慢三倍——配额是浮动的，闸门也得浮动。
+
+    熔断条件沿用原版口径：失败数 ≥ 5 且任务数 ≥ 4 且失败率 ≥ 60%。
+    熔断不是「放弃」，是把剩下的块直接产占位描述并写明原因，让下游照常跑完。
+    """
+
+    def __init__(self, start: int, hi: int, low: int = 1, min_total_for_trip: int = 4,
+                 trip_fail: int = 5, trip_rate: float = 0.6):
+        self.cur = max(1, min(start, hi))
+        self.hi = max(1, hi)
+        self.low = max(1, low)
+        self.active = 0
+        self.done = 0
+        self.failed = 0
+        self.tripped = False
+        self._min_total = min_total_for_trip
+        self._trip_fail = trip_fail
+        self._trip_rate = trip_rate
+        self._cond: Optional[asyncio.Condition] = None
+
+    def _c(self) -> asyncio.Condition:
+        if self._cond is None:
+            self._cond = asyncio.Condition()
+        return self._cond
+
+    async def acquire(self) -> bool:
+        cond = self._c()
+        async with cond:
+            await cond.wait_for(lambda: self.active < self.cur or self.tripped)
+            if self.tripped:
+                return False
+            self.active += 1
+            return True
+
+    async def release(self, ok: bool) -> None:
+        cond = self._c()
+        async with cond:
+            self.active -= 1
+            self.done += 1
+            if not ok:
+                self.failed += 1
+                self.cur = max(self.low, self.cur // 2 if self.cur > 1 else 1)
+                total_known = max(self.done, 1)
+                if (self.failed >= self._trip_fail and total_known >= self._min_total
+                        and self.failed / total_known >= self._trip_rate):
+                    self.tripped = True
+            elif self.cur < self.hi:
+                self.cur += 1
+            cond.notify_all()
 
 
 async def _extract_frames(ctx: dict, video_path: str, times: List[float],
@@ -246,57 +394,138 @@ def _chunk_rows(chunks_payload: Any) -> List[Dict[str, Any]]:
     return out
 
 
+def _placeholder_item(chunk: Dict[str, Any], reason: str) -> Dict[str, Any]:
+    """熔断/跳过时的占位描述：与正常产出同形状，下游不必分叉。"""
+    sidx = [int(x) for x in (chunk.get("scene_indices") or [])
+            if isinstance(x, (int, float))]
+    start = float(chunk.get("start") or 0.0)
+    end_ = chunk.get("end")
+    item: Dict[str, Any] = {
+        "chunk_index": int(chunk.get("chunk_index", 0)),
+        "start": round(start, 3),
+        "end": round(float(end_) if end_ is not None else start, 3),
+        "scene_indices": sidx,
+        "shot_type": "other",
+        "visual_description": "【分块分析跳过：%s】" % reason,
+        "audio_content": "",
+        "meta": {"mode": "skipped", "frames": 0, "video_bytes": 0, "calls": 0,
+                 "tokens_estimate": {"image": 0, "text": 0}},
+    }
+    if sidx:
+        item["index"] = sidx[0]
+    return item
+
+
 class AnalyzeChunksNode(NodeBase):
     """分块视觉分析（A4）。type_id: core/analyze_chunks"""
 
     async def _analyze_one(self, ctx: dict, chunk: Dict[str, Any], idx: int, total: int,
                            video_path: str, out_dir: str, params: Dict[str, Any],
                            provider: str, api_key: str, base_url: str, model: str,
-                           sem: asyncio.Semaphore) -> Dict[str, Any]:
-        """单块分析（在并发信号量内）：抽帧 → 重试循环（解析/schema/网络失败重试）。"""
-        async with sem:
+                           lim: "AdaptiveLimiter") -> Dict[str, Any]:
+        """单块分析：按 analysis_mode 选「抽帧」或「整段视频」，带解析/schema/网络失败重试。"""
+        admitted = await lim.acquire()
+        if not admitted:
+            # 熔断：没拿到闸门就不能走 finally 的 release，否则计数会变成负数
+            return {"item": _placeholder_item(chunk, "熔断：连续失败已停止发请求"),
+                    "warnings": ["块 %s 因熔断跳过（失败率过高），输出占位描述"
+                                 % chunk.get("chunk_index")],
+                    "ok": False}
+        ok_mark = False
+        try:
             start = float(chunk["start"])
             end_ = chunk.get("end")
             duration = (float(end_) - start) if end_ is not None else 0.0
             if duration <= 0:
                 duration = 0.0
-            fps = max(1, int(params["frames_per_chunk"]))
-            if duration > 0:
-                times = [start + (i + 1) * duration / (fps + 1) for i in range(fps)]
-            else:
-                times = [start]
-            frames = await _extract_frames(ctx, video_path, times, out_dir, params["frame_scale"])
-            images_b64: List[str] = []
-            for fp in frames:
-                try:
-                    with open(fp, "rb") as f:
-                        images_b64.append(base64.b64encode(f.read()).decode("ascii"))
-                except OSError:
-                    continue
+            mode = str(params.get("analysis_mode", "frames") or "frames").strip().lower()
+            if mode not in ("frames", "video"):
+                mode = "frames"
 
-            prompt = (
-                f"你是一名视频分镜分析师。这是视频第 {idx + 1}/{total} 段"
-                f"（{start:.1f}s-{float(end_) if end_ is not None else start:.1f}s），"
-                f"下面给出 {len(images_b64)} 帧采样画面。\n"
-                "请综合这些画面与关联音频输出该分段的 JSON 分析（只输出 JSON，不要解释）：\n"
-                '{"shot_type": "wide|medium|closeup|action|dialogue|transition|other 之一",\n'
-                ' "visual_description": "一段 40-80 字中文画面描述（像讲故事一样：人物身份特征/'
-                '具体动作/表情神态/环境氛围/关键道具）",\n'
-                ' "audio_content": "听觉信息——音频分析与画面同等重要，必须认真聆听：'
-                '对白写作 角色名(情绪副词):\\"完整台词\\"（逐字转录，不能概括）；'
-                '背景音乐写作【音乐情绪描述】；音效写作【具体音效描述】；'
-                '多种声音直接并列书写；仅当完全无声时写【静音】"}'
-            )
+            images_b64: List[str] = []
+            video_b64 = ""
             warnings: List[str] = []
-            last_err = "无画面帧可用" if not images_b64 else ""
+            span = f"{start:.1f}s-{float(end_) if end_ is not None else start:.1f}s"
+
+            if mode == "video":
+                clip = await _cut_chunk_clip(ctx, video_path, start,
+                                             float(end_) if end_ is not None else start + 1.0,
+                                             out_dir, params.get("video_fps", 1.0),
+                                             params.get("video_height", 360))
+                if clip and os.path.getsize(clip) <= _VIDEO_MAX_BYTES:
+                    try:
+                        with open(clip, "rb") as f:
+                            video_b64 = base64.b64encode(f.read()).decode("ascii")
+                    except OSError:
+                        video_b64 = ""
+                elif clip:
+                    warnings.append("块 %s 切片 %.1fMB 超过 inline 上限 %.0fMB，该块退回抽帧"
+                                    % (chunk.get("chunk_index"),
+                                       os.path.getsize(clip) / 1048576.0,
+                                       _VIDEO_MAX_BYTES / 1048576.0))
+                if not video_b64:
+                    if not clip:
+                        warnings.append("块 %s 切片失败（ffmpeg 不可用或不支持），该块退回抽帧"
+                                        % chunk.get("chunk_index"))
+                    mode = "frames"
+
+            if mode == "frames":
+                fps = max(1, int(params["frames_per_chunk"]))
+                if duration > 0:
+                    times = [start + (i + 1) * duration / (fps + 1) for i in range(fps)]
+                else:
+                    times = [start]
+                frames = await _extract_frames(ctx, video_path, times, out_dir,
+                                               params["frame_scale"])
+                for fp in frames:
+                    try:
+                        with open(fp, "rb") as f:
+                            images_b64.append(base64.b64encode(f.read()).decode("ascii"))
+                    except OSError:
+                        continue
+
+            if mode == "video":
+                prompt = (
+                    f"你是一名视频分镜分析师。这是视频第 {idx + 1}/{total} 段的**连续画面"
+                    f"（{span}，已降采样但保留完整音轨）**。\n"
+                    "请先完整看一遍画面、同时认真听声音，再输出该分段的 JSON 分析"
+                    "（只输出 JSON，不要解释）：\n"
+                    '{"shot_type": "wide|medium|closeup|action|dialogue|transition|other 之一",\n'
+                    ' "visual_description": "一段 40-80 字中文画面描述（像讲故事一样：人物身份特征/'
+                    '具体动作/表情神态/环境氛围/关键道具）",\n'
+                    ' "audio_content": "听觉信息——你必须真的听：'
+                    '对白写作 角色名(情绪副词):\\"完整台词\\"（逐字转录，不能概括）；'
+                    '背景音乐写作【音乐情绪描述】；音效写作【具体音效描述】；'
+                    '多种声音直接并列书写；仅当完全无声时写【静音】"}'
+                )
+                last_err = ""
+            else:
+                prompt = (
+                    f"你是一名视频分镜分析师。这是视频第 {idx + 1}/{total} 段（{span}），"
+                    f"下面给出 {len(images_b64)} 帧采样画面。\n"
+                    "请综合这些画面与关联音频输出该分段的 JSON 分析（只输出 JSON，不要解释）：\n"
+                    '{"shot_type": "wide|medium|closeup|action|dialogue|transition|other 之一",\n'
+                    ' "visual_description": "一段 40-80 字中文画面描述（像讲故事一样：人物身份特征/'
+                    '具体动作/表情神态/环境氛围/关键道具）",\n'
+                    ' "audio_content": "听觉信息——音频分析与画面同等重要，必须认真聆听：'
+                    '对白写作 角色名(情绪副词):\\"完整台词\\"（逐字转录，不能概括）；'
+                    '背景音乐写作【音乐情绪描述】；音效写作【具体音效描述】；'
+                    '多种声音直接并列书写；仅当完全无声时写【静音】"}'
+                )
+                last_err = "无画面帧可用" if not images_b64 else ""
             item: Dict[str, Any] = {}
             calls = 0
             for attempt in range(max(1, int(params["retries"]) + 1)):
                 calls += 1
                 try:
-                    raw = await _vision(ctx, images_b64, prompt, provider, api_key,
-                                        base_url, model, params["temperature"],
-                                        params["max_tokens"])
+                    if mode == "video" and video_b64:
+                        raw = await _vision_video(ctx, video_b64, prompt, api_key,
+                                                  base_url, model, params["temperature"],
+                                                  params["max_tokens"])
+                    else:
+                        raw = await _vision(ctx, images_b64, prompt, provider, api_key,
+                                            base_url, model, params["temperature"],
+                                            params["max_tokens"])
                     data = _extract_json(raw)
                     valid = False
                     if data is not None:
@@ -314,11 +543,9 @@ class AnalyzeChunksNode(NodeBase):
             if not item:
                 warnings.append(
                     f"块 {chunk['chunk_index']} 分析失败（{last_err}，尝试 {calls} 次），输出占位描述")
-                item = {
-                    "shot_type": "other",
-                    "visual_description": "【分块分析失败：画面不可用】",
-                    "audio_content": "",
-                }
+                item = {"shot_type": "other",
+                        "visual_description": "【分块分析失败：画面不可用】",
+                        "audio_content": ""}
             scene_indices = [int(x) for x in chunk["scene_indices"] if isinstance(x, (int, float))] \
                 if isinstance(chunk["scene_indices"], list) else []
             desc_item: Dict[str, Any] = {
@@ -330,7 +557,9 @@ class AnalyzeChunksNode(NodeBase):
                 "visual_description": str(item.get("visual_description") or "").strip(),
                 "audio_content": str(item.get("audio_content") or "").strip(),
                 "meta": {
+                    "mode": mode,
                     "frames": len(images_b64),
+                    "video_bytes": len(video_b64) * 3 // 4 if video_b64 else 0,
                     "calls": calls,
                     "tokens_estimate": {
                         "image": sum(est_image_tokens(params["frame_scale"],
@@ -343,8 +572,12 @@ class AnalyzeChunksNode(NodeBase):
             }
             if scene_indices:
                 desc_item["index"] = scene_indices[0]
-            return {"item": desc_item, "warnings": warnings, "ok": bool(item.get("visual_description"))
-                    and not str(item.get("visual_description", "")).startswith("【分块分析失败")}
+            ok = bool(item.get("visual_description")) and not str(
+                item.get("visual_description", "")).startswith("【分块分析失败")
+            ok_mark = ok
+            return {"item": desc_item, "warnings": warnings, "ok": ok}
+        finally:
+            await lim.release(ok_mark)
 
     async def run(self, ctx: dict, inputs: dict, params: dict) -> Dict[str, Any]:
         video_asset = inputs.get("video")
@@ -378,7 +611,13 @@ class AnalyzeChunksNode(NodeBase):
                 model = ""
         if not model:
             model = "gemini-1.5-flash"
-        concurrency = max(1, min(5, int(params.get("concurrency", 3) or 3)))  # 硬上限 5
+        concurrency = max(1, min(5, int(params.get("concurrency", 3) or 3)))  # 起始并发
+        analysis_mode = str(params.get("analysis_mode", "frames") or "frames").strip().lower()
+        if analysis_mode not in ("frames", "video"):
+            analysis_mode = "frames"
+        adaptive = bool(params.get("adaptive_concurrency", True))
+        max_conc = max(1, min(10, int(params.get("max_concurrency", 5) or 5))) if adaptive \
+            else concurrency
         retries = max(0, int(params.get("retries", 3) or 3))
         frames_per_chunk = max(1, int(params.get("frames_per_chunk", 3) or 3))
         frame_scale = max(64, int(params.get("frame_scale", 448) or 448))
@@ -399,6 +638,11 @@ class AnalyzeChunksNode(NodeBase):
                 base_url = ""
         if not base_url:
             base_url = _default_base_url(provider)
+        if analysis_mode == "video" and provider != "gemini":
+            # 配置错误就早失败：跑一半才发现没有视频通道，白烧配额与时间
+            raise RuntimeError(
+                "contract: analysis_mode=video 只能走 Gemini 协议（OpenAI 兼容协议没有视频输入）。"
+                "把 provider 改成 gemini，或把 analysis_mode 改回 frames")
 
         video_duration = 0.0
         try:
@@ -410,26 +654,31 @@ class AnalyzeChunksNode(NodeBase):
         out_dir = os.path.join(ctx.get("workdir", "."), "analyze_chunks_frames")
         os.makedirs(out_dir, exist_ok=True)
 
-        sem = asyncio.Semaphore(concurrency)
-        task_kwargs = {
-            "ctx": ctx, "video_path": video_asset.path, "out_dir": out_dir,
-            "params": {"frames_per_chunk": frames_per_chunk, "frame_scale": frame_scale,
-                       "retries": retries, "temperature": temperature, "max_tokens": max_tokens},
-            "provider": provider, "api_key": api_key, "base_url": base_url, "model": model,
-            "sem": sem,
+        lim = AdaptiveLimiter(start=concurrency, hi=max_conc, low=1)
+        vp = {
+            "frames_per_chunk": frames_per_chunk, "frame_scale": frame_scale,
+            "retries": retries, "temperature": temperature, "max_tokens": max_tokens,
+            "analysis_mode": analysis_mode,
+            "video_fps": max(0.5, float(params.get("video_fps", 1.0) or 1.0)),
+            "video_height": max(180, int(params.get("video_height", 360) or 360)),
         }
 
         async def _one(i: int, chunk: Dict[str, Any]) -> Dict[str, Any]:
             return await self._analyze_one(ctx, chunk, i, len(rows),
-                                           video_asset.path, out_dir, task_kwargs["params"],
-                                           provider, api_key, base_url, model, sem)
+                                           video_asset.path, out_dir, vp,
+                                           provider, api_key, base_url, model, lim)
 
         progress(0.1)
         results = await asyncio.gather(*(_one(i, c) for i, c in enumerate(rows)))
         progress(0.85)
+        if lim.tripped:
+            warnings_trip = ("并发熔断已触发：%d/%d 块失败后停止发请求，其余块产占位描述"
+                             % (lim.failed, max(lim.done, 1)))
+        else:
+            warnings_trip = ""
 
         items: List[Dict[str, Any]] = []
-        warnings: List[str] = []
+        warnings: List[str] = [warnings_trip] if warnings_trip else []
         failed_chunks: List[Dict[str, Any]] = []
         img_tok = 0
         txt_tok = 0
@@ -478,10 +727,20 @@ class AnalyzeChunksNode(NodeBase):
                         "path_compare": path_compare,
                         "params": {
                             "provider": provider, "model": model,
-                            "concurrency": concurrency, "retries": retries,
+                            "concurrency": concurrency,
+                            "max_concurrency": max_conc,
+                            "adaptive_concurrency": adaptive,
+                            "analysis_mode": analysis_mode,
+                            "video_fps": vp["video_fps"],
+                            "video_height": vp["video_height"],
+                            "retries": retries,
                             "frames_per_chunk": frames_per_chunk,
                             "frame_scale": frame_scale,
                             "json_schema": bool(params.get("json_schema", True)),
+                        },
+                        "concurrency_stats": {
+                            "start": concurrency, "final": lim.cur, "peak_allowed": max_conc,
+                            "done": lim.done, "failed": lim.failed, "tripped": lim.tripped,
                         },
                         "stats": {"version": "1.0.1", "ok": True, "finished_at": time.time()},
                         "degraded": bool(failed_chunks) or bool(warnings),

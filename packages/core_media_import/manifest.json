@@ -4,7 +4,7 @@
   "title": "媒体导入",
   "category": "输入",
   "description": "把本地视频接入流程，产出视频与音频两路资产。默认只读元数据不转码——本机没装 ffmpeg 也要能先把文件接进来",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "kind": "python",
   "entrypoint": "node.py",
   "class_name": "MediaImportNode",
@@ -91,7 +91,7 @@
   "signature": {
     "alg": "ed25519",
     "key_id": "a8998646b062c170",
-    "value": "prycsKjIxVhcXwos11BVF41xVPGaxxNnpyaS557OklVZpukfbh0BY9s4on9Eh+LfABp4PN1fNCc5f1/VEKldDw==",
+    "value": "QGHpXv5fsD0XzSLeHcort3zN+DhM9AubYvNp1o7JPzdkNOEjF1W/miQLdhJ82ibmuWt59VhId/9e3YQqJGgLBw==",
     "over": "manifest"
   }
 }
